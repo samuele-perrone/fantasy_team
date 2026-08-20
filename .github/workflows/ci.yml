@@ -30,6 +30,11 @@ jobs:
       - name: Lint
         run: npx eslint src --max-warnings=0
 
+      # PageProps/LayoutProps are globals Next generates into .next/types and next-env.d.ts,
+      # both gitignored — so a clean checkout must generate them before tsc can resolve them.
+      - name: Generate route types
+        run: npx next typegen
+
       - name: Typecheck
         run: npx tsc --noEmit
 
