@@ -111,12 +111,38 @@ function objectiveOf(squad: PlayerRow[], opts: Required<Pick<OptimiseOptions, "k
   return xi.startingPoints + captainBonus + xi.benchPoints * opts.benchWeight;
 }
 
-function canAdd(state: State, p: PlayerRow, budget: number, remainingSlots: number): boolean {
+/** Ascending price list per position, for costing out the cheapest possible completion. */
+type PriceFloors = Record<number, number[]>;
+
+function priceFloors(pool: PlayerRow[]): PriceFloors {
+  const floors: PriceFloors = { 1: [], 2: [], 3: [], 4: [] };
+  for (const p of pool) floors[p.posId]?.push(p.cost);
+  for (const pos of [1, 2, 3, 4]) floors[pos].sort((a, b) => a - b);
+  return floors;
+}
+
+/**
+ * Lower bound on what it costs to finish the squad from here — the sum of the cheapest
+ * players still needed in each position. A flat per-slot estimate is wrong because positions
+ * have very different price floors, and overestimating makes the greedy reject affordable
+ * picks and fail outright on a tight budget.
+ */
+function minCostToComplete(counts: Record<number, number>, floors: PriceFloors): number {
+  let total = 0;
+  for (const pos of [1, 2, 3, 4]) {
+    const needed = SQUAD_QUOTA[pos] - counts[pos];
+    for (let i = 0; i < needed; i++) total += floors[pos][i] ?? 4.0;
+  }
+  return total;
+}
+
+function canAdd(state: State, p: PlayerRow, budget: number, floors: PriceFloors): boolean {
   if (state.counts[p.posId] >= SQUAD_QUOTA[p.posId]) return false;
   if ((state.clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) return false;
-  // leave enough money for the cheapest possible fill of the remaining slots
-  const reserve = (remainingSlots - 1) * 4.0;
-  return state.cost + p.cost + reserve <= budget + 1e-9;
+
+  // Cost of completing the squad once this player is in.
+  const after = { ...state.counts, [p.posId]: state.counts[p.posId] + 1 };
+  return state.cost + p.cost + minCostToComplete(after, floors) <= budget + 1e-9;
 }
 
 function greedy(
@@ -125,6 +151,7 @@ function greedy(
   opts: Required<Pick<OptimiseOptions, "key">>,
   budget: number,
   locked: PlayerRow[],
+  floors: PriceFloors,
 ): PlayerRow[] | null {
   const state: State = { squad: [], cost: 0, counts: { 1: 0, 2: 0, 3: 0, 4: 0 }, clubs: new Map() };
 
@@ -150,10 +177,54 @@ function greedy(
 
   for (const { p } of ranked) {
     if (state.squad.length === 15) break;
-    if (canAdd(state, p, budget, 15 - state.squad.length)) push(p);
+    if (canAdd(state, p, budget, floors)) push(p);
   }
 
   return state.squad.length === 15 ? state.squad : null;
+}
+
+/**
+ * Cheapest legal 15, used as a fallback seed. Fills each position from the cheapest players
+ * available, so it succeeds whenever the budget can accommodate any legal squad at all.
+ */
+function cheapestLegal(
+  pool: PlayerRow[],
+  budget: number,
+  locked: PlayerRow[],
+): PlayerRow[] | null {
+  const squad: PlayerRow[] = [];
+  const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  const clubs = new Map<number, number>();
+  let cost = 0;
+
+  const take = (p: PlayerRow) => {
+    squad.push(p);
+    cost += p.cost;
+    counts[p.posId]++;
+    clubs.set(p.teamId, (clubs.get(p.teamId) ?? 0) + 1);
+  };
+
+  for (const p of locked) {
+    if (counts[p.posId] >= SQUAD_QUOTA[p.posId]) continue;
+    if ((clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) continue;
+    take(p);
+  }
+
+  const lockedIds = new Set(locked.map((p) => p.id));
+  const byPrice = pool
+    .filter((p) => !lockedIds.has(p.id))
+    .sort((a, b) => a.cost - b.cost || b.xPts - a.xPts);
+
+  for (const pos of [1, 2, 3, 4]) {
+    for (const p of byPrice) {
+      if (counts[pos] >= SQUAD_QUOTA[pos]) break;
+      if (p.posId !== pos || squad.some((s) => s.id === p.id)) continue;
+      if ((clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) continue;
+      take(p);
+    }
+  }
+
+  return squad.length === 15 && cost <= budget + 1e-9 ? squad : null;
 }
 
 /**
@@ -178,16 +249,28 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
     .filter((p): p is PlayerRow => Boolean(p))
     .slice(0, 15);
 
+  const floors = priceFloors(pool);
   let best: PlayerRow[] | null = null;
   let bestScore = -Infinity;
 
   for (const lambda of [0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.1, 1.5, 2.2, 3.0]) {
-    const squad = greedy(pool, lambda, opts, budget, locked);
+    const squad = greedy(pool, lambda, opts, budget, locked, floors);
     if (!squad) continue;
     const s = objectiveOf(squad, opts);
     if (s > bestScore) {
       bestScore = s;
       best = squad;
+    }
+  }
+
+  // On a tight budget every price penalty in the sweep can still overshoot and leave the
+  // greedy unable to fill 15 slots. Falling back to the cheapest legal squad guarantees a
+  // starting point whenever one exists at all, and the local search below improves it.
+  if (!best) {
+    const cheapest = cheapestLegal(pool, budget, locked);
+    if (cheapest) {
+      best = cheapest;
+      bestScore = objectiveOf(cheapest, opts);
     }
   }
 

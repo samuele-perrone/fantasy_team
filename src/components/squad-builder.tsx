@@ -6,7 +6,7 @@ import type { PlayerRow } from "@/lib/fpl/row";
 import { FixtureRun, PositionBadge } from "./ui";
 import { ScreenshotImport, type ImportMatch } from "./screenshot-import";
 import { BuilderPitch } from "./builder-pitch";
-import { FORMATIONS } from "@/lib/fpl/optimiser";
+import { FORMATIONS, optimiseSquad } from "@/lib/fpl/optimiser";
 import { cn, money } from "@/lib/utils";
 
 const QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
@@ -71,7 +71,10 @@ export function SquadBuilder({
   const [name, setName] = useState(initialName);
   const [query, setQuery] = useState("");
   const [posFilter, setPosFilter] = useState(0);
-  const [imported, setImported] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [optimising, setOptimising] = useState(false);
+  // Replacing a squad you built is destructive, so it takes a second click to confirm.
+  const [confirmAuto, setConfirmAuto] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const squadRef = useRef<HTMLDivElement>(null);
 
@@ -231,11 +234,52 @@ export function SquadBuilder({
     setIds(next);
     setCaptain(null);
     setVice(null);
-    setImported(next.length);
+    setNotice(
+      next.length < 15
+        ? `Imported ${next.length} players. Add the missing ${15 - next.length} by searching on the left.`
+        : `Imported all 15 players. Set your captain, then hit Analyse.`,
+    );
     // Drop the user straight onto the squad they just imported.
     requestAnimationFrame(() =>
       squadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
+  };
+
+  /**
+   * Fill the builder with the optimiser's best legal squad. Runs in the browser — the solver
+   * is a greedy sweep plus local search over ~600 players, a few milliseconds — but it is
+   * deferred a frame so the button can paint its pending state first.
+   */
+  const autoPick = () => {
+    setOptimising(true);
+    requestAnimationFrame(() => {
+      const budget = squad.length === 15 ? cost + bankValue : 100;
+      const result = optimiseSquad(players, {
+        budget,
+        key: "xPts",
+        benchWeight: 0.12,
+      });
+
+      if (result.squad.length !== 15) {
+        setNotice("Could not build a legal squad within that budget.");
+        setOptimising(false);
+        return;
+      }
+
+      const xi = result.xi.starters.map((p) => p.id);
+      setIds([...xi, ...result.xi.bench.map((p) => p.id)]);
+      setChosenXI(xi);
+      const [d, m, f] = result.xi.formation.split("-").map(Number);
+      setFormation([d, m, f]);
+      setCaptain(result.xi.captain?.id ?? null);
+      setVice(result.xi.viceCaptain?.id ?? null);
+      setNotice(
+        `Auto-picked the best ${result.xi.formation} for ${money(result.cost)} — ` +
+          `${result.xi.startingPoints.toFixed(1)} projected points from the XI over the next 5 gameweeks.`,
+      );
+      setOptimising(false);
+      squadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const analyse = () => {
@@ -328,15 +372,12 @@ export function SquadBuilder({
 
         {/* ---------------- squad ---------------- */}
         <section className="space-y-4">
-          {imported !== null && (
+          {notice && (
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-2.5 text-[12.5px] text-brand-300">
-              <strong className="font-bold">Imported {imported} players.</strong>
-              {imported < 15
-                ? `Add the missing ${15 - imported} by searching on the left, then hit Analyse.`
-                : "Set your captain below, then hit Analyse."}
+              <span>{notice}</span>
               <button
                 type="button"
-                onClick={() => setImported(null)}
+                onClick={() => setNotice(null)}
                 className="ml-auto text-[11px] text-brand-400/70 hover:text-brand-300"
               >
                 Dismiss
@@ -397,7 +438,41 @@ export function SquadBuilder({
           </div>
 
           <div className="panel flex flex-wrap items-center gap-2 px-4 py-2.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <button
+              type="button"
+              disabled={optimising}
+              onClick={() => {
+                if (squad.length > 0 && !confirmAuto) {
+                  setConfirmAuto(true);
+                  return;
+                }
+                setConfirmAuto(false);
+                autoPick();
+              }}
+              onBlur={() => setConfirmAuto(false)}
+              className={cn(
+                "rounded-lg px-4 py-1.5 text-[12.5px] font-bold transition disabled:opacity-50",
+                confirmAuto
+                  ? "bg-amber-500 text-pitch-950 hover:bg-amber-400"
+                  : "bg-brand-500 text-pitch-950 hover:bg-brand-400",
+              )}
+            >
+              {optimising
+                ? "Optimising…"
+                : confirmAuto
+                  ? `Replace all ${squad.length}?`
+                  : squad.length
+                    ? "Auto-pick best squad"
+                    : "Auto-pick the best squad"}
+            </button>
+
+            <span className="mr-1 text-[11.5px] text-slate-500">
+              {squad.length === 15
+                ? `within ${money(cost + bankValue)}`
+                : "within £100.0m"}
+            </span>
+
+            <span className="ml-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               Formation
             </span>
             <div className="flex flex-wrap gap-1">
