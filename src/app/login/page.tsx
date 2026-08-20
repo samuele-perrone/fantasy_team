@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthButton } from "@/components/auth-button";
 import { getUserId } from "@/lib/supabase/server";
+import { allowlistUnconfigured } from "@/lib/auth/allowlist";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -20,6 +21,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await getUserId()) redirect(next);
 
   const errorParam = Array.isArray(params.auth_error) ? params.auth_error[0] : params.auth_error;
+  const deniedRaw = Array.isArray(params.denied) ? params.denied[0] : params.denied;
+  const denied = deniedRaw ? (deniedRaw.includes("@") ? deniedRaw : null) : undefined;
+  const unconfigured = allowlistUnconfigured();
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
@@ -35,6 +39,33 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         {errorParam && (
           <p className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">
             {errorParam}
+          </p>
+        )}
+
+        {deniedRaw !== undefined && (
+          <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-[12.5px] leading-relaxed text-amber-200">
+            <strong className="font-bold">This account cannot access the site.</strong>{" "}
+            {denied ? (
+              <>
+                <span className="font-mono">{denied}</span> is not on the allow-list. Sign in
+                with a permitted account, or ask the owner to add this address.
+              </>
+            ) : (
+              <>Sign in with a permitted account.</>
+            )}
+            {unconfigured && (
+              <span className="mt-1.5 block text-amber-300/80">
+                No allow-list is configured, so every account is currently denied. Set
+                ALLOWED_EMAILS to a comma-separated list of addresses.
+              </span>
+            )}
+          </div>
+        )}
+
+        {unconfigured && deniedRaw === undefined && (
+          <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[12.5px] leading-relaxed text-amber-200">
+            ALLOWED_EMAILS is not set, so sign-in will be refused for every account. Set it to a
+            comma-separated list of permitted addresses.
           </p>
         )}
 

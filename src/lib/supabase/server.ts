@@ -1,6 +1,7 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isAllowed } from "@/lib/auth/allowlist";
 
 /** Server client bound to the request's cookies. */
 export async function createClient() {
@@ -38,5 +39,11 @@ export async function getUserId(): Promise<string | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) return null;
+
+  // Defence in depth: the proxy gates navigation, but a route outside its matcher would
+  // otherwise still hand data to an account that is not on the allow-list.
+  const email = typeof data.claims.email === "string" ? data.claims.email : null;
+  if (!isAllowed(email)) return null;
+
   return data.claims.sub;
 }

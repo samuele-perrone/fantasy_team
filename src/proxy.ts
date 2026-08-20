@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowed } from "@/lib/auth/allowlist";
 
 /** Paths reachable without a session. Everything else redirects to /login. */
 const PUBLIC_PREFIXES = ["/login", "/auth"];
@@ -34,6 +35,7 @@ export async function proxy(request: NextRequest) {
   // getClaims verifies the JWT signature; getSession would trust the cookie blindly.
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
+  const email = typeof data?.claims?.email === "string" ? data.claims.email : null;
 
   const { pathname, search } = request.nextUrl;
   const isPublic = PUBLIC_PREFIXES.some(
@@ -51,6 +53,20 @@ export async function proxy(request: NextRequest) {
     for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
     return redirect;
   };
+
+  // Anyone with a Google account can authenticate, so a valid session is not enough — the
+  // account has to be on the allow-list. Denied sessions are signed out rather than left to
+  // bounce off the gate on every request.
+  if (signedIn && !isAllowed(email)) {
+    await supabase.auth.signOut();
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("denied", email ?? "1");
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
+  }
 
   if (!signedIn && !isPublic) return redirectTo("/login", pathname + search);
 
