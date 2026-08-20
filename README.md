@@ -1,5 +1,9 @@
 # Fantasy Hub
 
+[![CI](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml/badge.svg)](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml)
+
+**Live: [fantasyteam.vercel.app](https://fantasyteam.vercel.app)**
+
 A Fantasy Premier League analytics site — points projections, OPTA-style stats, fixture
 analysis, price change predictions, AI transfer suggestions and a squad optimiser — built on
 the official FPL API.
@@ -83,6 +87,12 @@ season when no manager picks are published yet:
 ```bash
 FPL_API_BASE=http://localhost:4555 npm run dev
 ```
+
+## Deployment
+
+Vercel is connected to this repository, so merges to `main` deploy to production
+automatically and every pull request gets its own preview URL. CI (lint, route typegen,
+typecheck, build) runs on each push and pull request and must pass before merging.
 
 ## Notes
 
