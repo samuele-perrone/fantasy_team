@@ -7,6 +7,7 @@ import { FixtureRun, PositionBadge } from "./ui";
 import { ScreenshotImport, type ImportMatch } from "./screenshot-import";
 import { BuilderPitch } from "./builder-pitch";
 import { FORMATIONS, optimiseSquad } from "@/lib/fpl/optimiser";
+import { rowNewsLabel } from "@/lib/fpl/news";
 import { cn, money } from "@/lib/utils";
 
 const QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
@@ -273,9 +274,20 @@ export function SquadBuilder({
       setFormation([d, m, f]);
       setCaptain(result.xi.captain?.id ?? null);
       setVice(result.xi.viceCaptain?.id ?? null);
+      // Projections already discount players by their news, but say so explicitly if any
+      // flagged player still earned a place.
+      const flagged = result.squad
+        .map((p) => ({ p, label: rowNewsLabel(p) }))
+        .filter((x) => x.label);
+
       setNotice(
         `Auto-picked the best ${result.xi.formation} for ${money(result.cost)} — ` +
-          `${result.xi.startingPoints.toFixed(1)} projected points from the XI over the next 5 gameweeks.`,
+          `${result.xi.startingPoints.toFixed(1)} projected points from the XI over the next 5 gameweeks.` +
+          (flagged.length
+            ? ` Includes ${flagged.length} flagged: ${flagged
+                .map((x) => `${x.p.name} (${x.label})`)
+                .join(", ")}.`
+            : " Injured and suspended players were priced out by their news."),
       );
       setOptimising(false);
       squadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

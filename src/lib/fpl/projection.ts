@@ -1,4 +1,5 @@
 import type { Bootstrap, FplElement, FplFixture } from "./types";
+import { availabilityFor } from "./news";
 import {
   attackingMultiplier,
   clamp,
@@ -55,32 +56,14 @@ interface MinutesModel {
   expected: number;
 }
 
-/** Availability multiplier from injury/suspension flags. */
-function availability(p: FplElement): number {
-  const chance = p.chance_of_playing_next_round;
-  if (chance !== null && chance !== undefined) return clamp(chance / 100, 0, 1);
-  switch (p.status) {
-    case "a":
-      return 1;
-    case "d":
-      return 0.7;
-    case "i":
-    case "s":
-    case "u":
-    case "n":
-      return 0;
-    default:
-      return 1;
-  }
-}
-
 /**
  * Minutes are the single biggest driver of FPL points, so the sample rate is shrunk
  * toward a price-based prior — a £13m forward with no data is far more likely nailed
  * than a £4.0m one.
  */
 function minutesModel(p: FplElement, teamGames: number): MinutesModel {
-  const avail = availability(p);
+  // Availability is applied per fixture rather than here, since news changes what a player
+  // is worth in gameweek one without saying anything about gameweek five.
   // Pre-season the carried-over stats still describe a full 38-game campaign.
   const sample = teamGames > 0 ? teamGames : p.minutes > 0 ? 38 : 0;
 
@@ -99,8 +82,8 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
     subProb = clamp(subProb, 0, 0.9);
   }
 
-  startProb = clamp(startProb, 0, 0.97) * avail;
-  const cameo = (1 - startProb) * subProb * avail;
+  startProb = clamp(startProb, 0, 0.97);
+  const cameo = (1 - startProb) * subProb;
   const playProb = clamp(startProb + cameo, 0, 1);
   // Starters are pulled off or booked out of a 60+ appearance a fraction of the time.
   const p60 = startProb * 0.86;
@@ -166,8 +149,22 @@ function projectFixture(
   p: FplElement,
   fixture: FplFixture,
   ctx: ProjectionContext,
-  mins: MinutesModel,
+  baseMins: MinutesModel,
 ): FixtureProjection {
+  // News is read per fixture: a knock costs the next match, an "expected back" date rules
+  // out only the fixtures before it.
+  const avail = availabilityFor(
+    p,
+    fixture.kickoff_time,
+    Math.max(0, (fixture.event ?? ctx.nextEvent) - ctx.nextEvent),
+  );
+  const mins: MinutesModel = {
+    startProb: baseMins.startProb * avail,
+    playProb: baseMins.playProb * avail,
+    p60: baseMins.p60 * avail,
+    expected: baseMins.expected * avail,
+  };
+
   const isHome = fixture.team_h === p.team;
   const opponentId = isHome ? fixture.team_a : fixture.team_h;
   const team = ctx.ratings.get(p.team)!;
@@ -264,20 +261,24 @@ export function projectPlayer(
   const perGame = fixtures.length ? total / fixtures.length : 0;
   const neutral90 = mins.expected > 0 ? (perGame / mins.expected) * 90 : 0;
 
+  // Reported minutes reflect the next gameweek specifically, so a flagged player shows the
+  // reduced figure the news implies rather than their fully fit baseline.
+  const nextMinutes = nextEventFixtures.length
+    ? nextEventFixtures.reduce((a, f) => a + f.minutes, 0)
+    : 0;
+  const nextAvailability = mins.expected > 0 ? nextMinutes / mins.expected : 0;
+  const nextStartProb = clamp(mins.startProb * Math.min(nextAvailability, 1), 0, 1);
+
   // Rating blends raw output, value for money and minutes security onto a 0–10 scale.
-  const rating = clamp(
-    perGame * 1.05 + value * 0.32 + mins.startProb * 1.6,
-    0,
-    10,
-  );
+  const rating = clamp(perGame * 1.05 + value * 0.32 + nextStartProb * 1.6, 0, 10);
 
   return {
     id: p.id,
     next,
     horizon: total,
     per90: neutral90,
-    minutes: mins.expected,
-    startProb: mins.startProb,
+    minutes: nextMinutes,
+    startProb: nextStartProb,
     fixtures,
     value,
     rating,
