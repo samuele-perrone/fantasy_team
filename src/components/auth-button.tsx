@@ -8,10 +8,16 @@ import { cn } from "@/lib/utils";
 export function AuthButton({
   email,
   compact,
+  full,
+  redirectTo,
 }: {
   email: string | null;
   /** header variant — icon-sized, no descriptive text */
   compact?: boolean;
+  /** full-width variant for the login page */
+  full?: boolean;
+  /** explicit post-login destination; defaults to the current page */
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -21,10 +27,10 @@ export function AuthButton({
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      // Return to the page the user was on.
+      // Signing in from /login must return to the intended page, not back to /login.
       options: {
         redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(
-          location.pathname + location.search,
+          redirectTo ?? location.pathname + location.search,
         )}`,
       },
     });
@@ -34,8 +40,9 @@ export function AuthButton({
   const signOut = async () => {
     setBusy(true);
     await createClient().auth.signOut();
+    // The proxy will bounce the now-unauthenticated request to /login.
+    router.push("/login");
     router.refresh();
-    setBusy(false);
   };
 
   if (email) {
@@ -62,8 +69,11 @@ export function AuthButton({
       onClick={signIn}
       disabled={busy}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg border border-pitch-600 bg-pitch-900 font-semibold text-slate-200 transition hover:border-brand-500 hover:text-white disabled:opacity-50",
-        compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]",
+        "inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition disabled:opacity-50",
+        full
+          ? "w-full border-transparent bg-white px-4 py-3 text-[14px] text-pitch-950 hover:bg-slate-100"
+          : "border-pitch-600 bg-pitch-900 text-slate-200 hover:border-brand-500 hover:text-white",
+        !full && (compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]"),
       )}
     >
       <GoogleMark />

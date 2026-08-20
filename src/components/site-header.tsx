@@ -34,6 +34,9 @@ export function SiteHeader({
   const setMobileOpen = (mobile: boolean) =>
     setMenu({ path: pathname, group: null, mobile });
 
+  // On the login page the only thing to show is the wordmark.
+  const bare = pathname === "/login";
+
   return (
     <header className="sticky top-0 z-50 border-b border-pitch-700/80 bg-pitch-950/85 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-4">
@@ -46,7 +49,7 @@ export function SiteHeader({
           </span>
         </Link>
 
-        <nav className="ml-4 hidden items-center lg:flex" onMouseLeave={() => setOpen(null)}>
+        {!bare && <nav className="ml-4 hidden items-center lg:flex" onMouseLeave={() => setOpen(null)}>
           {NAV.map((group) => (
             <div key={group.label} className="relative" onMouseEnter={() => setOpen(group.label)}>
               <button
@@ -83,9 +86,11 @@ export function SiteHeader({
               )}
             </div>
           ))}
-        </nav>
+        </nav>}
 
         <div className="ml-auto flex items-center gap-3">
+          {!bare && (
+            <>
           {deadline && (
             <div className="hidden text-right sm:block">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -113,10 +118,12 @@ export function SiteHeader({
               <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.8" />
             </svg>
           </button>
+            </>
+          )}
         </div>
       </div>
 
-      {mobileOpen && (
+      {mobileOpen && !bare && (
         <div className="max-h-[70vh] overflow-y-auto border-t border-pitch-700 bg-pitch-900 px-4 py-3 lg:hidden">
           {NAV.map((group) => (
             <div key={group.label} className="mb-4">

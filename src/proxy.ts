@@ -1,9 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/** Paths reachable without a session. Everything else redirects to /login. */
+const PUBLIC_PREFIXES = ["/login", "/auth"];
+
 /**
- * Refreshes the Supabase session cookie. Server Components cannot write cookies, so without
- * this a token that expires mid-session would sign the user out until they hard-reloaded.
+ * Refreshes the Supabase session and gates the whole site behind it.
+ *
+ * Server Components cannot write cookies, so the refresh has to happen here — and any cookies
+ * it sets must be carried onto the redirect response too, otherwise the refreshed session is
+ * dropped and the user bounces between /login and their destination forever.
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -25,8 +31,34 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // Verifies and refreshes the token if needed.
-  await supabase.auth.getClaims();
+  // getClaims verifies the JWT signature; getSession would trust the cookie blindly.
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = Boolean(data?.claims?.sub);
+
+  const { pathname, search } = request.nextUrl;
+  const isPublic = PUBLIC_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+
+  /** Redirect while preserving any refreshed auth cookies. */
+  const redirectTo = (pathName: string, next?: string) => {
+    const url = request.nextUrl.clone();
+    url.pathname = pathName;
+    url.search = "";
+    if (next && next !== "/") url.searchParams.set("next", next);
+
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
+  };
+
+  if (!signedIn && !isPublic) return redirectTo("/login", pathname + search);
+
+  // Nothing to do on the login page once you are already in.
+  if (signedIn && pathname === "/login") {
+    const next = request.nextUrl.searchParams.get("next");
+    return redirectTo(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
+  }
 
   return response;
 }
