@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tesseract.js language models, downloaded on demand at runtime
+*.traineddata
+
+# scratch output from local testing
+r.html
