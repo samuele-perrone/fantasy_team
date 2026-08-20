@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NAV } from "./nav";
+import { AuthButton } from "./auth-button";
 import { cn } from "@/lib/utils";
 
 interface MenuState {
@@ -12,7 +13,15 @@ interface MenuState {
   mobile: boolean;
 }
 
-export function SiteHeader({ deadline, gwLabel }: { deadline: string | null; gwLabel: string }) {
+export function SiteHeader({
+  deadline,
+  gwLabel,
+  email,
+}: {
+  deadline: string | null;
+  gwLabel: string;
+  email: string | null;
+}) {
   const pathname = usePathname();
   // Menus are scoped to the route they were opened on, so navigating closes them without
   // needing an effect that would trigger a second render pass.
@@ -87,10 +96,13 @@ export function SiteHeader({ deadline, gwLabel }: { deadline: string | null; gwL
           )}
           <Link
             href="/my-team"
-            className="rounded-lg bg-brand-500 px-3 py-1.5 text-[13px] font-bold text-pitch-950 transition hover:bg-brand-400"
+            className="hidden rounded-lg bg-brand-500 px-3 py-1.5 text-[13px] font-bold text-pitch-950 transition hover:bg-brand-400 sm:block"
           >
             My Team
           </Link>
+          <div className="hidden sm:block">
+            <AuthButton email={email} compact />
+          </div>
           <button
             type="button"
             aria-label="Menu"

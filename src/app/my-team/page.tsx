@@ -5,6 +5,8 @@ import { Pitch, SquadList } from "@/components/pitch";
 import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
+import { getUserId } from "@/lib/supabase/server";
+import { getSavedEntryId } from "@/lib/supabase/squads";
 
 export const revalidate = 60;
 
@@ -16,17 +18,21 @@ export const metadata: Metadata = {
 
 export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">) {
   const params = await searchParams;
-  const idParam = Array.isArray(params.id) ? params.id[0] : params.id;
-  const query = teamQueryString(params);
+  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const signedIn = Boolean(await getUserId());
+  // Fall back to the id saved on the profile so a signed-in manager never retypes it.
+  const savedId = signedIn && !rawId && !params.squad ? await getSavedEntryId() : null;
+  const idParam = rawId ?? (savedId ? String(savedId) : undefined);
+  const query = teamQueryString(idParam && !rawId ? { ...params, id: idParam } : params);
 
   let team;
   try {
-    team = await resolveTeam(params, 5);
+    team = await resolveTeam(idParam && !rawId ? { ...params, id: idParam } : params, 5);
   } catch (e) {
     return (
       <div>
         <PageHeader eyebrow="My Team" title="Pick & Rating" />
-        <EntryForm action="/my-team" defaultValue={idParam} />
+        <EntryForm action="/my-team" defaultValue={idParam} signedIn={signedIn} />
         <div className="panel mt-4 px-5 py-4 text-[13.5px] text-amber-300">
           {e instanceof EntryNotFound || e instanceof InvalidSquad
             ? e.message
@@ -53,7 +59,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           title="Pick & Rating"
           description="Enter your FPL team ID to load your squad. Every player is rated on projected points, minutes security and fixture run, and the model tells you the best XI, captain and the picks holding you back."
         />
-        <EntryForm action="/my-team" />
+        <EntryForm action="/my-team" signedIn={signedIn} />
         {params.error && (
           <p className="mt-3 text-[13px] text-rose-400">
             That does not look like a valid team ID — it should be digits only.
@@ -318,7 +324,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <SquadList players={team.squad} teamCodes={team.teamCodes} />
       </section>
 
-      {team.source === "fpl" && <EntryForm action="/my-team" defaultValue={idParam} cta="Load another team" />}
+      {team.source === "fpl" && <EntryForm action="/my-team" defaultValue={idParam} cta="Load another team" signedIn={signedIn} />}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { saveEntryId } from "@/lib/supabase/squads";
 
 /**
  * Small server-action form used by every tool that needs an FPL entry ID. Keeping it a
@@ -9,16 +10,20 @@ export function EntryForm({
   defaultValue,
   label = "FPL Team ID",
   cta = "Load team",
+  signedIn = false,
 }: {
   action: string;
   defaultValue?: string;
   label?: string;
   cta?: string;
+  /** when signed in, the id is also stored on the profile so it prefills next visit */
+  signedIn?: boolean;
 }) {
   async function submit(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "").trim();
     if (!/^\d+$/.test(id)) redirect(`${action}?error=invalid`);
+    if (formData.get("remember") === "on") await saveEntryId(Number(id));
     redirect(`${action}?id=${id}`);
   }
 
@@ -47,6 +52,18 @@ export function EntryForm({
         >
           {cta}
         </button>
+
+        {signedIn && (
+          <label className="flex h-10 cursor-pointer items-center gap-2 text-[12.5px] text-slate-400">
+            <input
+              type="checkbox"
+              name="remember"
+              defaultChecked
+              className="accent-brand-500"
+            />
+            Remember this ID on my account
+          </label>
+        )}
       </div>
 
       <FindYourId />
