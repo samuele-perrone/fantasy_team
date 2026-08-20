@@ -10,6 +10,17 @@ import { createClient } from "@/lib/supabase/server";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+/**
+ * Nothing is statically prerendered.
+ *
+ * Every route sits behind the login gate, so static generation bought nothing — but it did
+ * make each deploy depend on the FPL API answering during the build. Rendering 28 pages
+ * across parallel workers fired concurrent bootstrap requests, FPL rate limited them, and a
+ * 403 failed the whole deploy. Live data still comes from the cached client, so the cost of
+ * rendering per request is a few milliseconds of projection maths.
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     default: "Fantasy Hub — FPL tools, stats and points predictions",

@@ -18,23 +18,56 @@ const BASE = process.env.FPL_API_BASE ?? "https://fantasy.premierleague.com/api"
  * The FPL API rejects requests without a browser-ish UA and has no CORS headers,
  * so every call is proxied through the server with a revalidating fetch cache.
  */
-async function fplFetch<T>(path: string, revalidate: number | "no-store"): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
-      Accept: "application/json",
-    },
-    // "no-store" is used where an outer unstable_cache caches the trimmed result instead.
-    ...(revalidate === "no-store"
-      ? { cache: "no-store" as const }
-      : { next: { revalidate } }),
-  });
+/** Rate limiting and upstream blips are worth retrying; a 404 never is. */
+const RETRYABLE = new Set([403, 408, 425, 429, 500, 502, 503, 504]);
 
-  if (!res.ok) {
-    throw new FplError(`FPL request failed (${res.status}) for ${path}`, res.status);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fplFetch<T>(
+  path: string,
+  revalidate: number | "no-store",
+  attempts = 4,
+): Promise<T> {
+  let lastStatus = 0;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (attempt > 0) {
+      // Exponential backoff with jitter. A production build renders many pages across
+      // parallel workers, and React's request cache does not span processes, so several
+      // concurrent bootstrap requests hit FPL at once and get rate limited. Staggering the
+      // retries is what lets the build through.
+      const backoff = 400 * 2 ** (attempt - 1);
+      await sleep(backoff + Math.random() * 400);
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(`${BASE}${path}`, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+          Accept: "application/json",
+        },
+        // "no-store" is used where an outer unstable_cache caches the trimmed result instead.
+        ...(revalidate === "no-store"
+          ? { cache: "no-store" as const }
+          : { next: { revalidate } }),
+      });
+    } catch {
+      lastStatus = 0; // network error — retry
+      continue;
+    }
+
+    if (res.ok) return (await res.json()) as T;
+
+    lastStatus = res.status;
+    if (!RETRYABLE.has(res.status)) break;
   }
-  return (await res.json()) as T;
+
+  throw new FplError(
+    `FPL request failed (${lastStatus || "network error"}) for ${path} after ${attempts} attempts`,
+    lastStatus || 503,
+  );
 }
 
 export class FplError extends Error {
