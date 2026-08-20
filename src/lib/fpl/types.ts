@@ -1,5 +1,10 @@
 export type ElementStatus = "a" | "d" | "i" | "s" | "u" | "n";
 
+/**
+ * Only the fields this app actually reads. The API returns ~109 per player; the rest are
+ * discarded at the trim boundary in client.ts so the cached payload stays under Next's
+ * 2MB data-cache limit.
+ */
 export interface FplElement {
   id: number;
   code: number;
@@ -12,33 +17,22 @@ export interface FplElement {
   now_cost: number;
   status: ElementStatus;
   news: string;
-  news_added: string | null;
   chance_of_playing_next_round: number | null;
-  chance_of_playing_this_round: number | null;
   total_points: number;
   event_points: number;
   points_per_game: string;
   form: string;
-  value_form: string;
-  value_season: string;
   selected_by_percent: string;
-  transfers_in: number;
-  transfers_out: number;
   transfers_in_event: number;
   transfers_out_event: number;
   cost_change_start: number;
   cost_change_event: number;
-  ep_this: string | null;
-  ep_next: string | null;
   minutes: number;
   starts: number;
   goals_scored: number;
   assists: number;
   clean_sheets: number;
-  goals_conceded: number;
-  own_goals: number;
   penalties_saved: number;
-  penalties_missed: number;
   yellow_cards: number;
   red_cards: number;
   saves: number;
@@ -49,21 +43,16 @@ export interface FplElement {
   threat: string;
   ict_index: string;
   defensive_contribution: number;
-  clearances_blocks_interceptions: number;
   recoveries: number;
   tackles: number;
   expected_goals: string;
   expected_assists: string;
   expected_goal_involvements: string;
-  expected_goals_conceded: string;
   expected_goals_per_90: number;
   expected_assists_per_90: number;
   expected_goal_involvements_per_90: number;
   expected_goals_conceded_per_90: number;
-  goals_conceded_per_90: number;
   saves_per_90: number;
-  starts_per_90: number;
-  clean_sheets_per_90: number;
   defensive_contribution_per_90: number;
   penalties_order: number | null;
   penalties_text: string;
@@ -71,12 +60,6 @@ export interface FplElement {
   corners_and_indirect_freekicks_text: string;
   direct_freekicks_order: number | null;
   direct_freekicks_text: string;
-  in_dreamteam: boolean;
-  dreamteam_count: number;
-  photo: string;
-  birth_date: string | null;
-  region: number | null;
-  price_change_projections?: { offset: number; projected_percent: string; likelihood: number }[];
 }
 
 export interface FplTeam {
@@ -119,25 +102,12 @@ export interface FplEvent {
   chip_plays: { chip_name: string; num_played: number }[];
 }
 
-export interface FplElementType {
-  id: number;
-  singular_name: string;
-  singular_name_short: string;
-  plural_name: string;
-  plural_name_short: string;
-  squad_select: number;
-  squad_min_play: number;
-  squad_max_play: number;
-  element_count: number;
-}
-
+/** Trimmed in client.ts — only the blocks this app reads are cached. */
 export interface Bootstrap {
   events: FplEvent[];
   teams: FplTeam[];
   elements: FplElement[];
-  element_types: FplElementType[];
   total_players: number;
-  element_stats: { label: string; name: string }[];
 }
 
 export interface FplFixture {
