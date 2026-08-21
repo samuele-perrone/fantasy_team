@@ -76,7 +76,18 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
   if (sample > 0) {
     const observedStarts = clamp(p.starts / sample, 0, 1);
     const appearances = clamp(p.minutes / (sample * 72), 0, 1);
-    const w = sample / (sample + 5);
+
+    // Minutes belong to whichever club the player was at when they played them. A summer
+    // signing carries a full season of starts from somewhere else, and reading those as a
+    // guaranteed place in the new side is how a squad player ends up modelled as nailed.
+    // Their history still says they are a good footballer, which price already reflects, so
+    // the shrinkage moves them toward the price prior rather than penalising them outright.
+    const daysAtClub = p.team_join_date
+      ? (Date.now() - Date.parse(p.team_join_date)) / 86_400_000
+      : Infinity;
+    const newness = Number.isFinite(daysAtClub) ? clamp(1 - daysAtClub / 150, 0, 1) : 0;
+
+    const w = sample / (sample + 5 + 22 * newness);
     startProb = observedStarts * w + prior * (1 - w);
     subProb = clamp(appearances - observedStarts, 0, 1) / Math.max(1 - observedStarts, 0.15);
     subProb = clamp(subProb, 0, 0.9);

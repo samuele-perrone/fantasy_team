@@ -27,6 +27,8 @@ export interface PlayerRow {
   status: string;
   news: string;
   availability: number | null;
+  /** days at the current club, or null when unknown */
+  daysAtClub: number | null;
 
   totalPoints: number;
   eventPoints: number;
@@ -116,6 +118,9 @@ export function toRow(
     status: p.status,
     news: p.news,
     availability: p.chance_of_playing_next_round,
+    daysAtClub: p.team_join_date
+      ? Math.max(0, Math.round((Date.now() - Date.parse(p.team_join_date)) / 86_400_000))
+      : null,
 
     totalPoints: p.total_points,
     eventPoints: p.event_points,

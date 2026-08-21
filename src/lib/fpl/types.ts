@@ -18,6 +18,8 @@ export interface FplElement {
   status: ElementStatus;
   news: string;
   chance_of_playing_next_round: number | null;
+  /** when the player joined their current club — their stats before it are another team's */
+  team_join_date: string | null;
   total_points: number;
   event_points: number;
   points_per_game: string;

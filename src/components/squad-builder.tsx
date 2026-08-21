@@ -80,6 +80,10 @@ export function SquadBuilder({
   const [optimising, setOptimising] = useState(false);
   // Replacing a squad you built is destructive, so it takes a second click to confirm.
   const [confirmAuto, setConfirmAuto] = useState(false);
+  // Rumoured or agreed-but-unofficial transfers have no representation in the FPL API — a
+  // player stays fully available until the move completes — so exclusions are manual.
+  const [excluded, setExcluded] = useState<number[]>([]);
+  const [excludeQuery, setExcludeQuery] = useState("");
   const [prefs, setPrefs] = useState({
     fitOnly: true,
     nailed: true,
@@ -283,6 +287,7 @@ export function SquadBuilder({
 
       const result = optimiseSquad(scoped, {
         budget,
+        banned: excluded,
         key: "xPts",
         benchWeight: 0.12,
         formation,
@@ -400,6 +405,14 @@ export function SquadBuilder({
                     <PositionBadge pos={p.pos} />
                     <span className="text-[13px] font-semibold text-white">{p.name}</span>
                     <span className="text-[11px] text-slate-500">{p.team}</span>
+                    {p.daysAtClub !== null && p.daysAtClub < 150 && (
+                      <span
+                        title={`Joined ${p.team} ${p.daysAtClub} days ago — their minutes were played for a different club, so their place in this side is less certain`}
+                        className="rounded bg-accent-500/20 px-1 text-[9.5px] font-bold uppercase tracking-wide text-accent-400"
+                      >
+                        New
+                      </span>
+                    )}
                     <span className="num ml-auto text-[12px] text-slate-300">
                       {money(p.cost)}
                     </span>
@@ -547,7 +560,8 @@ export function SquadBuilder({
             </div>
           </div>
 
-          <div className="panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+          <div className="panel px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               Auto-pick prefers
             </span>
@@ -573,6 +587,77 @@ export function SquadBuilder({
                 {label}
               </label>
             ))}
+          </div>
+
+          <div className="relative mt-2 border-t border-pitch-800 pt-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                title="FPL only marks a player unavailable once a transfer completes, so a rumoured or agreed move is invisible to the data. Exclude those players by hand."
+                className="text-[11px] font-bold uppercase tracking-wider text-slate-500"
+              >
+                Never pick
+              </span>
+              {excluded.map((id) => {
+                const p = byId.get(id);
+                if (!p) return null;
+                return (
+                  <span
+                    key={id}
+                    className="flex items-center gap-1.5 rounded bg-rose-500/15 px-2 py-1 text-[12px] text-rose-300"
+                  >
+                    {p.name}
+                    <button
+                      type="button"
+                      onClick={() => setExcluded(excluded.filter((x) => x !== id))}
+                      className="text-rose-400/70 hover:text-rose-300"
+                      aria-label={`Stop excluding ${p.name}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
+              <input
+                value={excludeQuery}
+                onChange={(e) => setExcludeQuery(e.target.value)}
+                placeholder="Exclude a player (rumoured transfer, benched, hunch…)"
+                className="h-8 min-w-[260px] flex-1 rounded-lg border border-pitch-700 bg-pitch-900 px-2.5 text-[12.5px] outline-none placeholder:text-slate-600 focus:border-brand-500"
+              />
+            </div>
+
+            {excludeQuery.trim().length > 1 && (
+              <ul className="absolute right-0 z-20 mt-1 max-h-56 w-full max-w-md overflow-y-auto rounded-lg border border-pitch-600 bg-pitch-850 shadow-2xl shadow-black/60">
+                {players
+                  .filter(
+                    (p) =>
+                      !excluded.includes(p.id) &&
+                      (p.name.toLowerCase().includes(excludeQuery.trim().toLowerCase()) ||
+                        p.fullName.toLowerCase().includes(excludeQuery.trim().toLowerCase())),
+                  )
+                  .sort((a, b) => b.xPts - a.xPts)
+                  .slice(0, 8)
+                  .map((p) => (
+                    <li key={p.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExcluded([...excluded, p.id]);
+                          setExcludeQuery("");
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left transition hover:bg-pitch-700"
+                      >
+                        <PositionBadge pos={p.pos} />
+                        <span className="text-[13px] font-semibold text-white">{p.name}</span>
+                        <span className="text-[11px] text-slate-500">{p.team}</span>
+                        <span className="num ml-auto text-[12px] text-slate-400">
+                          {money(p.cost)}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
           </div>
 
           <BuilderPitch
