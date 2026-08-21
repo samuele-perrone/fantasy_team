@@ -102,6 +102,7 @@ function slimElement(raw: FplElement): FplElement {
     news: raw.news,
     chance_of_playing_next_round: raw.chance_of_playing_next_round,
     team_join_date: raw.team_join_date,
+    scout_news_link: raw.scout_news_link,
     total_points: raw.total_points,
     event_points: raw.event_points,
     points_per_game: raw.points_per_game,

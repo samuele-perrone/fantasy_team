@@ -29,6 +29,8 @@ export interface PlayerRow {
   availability: number | null;
   /** days at the current club, or null when unknown */
   daysAtClub: number | null;
+  /** link to the press conference or club statement behind the news, when FPL cites one */
+  newsSource: string;
 
   totalPoints: number;
   eventPoints: number;
@@ -121,6 +123,7 @@ export function toRow(
     daysAtClub: p.team_join_date
       ? Math.max(0, Math.round((Date.now() - Date.parse(p.team_join_date)) / 86_400_000))
       : null,
+    newsSource: p.scout_news_link ?? "",
 
     totalPoints: p.total_points,
     eventPoints: p.event_points,

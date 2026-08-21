@@ -62,7 +62,7 @@ export default async function ScoutPage() {
       <PageHeader
         eyebrow="Planners"
         title="Team News & Scout Picks"
-        description="Every flagged player in the game with their official status, plus the model's predicted lineups derived from start probability rather than press conference guesswork."
+        description="Every flagged player in the game with their official status, linked to the club's own press conference where FPL cites one, plus predicted lineups derived from start probability."
       />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -122,7 +122,19 @@ export default async function ScoutPage() {
                     <td className="num pr-1 text-right text-slate-400">
                       {r.selectedBy.toFixed(1)}%
                     </td>
-                    <td className="px-4 py-1.5 text-[12px] text-slate-400">{r.news || "—"}</td>
+                    <td className="px-4 py-1.5 text-[12px] text-slate-400">
+                      {r.news || "—"}
+                      {r.newsSource && (
+                        <a
+                          href={r.newsSource}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 whitespace-nowrap font-semibold text-brand-400 hover:underline"
+                        >
+                          press conference →
+                        </a>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
