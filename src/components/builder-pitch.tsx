@@ -316,7 +316,7 @@ function PitchSlot({
         type="button"
         onClick={(e) => onActivate(e.currentTarget.getBoundingClientRect())}
         title={`Add a ${POS_LABEL[slot.pos].slice(0, -1).toLowerCase()}`}
-        className="group w-[74px] shrink-0 text-center sm:w-[88px]"
+        className="group w-[62px] shrink-0 text-center sm:w-[74px] md:w-[88px]"
       >
         <div className="mx-auto grid h-[46px] w-[40px] place-items-center rounded-md border-2 border-dashed border-white/25 text-white/40 transition group-hover:border-brand-400 group-hover:text-brand-400">
           <span className="text-[18px] leading-none">+</span>
@@ -335,7 +335,7 @@ function PitchSlot({
       type="button"
       onClick={(e) => onActivate(e.currentTarget.getBoundingClientRect())}
       className={cn(
-        "group w-[74px] shrink-0 rounded-lg text-center outline-none sm:w-[88px]",
+        "group w-[62px] shrink-0 rounded-lg text-center outline-none sm:w-[74px] md:w-[88px]",
         active && "ring-2 ring-brand-400",
       )}
     >

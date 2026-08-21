@@ -46,7 +46,7 @@ export function Pitch({
         <PitchMarkings />
         <div className="relative space-y-5">
           {rows.map((line, i) => (
-            <div key={i} className="flex flex-wrap items-start justify-center gap-x-2 gap-y-4">
+            <div key={i} className="flex flex-wrap items-start justify-center gap-x-1 gap-y-4 sm:gap-x-2">
               {line.map((p) => (
                 <Shirt
                   key={p.id}
@@ -67,7 +67,7 @@ export function Pitch({
         <div className="mb-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Bench
         </div>
-        <div className="flex flex-wrap items-start justify-center gap-x-2 gap-y-4">
+        <div className="flex flex-wrap items-start justify-center gap-x-1 gap-y-4 sm:gap-x-2">
           {xi.bench.map((p, i) => (
             <Shirt
               key={p.id}
@@ -107,7 +107,7 @@ function Shirt({
   return (
     <Link
       href={`/players/${player.id}`}
-      className="group relative w-[78px] shrink-0 text-center sm:w-[92px]"
+      className="group relative w-[60px] shrink-0 text-center sm:w-[78px] md:w-[92px]"
       title={player.news || undefined}
     >
       <div className="relative mx-auto h-[48px] w-[42px]">

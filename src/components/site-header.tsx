@@ -92,8 +92,8 @@ export function SiteHeader({
           {!bare && (
             <>
           {deadline && (
-            <div className="hidden text-right sm:block">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="text-right">
+              <div className="hidden text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:block">
                 {gwLabel} deadline
               </div>
               <Countdown iso={deadline} />
@@ -105,6 +105,7 @@ export function SiteHeader({
           >
             My Team
           </Link>
+          {/* Auth stays reachable at every width — hiding it on phones left no way to sign out. */}
           <div className="hidden sm:block">
             <AuthButton email={email} compact />
           </div>
@@ -124,7 +125,25 @@ export function SiteHeader({
       </div>
 
       {mobileOpen && !bare && (
-        <div className="max-h-[70vh] overflow-y-auto border-t border-pitch-700 bg-pitch-900 px-4 py-3 lg:hidden">
+        <div className="max-h-[75vh] overflow-y-auto border-t border-pitch-700 bg-pitch-900 px-4 py-3 lg:hidden">
+          <div className="mb-4 flex flex-wrap items-center gap-2 border-b border-pitch-800 pb-4">
+            <Link
+              href="/my-team"
+              className="rounded-lg bg-brand-500 px-3.5 py-2 text-[13px] font-bold text-pitch-950"
+            >
+              My Team
+            </Link>
+            <Link
+              href="/squad"
+              className="rounded-lg border border-pitch-600 px-3.5 py-2 text-[13px] font-bold text-slate-300"
+            >
+              Build a squad
+            </Link>
+            <div className="ml-auto">
+              <AuthButton email={email} />
+            </div>
+          </div>
+
           {NAV.map((group) => (
             <div key={group.label} className="mb-4">
               <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
