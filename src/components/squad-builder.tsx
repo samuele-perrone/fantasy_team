@@ -571,9 +571,11 @@ export function SquadBuilder({
             >
               Analyse this squad →
             </button>
-            <p className="mt-2 text-[11.5px] leading-snug text-slate-500">
-              Your squad is encoded in the page URL — bookmark or share the result and it loads
-              straight back, no account needed.
+            <p className="mt-2 text-[11.5px] leading-snug text-amber-300/80">
+              This squad is not saved yet. Scroll up and press{" "}
+              <strong className="font-bold">Save current squad</strong> to keep it on your
+              account — otherwise it only lives in this page&apos;s URL and is gone once you
+              navigate away.
             </p>
           </div>
         </section>

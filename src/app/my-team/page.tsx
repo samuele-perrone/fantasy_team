@@ -6,7 +6,7 @@ import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/comp
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
 import { getUserId } from "@/lib/supabase/server";
-import { getSavedEntryId } from "@/lib/supabase/squads";
+import { getSavedEntryId, listSquads } from "@/lib/supabase/squads";
 
 export const revalidate = 60;
 
@@ -20,14 +20,35 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   const params = await searchParams;
   const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
   const signedIn = Boolean(await getUserId());
-  // Fall back to the id saved on the profile so a signed-in manager never retypes it.
-  const savedId = signedIn && !rawId && !params.squad ? await getSavedEntryId() : null;
+  const noInput = !rawId && !params.squad;
+
+  // With nothing in the URL, fall back to what the account already knows: the saved FPL team
+  // id, or failing that the most recently saved squad. Otherwise a signed-in manager lands on
+  // an empty form and it looks like their team was lost.
+  const savedId = signedIn && noInput ? await getSavedEntryId() : null;
+  const savedSquads = signedIn && noInput && !savedId ? await listSquads() : [];
+  const autoSquad = savedSquads[0] ?? null;
+
   const idParam = rawId ?? (savedId ? String(savedId) : undefined);
-  const query = teamQueryString(idParam && !rawId ? { ...params, id: idParam } : params);
+
+  const effective: typeof params = autoSquad
+    ? {
+        ...params,
+        squad: autoSquad.playerIds.join(","),
+        c: autoSquad.captainId ? String(autoSquad.captainId) : undefined,
+        v: autoSquad.viceCaptainId ? String(autoSquad.viceCaptainId) : undefined,
+        bank: String(autoSquad.bank),
+        name: autoSquad.name,
+      }
+    : idParam && !rawId
+      ? { ...params, id: idParam }
+      : params;
+
+  const query = teamQueryString(effective);
 
   let team;
   try {
-    team = await resolveTeam(idParam && !rawId ? { ...params, id: idParam } : params, 5);
+    team = await resolveTeam(effective, 5);
   } catch (e) {
     return (
       <div>
@@ -65,11 +86,41 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
             That does not look like a valid team ID — it should be digits only.
           </p>
         )}
+        {savedSquads.length > 0 && (
+          <div className="panel mt-4 px-5 py-4">
+            <h2 className="mb-2 text-[13.5px] font-bold text-white">Your saved squads</h2>
+            <ul className="divide-y divide-pitch-800">
+              {savedSquads.map((sq) => (
+                <li key={sq.id} className="flex items-center gap-3 py-2">
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-white">
+                    {sq.name}
+                  </span>
+                  <Link
+                    href={`/my-team?squad=${sq.playerIds.join(",")}${
+                      sq.captainId ? `&c=${sq.captainId}` : ""
+                    }&name=${encodeURIComponent(sq.name)}`}
+                    className="rounded-lg border border-pitch-600 px-3 py-1.5 text-[12.5px] font-semibold text-slate-300 transition hover:border-brand-500 hover:text-white"
+                  >
+                    Rate this squad
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="panel mt-4 px-5 py-4 text-[13.5px] text-slate-300">
           No team ID, or FPL not showing your picks yet?{" "}
           <Link href="/squad" className="font-semibold text-brand-400 hover:underline">
             Build your squad manually or import it from a screenshot →
           </Link>
+          {signedIn && !savedSquads.length && (
+            <p className="mt-2 text-[12.5px] text-slate-500">
+              Nothing is saved to your account yet. Squads are only kept when you build one and
+              press <strong className="text-slate-300">Save current squad</strong> — the builder
+              itself keeps your squad in the page URL, which is lost once you navigate away.
+            </p>
+          )}
         </div>
       </div>
     );
