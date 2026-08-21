@@ -265,25 +265,82 @@ export function SquadBuilder({
    * is a greedy sweep plus local search over ~600 players, a few milliseconds — but it is
    * deferred a frame so the button can paint its pending state first.
    */
+  /** Re-score every player over just the auto-pick horizon rather than the full five. */
+  const scopedPlayers = () => {
+    const firstEvent = Math.min(
+      ...players.flatMap((p) => p.fixtures.map((f) => f.event)).filter(Number.isFinite),
+    );
+    return players.map((p) => {
+      const within = p.fixtures.filter((f) => f.event < firstEvent + AUTOPICK_HORIZON);
+      return {
+        ...p,
+        fixtures: within,
+        xPts: Math.round(within.reduce((a, f) => a + f.xPts, 0) * 100) / 100,
+      };
+    });
+  };
+
+  /**
+   * Drop one player and slot in the best legal replacement, keeping everyone else untouched.
+   * The player is added to the exclusion list so a later auto-pick does not simply bring them
+   * back, which is the whole point of removing them by hand.
+   */
+  const replacePlayer = (id: number) => {
+    const out = byId.get(id);
+    if (!out) return;
+
+    const budget = squad.length === 15 ? cost + bankValue : 100;
+    const spare = budget - (cost - out.cost);
+    const clubCount = (teamId: number) =>
+      squad.filter((p) => p.teamId === teamId && p.id !== id).length;
+
+    const candidate = scopedPlayers()
+      .filter(
+        (p) =>
+          p.posId === out.posId &&
+          p.id !== id &&
+          !ids.includes(p.id) &&
+          !excluded.includes(p.id) &&
+          p.cost <= spare + 1e-9 &&
+          clubCount(p.teamId) < TEAM_LIMIT &&
+          (!prefs.fitOnly || rowNewsLabel(p) === null) &&
+          (!prefs.nailed || p.startProb >= 0.75),
+      )
+      .sort(
+        (a, b) =>
+          b.xPts +
+          (prefs.penalties && b.penaltyOrder === 1 ? 1.5 : 0) -
+          (a.xPts + (prefs.penalties && a.penaltyOrder === 1 ? 1.5 : 0)),
+      )[0];
+
+    setExcluded((prev) => (prev.includes(id) ? prev : [...prev, id]));
+
+    if (!candidate) {
+      setNotice(
+        `No affordable replacement for ${out.name} at ${money(spare)} that meets the current preferences. They have been excluded — turn a preference off or free up funds.`,
+      );
+      return;
+    }
+
+    // Swap in place so the player keeps the outgoing player's XI or bench slot.
+    setIds((prev) => prev.map((x) => (x === id ? candidate.id : x)));
+    setChosenXI((prev) => (prev ? prev.map((x) => (x === id ? candidate.id : x)) : prev));
+    if (captain === id) setCaptain(null);
+    if (vice === id) setVice(null);
+
+    setNotice(
+      `Replaced ${out.name} with ${candidate.name} (${candidate.team}, ${money(candidate.cost)}) — ` +
+        `${candidate.xPts.toFixed(1)} projected points over the next ${AUTOPICK_HORIZON} gameweeks, ` +
+        `against ${out.name}'s ${scopedPlayers().find((p) => p.id === id)?.xPts.toFixed(1) ?? "?"}.`,
+    );
+  };
+
   const autoPick = () => {
     setOptimising(true);
     requestAnimationFrame(() => {
       const budget = squad.length === 15 ? cost + bankValue : 100;
 
-      // Re-score every player over just the next three gameweeks. PlayerRow.xPts spans five,
-      // so the horizon is applied by summing the fixtures inside the window rather than by
-      // teaching the optimiser about horizons.
-      const firstEvent = Math.min(
-        ...players.flatMap((p) => p.fixtures.map((f) => f.event)).filter(Number.isFinite),
-      );
-      const scoped = players.map((p) => {
-        const within = p.fixtures.filter((f) => f.event < firstEvent + AUTOPICK_HORIZON);
-        return {
-          ...p,
-          fixtures: within,
-          xPts: Math.round(within.reduce((a, f) => a + f.xPts, 0) * 100) / 100,
-        };
-      });
+      const scoped = scopedPlayers();
 
       const result = optimiseSquad(scoped, {
         budget,
@@ -683,6 +740,7 @@ export function SquadBuilder({
             onSetVice={(id) => setVice(vice === id ? null : id)}
             onToggleStart={toggleStart}
             onRemove={remove}
+            onReplace={replacePlayer}
             onPickEmpty={(pos) => {
               setPosFilter(pos);
               setQuery("");

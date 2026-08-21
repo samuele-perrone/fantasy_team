@@ -48,6 +48,7 @@ export function BuilderPitch({
   onSetVice,
   onToggleStart,
   onRemove,
+  onReplace,
   onPickEmpty,
 }: {
   starters: PlayerRow[];
@@ -67,6 +68,7 @@ export function BuilderPitch({
   onSetVice: (id: number) => void;
   onToggleStart: (id: number) => void;
   onRemove: (id: number) => void;
+  onReplace: (id: number) => void;
   onPickEmpty: (pos: number) => void;
 }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -170,6 +172,7 @@ export function BuilderPitch({
           onSetVice={onSetVice}
           onToggleStart={onToggleStart}
           onRemove={onRemove}
+          onReplace={onReplace}
         />
       )}
     </div>
@@ -191,6 +194,7 @@ function SlotMenu({
   onSetVice,
   onToggleStart,
   onRemove,
+  onReplace,
 }: {
   menu: MenuState;
   /** null when the player can be swapped, otherwise why not */
@@ -202,6 +206,7 @@ function SlotMenu({
   onSetVice: (id: number) => void;
   onToggleStart: (id: number) => void;
   onRemove: (id: number) => void;
+  onReplace: (id: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number }>({
@@ -274,6 +279,9 @@ function SlotMenu({
         title={swapBlocked ?? undefined}
       >
         {menu.isStarter ? "Move to bench" : "Move into XI"}
+      </Action>
+      <Action onClick={act(() => onReplace(menu.player.id))}>
+        Swap for next best
       </Action>
       <Action onClick={act(() => onRemove(menu.player.id))} tone="danger">
         Remove from squad
