@@ -14,6 +14,13 @@ export interface SavedSquad {
   updatedAt: string;
 }
 
+/**
+ * Reserved name for the builder's working squad. It is upserted on every edit and hidden
+ * from the saved list, so the builder survives a refresh without the user having to think
+ * about saving. Naming it this way avoids a schema migration for a draft flag.
+ */
+const DRAFT_NAME = "__working_draft__";
+
 export interface ActionResult {
   ok: boolean;
   error?: string;
@@ -31,6 +38,7 @@ export async function listSquads(): Promise<SavedSquad[]> {
   const { data, error } = await supabase
     .from("squads")
     .select("id, name, player_ids, captain_id, vice_captain_id, formation, bank, updated_at")
+    .neq("name", DRAFT_NAME)
     .order("updated_at", { ascending: false })
     .limit(50);
 
@@ -130,4 +138,68 @@ export async function saveEntryId(entryId: number): Promise<ActionResult> {
 
   revalidatePath("/my-team");
   return { ok: true };
+}
+
+/** The builder's autosaved working squad, if there is one. */
+export async function getDraft(): Promise<SavedSquad | null> {
+  const userId = await getUserId();
+  if (!userId) return null;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("squads")
+    .select("id, name, player_ids, captain_id, vice_captain_id, formation, bank, updated_at")
+    .eq("name", DRAFT_NAME)
+    .maybeSingle();
+
+  if (!data) return null;
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    playerIds: (data.player_ids as number[]) ?? [],
+    captainId: data.captain_id as number | null,
+    viceCaptainId: data.vice_captain_id as number | null,
+    formation: data.formation as string | null,
+    bank: Number(data.bank ?? 0),
+    updatedAt: data.updated_at as string,
+  };
+}
+
+/**
+ * Autosave the builder. Called on every edit, so it updates the single draft row rather than
+ * accumulating history. A partial squad is allowed here — unlike saveSquad, which requires a
+ * legal 15 — because the whole point is not losing work in progress.
+ */
+export async function saveDraft(input: {
+  playerIds: number[];
+  captainId: number | null;
+  viceCaptainId: number | null;
+  formation: string | null;
+  bank: number;
+}): Promise<ActionResult> {
+  const userId = await getUserId();
+  if (!userId) return { ok: false, error: "Not signed in." };
+
+  const supabase = await createClient();
+  const row = {
+    user_id: userId,
+    name: DRAFT_NAME,
+    player_ids: input.playerIds,
+    captain_id: input.captainId,
+    vice_captain_id: input.viceCaptainId,
+    formation: input.formation,
+    bank: Math.min(Math.max(input.bank, 0), 100),
+  };
+
+  const { data: existing } = await supabase
+    .from("squads")
+    .select("id")
+    .eq("name", DRAFT_NAME)
+    .maybeSingle();
+
+  const { error } = existing
+    ? await supabase.from("squads").update(row).eq("id", existing.id)
+    : await supabase.from("squads").insert(row);
+
+  return error ? { ok: false, error: error.message } : { ok: true };
 }

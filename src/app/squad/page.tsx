@@ -6,7 +6,7 @@ import { SquadBuilder } from "@/components/squad-builder";
 import { SavedSquads } from "@/components/saved-squads";
 import { PageHeader } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
-import { listSquads } from "@/lib/supabase/squads";
+import { getDraft, listSquads } from "@/lib/supabase/squads";
 
 export const revalidate = 300;
 
@@ -32,6 +32,10 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
   const email = userData.user?.email ?? null;
   const saved = email ? await listSquads() : [];
 
+  // With nothing in the URL, reopen whatever was last being built.
+  const draft = email && initialIds.length === 0 ? await getDraft() : null;
+  const startIds = initialIds.length ? initialIds : (draft?.playerIds ?? []);
+
   return (
     <div>
       <PageHeader
@@ -51,10 +55,10 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         email={email}
         squads={saved}
         current={
-          initialIds.length === 15
+          startIds.length === 15
             ? {
                 name: one(params.name) ?? "My squad",
-                playerIds: initialIds,
+                playerIds: startIds,
                 captainId: Number(one(params.c)) || null,
                 viceCaptainId: Number(one(params.v)) || null,
                 formation: null,
@@ -69,11 +73,12 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
       <SquadBuilder
         players={rows}
         teamCodes={teamCodes}
-        initialIds={initialIds}
-        initialCaptain={Number(one(params.c)) || null}
-        initialVice={Number(one(params.v)) || null}
-        initialBank={Number(one(params.bank)) || 0}
+        initialIds={startIds}
+        initialCaptain={Number(one(params.c)) || draft?.captainId || null}
+        initialVice={Number(one(params.v)) || draft?.viceCaptainId || null}
+        initialBank={Number(one(params.bank)) || draft?.bank || 0}
         initialName={one(params.name) ?? ""}
+        canPersist={Boolean(email)}
       />
     </div>
   );

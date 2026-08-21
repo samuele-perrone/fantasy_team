@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { FixtureRun, PositionBadge } from "./ui";
 import { ScreenshotImport, type ImportMatch } from "./screenshot-import";
 import { BuilderPitch } from "./builder-pitch";
 import { FORMATIONS, optimiseSquad } from "@/lib/fpl/optimiser";
 import { rowNewsLabel } from "@/lib/fpl/news";
+import { saveDraft } from "@/lib/supabase/squads";
 import { cn, money } from "@/lib/utils";
 
 const QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
@@ -55,6 +56,7 @@ export function SquadBuilder({
   initialVice,
   initialBank,
   initialName,
+  canPersist = false,
 }: {
   players: PlayerRow[];
   teamCodes: Record<number, number>;
@@ -63,6 +65,8 @@ export function SquadBuilder({
   initialVice: number | null;
   initialBank: number;
   initialName: string;
+  /** signed in, so the working squad can be autosaved to the account */
+  canPersist?: boolean;
 }) {
   const router = useRouter();
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
@@ -80,6 +84,7 @@ export function SquadBuilder({
   const [optimising, setOptimising] = useState(false);
   // Replacing a squad you built is destructive, so it takes a second click to confirm.
   const [confirmAuto, setConfirmAuto] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   // Rumoured or agreed-but-unofficial transfers have no representation in the FPL API — a
   // player stays fully available until the move completes — so exclusions are manual.
   const [excluded, setExcluded] = useState<number[]>([]);
@@ -391,6 +396,39 @@ export function SquadBuilder({
       squadRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+
+  /**
+   * Autosave the working squad. Debounced so a burst of edits is one write, and deliberately
+   * fire-and-forget: losing an autosave is not worth interrupting the user for, so failures
+   * surface as a quiet indicator rather than an error.
+   */
+  const signature = `${ids.join(",")}|${captain ?? ""}|${vice ?? ""}|${bankValue}|${formation.join("-")}`;
+  const lastSaved = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!canPersist) return;
+    // Skip the first render, which reflects what was just loaded from the server.
+    if (lastSaved.current === null) {
+      lastSaved.current = signature;
+      return;
+    }
+    if (lastSaved.current === signature) return;
+
+    const timer = setTimeout(async () => {
+      setSaveState("saving");
+      const res = await saveDraft({
+        playerIds: ids,
+        captainId: captain,
+        viceCaptainId: vice,
+        formation: formation.join("-"),
+        bank: bankValue,
+      });
+      lastSaved.current = signature;
+      setSaveState(res.ok ? "saved" : "error");
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [signature, canPersist, ids, captain, vice, bankValue, formation]);
 
   const analyse = () => {
     const ordered = [...starters, ...bench].map((p) => p.id);
@@ -777,11 +815,27 @@ export function SquadBuilder({
             >
               Analyse this squad →
             </button>
-            <p className="mt-2 text-[11.5px] leading-snug text-amber-300/80">
-              This squad is not saved yet. Scroll up and press{" "}
-              <strong className="font-bold">Save current squad</strong> to keep it on your
-              account — otherwise it only lives in this page&apos;s URL and is gone once you
-              navigate away.
+            <p className="mt-2 text-[11.5px] leading-snug text-slate-500">
+              {canPersist ? (
+                <>
+                  {saveState === "saving" && "Saving…"}
+                  {saveState === "saved" && (
+                    <span className="text-brand-400">
+                      Saved automatically — this squad reopens next time you visit.
+                    </span>
+                  )}
+                  {saveState === "error" && (
+                    <span className="text-amber-300">
+                      Could not autosave. Run the 0002 migration in Supabase if you have not
+                      yet, then reload.
+                    </span>
+                  )}
+                  {saveState === "idle" &&
+                    "Edits are saved to your account automatically. Use Save current squad to keep a named copy."}
+                </>
+              ) : (
+                "Sign in to have your squad saved automatically."
+              )}
             </p>
           </div>
         </section>
