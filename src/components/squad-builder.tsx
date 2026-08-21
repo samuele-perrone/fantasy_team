@@ -21,7 +21,11 @@ const TEAM_LIMIT = 3;
 
 export type Formation = [number, number, number];
 
-const DEFAULT_FORMATION: Formation = [4, 4, 2];
+// 3-4-3 by default: the auto-pick optimises for this shape unless the formation is changed.
+const DEFAULT_FORMATION: Formation = [3, 4, 3];
+
+/** Auto-pick judges players on their next three fixtures rather than the full five. */
+const AUTOPICK_HORIZON = 3;
 
 /**
  * Choose the XI for a given shape, keeping whoever is already starting where possible so
@@ -76,6 +80,12 @@ export function SquadBuilder({
   const [optimising, setOptimising] = useState(false);
   // Replacing a squad you built is destructive, so it takes a second click to confirm.
   const [confirmAuto, setConfirmAuto] = useState(false);
+  const [prefs, setPrefs] = useState({
+    fitOnly: true,
+    nailed: true,
+    easyFixture: true,
+    penalties: true,
+  });
   const searchRef = useRef<HTMLInputElement>(null);
   const squadRef = useRef<HTMLDivElement>(null);
 
@@ -255,10 +265,33 @@ export function SquadBuilder({
     setOptimising(true);
     requestAnimationFrame(() => {
       const budget = squad.length === 15 ? cost + bankValue : 100;
-      const result = optimiseSquad(players, {
+
+      // Re-score every player over just the next three gameweeks. PlayerRow.xPts spans five,
+      // so the horizon is applied by summing the fixtures inside the window rather than by
+      // teaching the optimiser about horizons.
+      const firstEvent = Math.min(
+        ...players.flatMap((p) => p.fixtures.map((f) => f.event)).filter(Number.isFinite),
+      );
+      const scoped = players.map((p) => {
+        const within = p.fixtures.filter((f) => f.event < firstEvent + AUTOPICK_HORIZON);
+        return {
+          ...p,
+          fixtures: within,
+          xPts: Math.round(within.reduce((a, f) => a + f.xPts, 0) * 100) / 100,
+        };
+      });
+
+      const result = optimiseSquad(scoped, {
         budget,
         key: "xPts",
         benchWeight: 0.12,
+        formation,
+        fitOnly: prefs.fitOnly,
+        // Expected minutes are probability weighted and peak near 76, so "plays the whole
+        // match" is expressed as a high chance of starting rather than a minutes threshold.
+        minStartProb: prefs.nailed ? 0.75 : undefined,
+        maxNextDifficulty: prefs.easyFixture ? 3 : undefined,
+        penaltyBonus: prefs.penalties ? 1.5 : 0,
       });
 
       if (result.squad.length !== 15) {
@@ -282,7 +315,10 @@ export function SquadBuilder({
 
       setNotice(
         `Auto-picked the best ${result.xi.formation} for ${money(result.cost)} — ` +
-          `${result.xi.startingPoints.toFixed(1)} projected points from the XI over the next 5 gameweeks.` +
+          `${result.xi.startingPoints.toFixed(1)} projected points from the XI over the next ${AUTOPICK_HORIZON} gameweeks.` +
+          (result.relaxed.length
+            ? ` Could not satisfy ${result.relaxed.join(" or ")}, so that was relaxed.`
+            : "") +
           (flagged.length
             ? ` Includes ${flagged.length} flagged: ${flagged
                 .map((x) => `${x.p.name} (${x.label})`)
@@ -479,9 +515,8 @@ export function SquadBuilder({
             </button>
 
             <span className="mr-1 text-[11.5px] text-slate-500">
-              {squad.length === 15
-                ? `within ${money(cost + bankValue)}`
-                : "within £100.0m"}
+              {squad.length === 15 ? `within ${money(cost + bankValue)}` : "within £100.0m"} ·
+              next {AUTOPICK_HORIZON} GWs
             </span>
 
             <span className="ml-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
@@ -510,6 +545,34 @@ export function SquadBuilder({
                 );
               })}
             </div>
+          </div>
+
+          <div className="panel flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Auto-pick prefers
+            </span>
+            {(
+              [
+                ["fitOnly", "Fully fit", "Excludes injured, doubtful, suspended and just-returned players"],
+                ["nailed", "Nailed starters", "At least a 75% chance of starting. Expected minutes peak near 76 across the whole game, so a literal 80-minute threshold would match nobody"],
+                ["easyFixture", "Kind next fixture", "Next match rated FDR 3 or easier"],
+                ["penalties", "Penalty takers", "Favours penalty takers rather than requiring them — no keeper and only two defenders in the game take them"],
+              ] as const
+            ).map(([k, label, help]) => (
+              <label
+                key={k}
+                title={help}
+                className="flex cursor-pointer items-center gap-1.5 text-[12.5px] text-slate-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={prefs[k]}
+                  onChange={(e) => setPrefs({ ...prefs, [k]: e.target.checked })}
+                  className="accent-brand-500"
+                />
+                {label}
+              </label>
+            ))}
           </div>
 
           <BuilderPitch

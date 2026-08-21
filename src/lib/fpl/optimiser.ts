@@ -1,4 +1,5 @@
 import type { PlayerRow } from "./data";
+import { rowNewsLabel } from "./news";
 
 export const SQUAD_QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
 export const TEAM_LIMIT = 3;
@@ -24,8 +25,15 @@ export interface XI {
 
 const score = (p: PlayerRow, key: keyof PlayerRow) => Number(p[key]) || 0;
 
-/** Pick the highest-scoring legal XI out of a 15-man squad. */
-export function bestXI(squad: PlayerRow[], key: keyof PlayerRow = "xPtsNext"): XI {
+/**
+ * Pick the highest-scoring legal XI out of a 15-man squad. Pass `formation` to lock the
+ * shape rather than letting it float to whichever shape scores best.
+ */
+export function bestXI(
+  squad: PlayerRow[],
+  key: keyof PlayerRow = "xPtsNext",
+  formation?: [number, number, number],
+): XI {
   const byPos = (pos: number) =>
     squad.filter((p) => p.posId === pos).sort((a, b) => score(b, key) - score(a, key));
 
@@ -35,8 +43,9 @@ export function bestXI(squad: PlayerRow[], key: keyof PlayerRow = "xPtsNext"): X
   const fwds = byPos(4);
 
   let best: XI | null = null;
+  const shapes = formation ? [formation] : FORMATIONS;
 
-  for (const [d, m, f] of FORMATIONS) {
+  for (const [d, m, f] of shapes) {
     if (defs.length < d || mids.length < m || fwds.length < f || !gks.length) continue;
     const starters = [gks[0], ...defs.slice(0, d), ...mids.slice(0, m), ...fwds.slice(0, f)];
     const total = starters.reduce((a, p) => a + score(p, key), 0);
@@ -88,6 +97,25 @@ export interface OptimiseOptions {
   banned?: number[];
   /** captaincy doubles the best starter's score when true */
   includeCaptain?: boolean;
+
+  /**
+   * Minimum probability of starting, 0–1. This is the right measure of "plays the full
+   * match" — expected minutes are probability weighted and top out near 76 across the whole
+   * game, so a threshold like 80 minutes would match nobody.
+   */
+  minStartProb?: number;
+  /** exclude anyone injured, doubtful, suspended or just back from injury */
+  fitOnly?: boolean;
+  /** maximum fixture difficulty of the player's next match */
+  maxNextDifficulty?: number;
+  /**
+   * Extra objective weight for penalty takers, in projected points. A preference rather
+   * than a filter: no goalkeeper and only two defenders in the game take penalties, so
+   * requiring them outright cannot fill a legal squad.
+   */
+  penaltyBonus?: number;
+  /** lock the starting shape, e.g. [3, 4, 3] */
+  formation?: [number, number, number];
 }
 
 export interface OptimiseResult {
@@ -96,6 +124,15 @@ export interface OptimiseResult {
   cost: number;
   objective: number;
   iterations: number;
+  /** filters dropped to reach a legal squad, in the order they were given up */
+  relaxed: string[];
+}
+
+/** Preference weight added to a player's score, currently only for penalty takers. */
+function bonusFor(p: PlayerRow, penaltyBonus: number): number {
+  if (!penaltyBonus || p.penaltyOrder === null) return 0;
+  // Second choice is worth materially less than first.
+  return p.penaltyOrder === 1 ? penaltyBonus : penaltyBonus * 0.4;
 }
 
 interface State {
@@ -105,10 +142,18 @@ interface State {
   clubs: Map<number, number>;
 }
 
-function objectiveOf(squad: PlayerRow[], opts: Required<Pick<OptimiseOptions, "key" | "benchWeight" | "includeCaptain">>) {
-  const xi = bestXI(squad, opts.key);
+function objectiveOf(
+  squad: PlayerRow[],
+  opts: Required<Pick<OptimiseOptions, "key" | "benchWeight" | "includeCaptain">> & {
+    penaltyBonus: number;
+    formation?: [number, number, number];
+  },
+) {
+  const xi = bestXI(squad, opts.key, opts.formation);
   const captainBonus = opts.includeCaptain && xi.captain ? score(xi.captain, opts.key) : 0;
-  return xi.startingPoints + captainBonus + xi.benchPoints * opts.benchWeight;
+  // Preferences count only for the eleven that actually play.
+  const preference = xi.starters.reduce((a, p) => a + bonusFor(p, opts.penaltyBonus), 0);
+  return xi.startingPoints + captainBonus + preference + xi.benchPoints * opts.benchWeight;
 }
 
 /** Ascending price list per position, for costing out the cheapest possible completion. */
@@ -236,11 +281,13 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
   const key = options.key ?? "xPts";
   const benchWeight = options.benchWeight ?? 0.12;
   const includeCaptain = options.includeCaptain ?? false;
-  const opts = { key, benchWeight, includeCaptain };
+  const penaltyBonus = options.penaltyBonus ?? 0;
+  const formation = options.formation;
+  const opts = { key, benchWeight, includeCaptain, penaltyBonus, formation };
   const budget = options.budget;
 
   const banned = new Set(options.banned ?? []);
-  const pool = players.filter(
+  const base = players.filter(
     (p) => !banned.has(p.id) && p.status !== "u" && p.status !== "n" && p.cost <= budget,
   );
   const byId = new Map(players.map((p) => [p.id, p]));
@@ -249,45 +296,86 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
     .filter((p): p is PlayerRow => Boolean(p))
     .slice(0, 15);
 
-  const floors = priceFloors(pool);
-  let best: PlayerRow[] | null = null;
-  let bestScore = -Infinity;
-
-  for (const lambda of [0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.1, 1.5, 2.2, 3.0]) {
-    const squad = greedy(pool, lambda, opts, budget, locked, floors);
-    if (!squad) continue;
-    const s = objectiveOf(squad, opts);
-    if (s > bestScore) {
-      bestScore = s;
-      best = squad;
-    }
+  /**
+   * Filters are applied hardest-first and dropped one at a time until a legal squad exists.
+   * Requesting nailed starters with easy fixtures can leave too few players to fill a
+   * position, and silently returning nothing would be worse than returning a squad and
+   * saying which preference was given up.
+   */
+  const filters: { name: string; apply: (p: PlayerRow) => boolean }[] = [];
+  if (options.maxNextDifficulty !== undefined) {
+    const max = options.maxNextDifficulty;
+    filters.push({
+      name: `next fixture at most FDR ${max}`,
+      apply: (p) => (p.fixtures[0]?.difficulty ?? 5) <= max,
+    });
+  }
+  if (options.minStartProb !== undefined) {
+    const min = options.minStartProb;
+    filters.push({
+      name: `${Math.round(min * 100)}%+ chance of starting`,
+      apply: (p) => p.startProb >= min,
+    });
+  }
+  if (options.fitOnly) {
+    filters.push({ name: "fully fit only", apply: (p) => rowNewsLabel(p) === null });
   }
 
-  // On a tight budget every price penalty in the sweep can still overshoot and leave the
-  // greedy unable to fill 15 slots. Falling back to the cheapest legal squad guarantees a
-  // starting point whenever one exists at all, and the local search below improves it.
-  if (!best) {
-    const cheapest = cheapestLegal(pool, budget, locked);
-    if (cheapest) {
-      best = cheapest;
-      bestScore = objectiveOf(cheapest, opts);
+  const relaxed: string[] = [];
+  let result: { squad: PlayerRow[]; score: number } | null = null;
+  let pool = base;
+
+  for (let dropped = 0; dropped <= filters.length; dropped++) {
+    const active = filters.slice(dropped);
+    pool = base.filter((p) => active.every((f) => f.apply(p)));
+
+    const floors = priceFloors(pool);
+    let best: PlayerRow[] | null = null;
+    let bestScore = -Infinity;
+
+    for (const lambda of [0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.1, 1.5, 2.2, 3.0]) {
+      const squad = greedy(pool, lambda, opts, budget, locked, floors);
+      if (!squad) continue;
+      const sc = objectiveOf(squad, opts);
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = squad;
+      }
     }
+
+    // On a tight budget every price penalty in the sweep can still overshoot and leave the
+    // greedy unable to fill 15 slots. Falling back to the cheapest legal squad guarantees a
+    // starting point whenever one exists at all, and the local search below improves it.
+    if (!best) {
+      const cheapest = cheapestLegal(pool, budget, locked);
+      if (cheapest) {
+        best = cheapest;
+        bestScore = objectiveOf(cheapest, opts);
+      }
+    }
+
+    if (best) {
+      result = { squad: best, score: bestScore };
+      break;
+    }
+    if (dropped < filters.length) relaxed.push(filters[dropped].name);
   }
 
-  if (!best) {
+  if (!result) {
     return {
       squad: [],
-      xi: bestXI([], key),
+      xi: bestXI([], key, formation),
       cost: 0,
       objective: 0,
       iterations: 0,
+      relaxed,
     };
   }
 
   // Steepest-ascent local search over single swaps.
   const lockedIds = new Set(locked.map((p) => p.id));
-  let squad = best;
-  let current = bestScore;
+  let squad = result.squad;
+  let current = result.score;
   let iterations = 0;
 
   for (let pass = 0; pass < 60; pass++) {
@@ -333,10 +421,11 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
 
   return {
     squad,
-    xi: bestXI(squad, key),
+    xi: bestXI(squad, key, formation),
     cost: Math.round(squad.reduce((a, p) => a + p.cost, 0) * 10) / 10,
     objective: Math.round(current * 100) / 100,
     iterations,
+    relaxed,
   };
 }
 
@@ -377,7 +466,7 @@ export function planTransfers(
     benchWeight?: number;
   },
 ): TransferPlan[] {
-  const opts = { key, benchWeight, includeCaptain: false };
+  const opts = { key, benchWeight, includeCaptain: false, penaltyBonus: 0 };
   const plans: TransferPlan[] = [];
 
   let currentSquad = squad.slice();
