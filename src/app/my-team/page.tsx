@@ -461,8 +461,15 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <div className="flex items-end gap-2 overflow-x-auto pb-1">
           {weeks.map((w) => (
             <div key={w.event} className="flex min-w-[52px] flex-1 flex-col items-center gap-1">
-              <span className="num text-[11px] font-bold text-white">
-                {w.actual !== null ? w.actual : w.projected.toFixed(1)}
+              {/* Both numbers, in the same order as the bars beneath them. */}
+              <span className="num flex items-baseline gap-1 text-[11px] font-bold leading-none">
+                <span className="text-slate-400">{w.projected.toFixed(0)}</span>
+                {w.actual !== null && (
+                  <>
+                    <span className="text-slate-600">/</span>
+                    <span className="text-white">{w.actual}</span>
+                  </>
+                )}
               </span>
 
               <div className="flex h-[120px] w-full items-end justify-center gap-[3px]">

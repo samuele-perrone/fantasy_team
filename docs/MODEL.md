@@ -99,7 +99,7 @@ ownership-scaled threshold. FPL has never published the real formula.
 ## Retrospective estimates
 
 The gameweek chart on `/my-team` shows the model's estimate beside the actual score for played
-weeks. That estimate is **retrospective**: it runs today's model against that week's fixtures,
+weeks, labelled `estimate / actual` above the pair of bars. That estimate is **retrospective**: it runs today's model against that week's fixtures,
 and today's model has seen results the original forecast had not. It is a rough calibration
 check, not a track record. A real one needs projections snapshotted at each deadline.
 
