@@ -42,7 +42,7 @@ Set on Vercel across production, preview and development. Pull them locally with
 | `SUPABASE_*` | Server-side equivalents |
 | `ALLOWED_EMAILS` | Comma-separated sign-in allow-list. **Fails closed** — unset means nobody can sign in |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata |
-| `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Analytics only load when this is set |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Analytics only load when this is set. Changing it needs a redeploy, since `NEXT_PUBLIC_*` values are inlined at build time |
 | `FPL_API_BASE` | Local only — point the FPL client at a fixture server |
 
 To add someone to the allow-list:
@@ -104,18 +104,20 @@ TTL is 4 hours, so allow for that when changing records — a stale local resolv
 returning Squarespace's IPs long after the change is live everywhere else. Test past a cache
 with `curl --resolve fantasyteamhub.com:443:76.76.21.21 https://fantasyteamhub.com/login`.
 
-Certificates are issued by Vercel automatically.
+`www` is configured in Vercel to redirect to the apex with a 307, preserving the path, so the
+apex is the single canonical host. Certificates are issued by Vercel automatically.
 
 Supabase's redirect allow-list holds both hosts, which is what makes sign-in work on them.
 Google Cloud Console needed **no change**, per the note above.
 
-### Still outstanding
+### Optional, not required
 
 - Squarespace's nameservers remain authoritative. Moving them to `ns1.vercel-dns.com` /
   `ns2.vercel-dns.com` would consolidate DNS in Vercel. If that happens, recreate the SPF
   record (`TXT @ = v=spf1 -all`); there are no MX records to preserve.
-- Pick a canonical host in Vercel's domain settings so the other redirects to it. The app
-  declares the apex as canonical via `NEXT_PUBLIC_SITE_URL`.
+- Vercel flags a "DNS Change Recommended" badge suggesting `A @ 216.150.1.1` and a hashed
+  CNAME for `www`, because it is expanding its IP range. Vercel states the current records
+  keep working, and they do — the badge is an upgrade prompt, not a fault.
 
 ## Analytics
 
