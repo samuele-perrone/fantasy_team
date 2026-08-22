@@ -1,8 +1,8 @@
-# Fantasy Hub
+# FantasyTeamHub
 
 [![CI](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml/badge.svg)](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml)
 
-**Live: [fantasyteam.vercel.app](https://fantasyteam.vercel.app)**
+**Live: [fantasyteamhub.com](https://fantasyteamhub.com)**
 
 A Fantasy Premier League analytics site — points projections, OPTA-style stats, fixture
 analysis, price change predictions, AI transfer suggestions and a squad optimiser — built on

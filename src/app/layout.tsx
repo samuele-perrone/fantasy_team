@@ -23,8 +23,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
-    default: "Fantasy Hub — FPL tools, stats and points predictions",
-    template: "%s · Fantasy Hub",
+    default: "FantasyTeamHub — FPL tools, stats and points predictions",
+    template: "%s · FantasyTeamHub",
   },
   description:
     "Points predictions, OPTA stats, fixture analysis, price change alerts, AI transfer suggestions and squad optimisation for Fantasy Premier League.",

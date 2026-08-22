@@ -41,11 +41,11 @@ export function SiteHeader({
     <header className="sticky top-0 z-50 border-b border-pitch-700/80 bg-pitch-950/85 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-sm font-black text-pitch-950">
-            H
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-[11px] font-black tracking-tight text-pitch-950">
+            FTH
           </span>
-          <span className="hidden text-[15px] font-bold tracking-tight sm:block">
-            Fantasy<span className="text-brand-400">Hub</span>
+          <span className={cn("text-[15px] font-bold tracking-tight", bare ? "block" : "hidden sm:block")}>
+            Fantasy<span className="text-brand-400">Team</span>Hub
           </span>
         </Link>
 

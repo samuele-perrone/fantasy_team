@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAllowed } from "@/lib/auth/allowlist";
 
 /** Paths reachable without a session. Everything else redirects to /login. */
-const PUBLIC_PREFIXES = ["/login", "/auth"];
+const PUBLIC_PREFIXES = ["/login", "/auth", "/icon", "/apple-icon", "/manifest"];
 
 /**
  * Refreshes the Supabase session and gates the whole site behind it.

@@ -6,7 +6,7 @@ import { allowlistUnconfigured } from "@/lib/auth/allowlist";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to Fantasy Hub.",
+  description: "Sign in to FantasyTeamHub.",
   // The site is private, so keep it out of search results.
   robots: { index: false, follow: false },
 };
