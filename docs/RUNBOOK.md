@@ -100,9 +100,21 @@ on Squarespace's nameservers, with two custom records:
 | `A` | `@` | `76.76.21.21` |
 | `CNAME` | `www` | `cname.vercel-dns.com` |
 
-TTL is 4 hours, so allow for that when changing records — a stale local resolver will keep
-returning Squarespace's IPs long after the change is live everywhere else. Test past a cache
-with `curl --resolve fantasyteamhub.com:443:76.76.21.21 https://fantasyteamhub.com/login`.
+TTL is 30 minutes. It was originally 4 hours, and a resolver that cached an answer under the
+old TTL holds it for that long regardless of what the record says now — which looks exactly
+like the site going down.
+
+Before assuming an outage, check whether it is only your machine:
+
+```bash
+dig +short fantasyteamhub.com A            # your resolver
+dig +short fantasyteamhub.com A @1.1.1.1   # a public one
+curl -sI --resolve fantasyteamhub.com:443:216.150.1.1 https://fantasyteamhub.com/login
+```
+
+If the public resolver and the forced IP are healthy, it is a cache. Flush macOS with
+`sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder`, hard-reload the browser, or
+test on mobile data, which uses a different resolver entirely.
 
 `www` is configured in Vercel to redirect to the apex with a 307, preserving the path, so the
 apex is the single canonical host. Certificates are issued by Vercel automatically.
