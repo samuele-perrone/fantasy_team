@@ -5,6 +5,8 @@ import { Pitch, SquadList } from "@/components/pitch";
 import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
+import { chipLabel } from "@/lib/fpl/chips";
+import { bestXI } from "@/lib/fpl/optimiser";
 import { getUserId } from "@/lib/supabase/server";
 import { getSavedEntryId, listSquads } from "@/lib/supabase/squads";
 
@@ -143,10 +145,46 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
     team.squad.reduce((a, p) => a + p.rating, 0) / Math.max(team.squad.length, 1);
   const squadBand = squadRatingBand(squadRating);
 
+  /**
+   * A per-gameweek view of the squad: what it actually scored where the week has been played,
+   * and what it projects where it has not. Ratings alone describe the squad as it stands
+   * today, which says nothing about whether a given week is a good or bad one for it.
+   */
+  const weeks: { event: number; actual: number | null; projected: number | null }[] = [];
+
+  for (const h of team.history?.current ?? []) {
+    weeks.push({ event: h.event, actual: h.points - h.event_transfers_cost, projected: null });
+  }
+
+  // Upcoming weeks: the best XI the current squad can field in that week, plus its captain.
+  const upcomingEvents = [
+    ...new Set(team.squad.flatMap((p) => p.fixtures.map((f) => f.event))),
+  ]
+    .sort((a, b) => a - b)
+    .slice(0, 5);
+
+  for (const event of upcomingEvents) {
+    const scoped = team.squad.map((p) => ({
+      ...p,
+      xPtsNext: p.fixtures
+        .filter((f) => f.event === event)
+        .reduce((a, f) => a + f.xPts, 0),
+    }));
+    const xi = bestXI(scoped, "xPtsNext");
+    weeks.push({
+      event,
+      actual: null,
+      projected: xi.startingPoints + (xi.captain?.xPtsNext ?? 0),
+    });
+  }
+
+  const maxWeek = Math.max(1, ...weeks.map((w) => w.actual ?? w.projected ?? 0));
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="My Team"
+        badge={chipLabel(team.activeChip)}
         title={team.name}
         description={
           team.source === "manual"
@@ -372,6 +410,53 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           </div>
         </section>
       </div>
+
+      <section className="panel px-5 py-4">
+        <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">
+          Gameweek by gameweek
+          <InfoTip label="About gameweek by gameweek">
+            Solid bars are points this squad actually scored, net of any transfer hits. Hollow
+            bars are what it projects in weeks still to come, using the best eleven it could
+            field that week plus its captain.
+          </InfoTip>
+        </h2>
+        <p className="mb-4 text-[12px] text-slate-500">
+          Played weeks show what you scored; upcoming weeks show what this squad projects.
+        </p>
+
+        <div className="flex items-end gap-2 overflow-x-auto pb-1">
+          {weeks.map((w) => {
+            const value = w.actual ?? w.projected ?? 0;
+            return (
+              <div key={w.event} className="flex min-w-[46px] flex-1 flex-col items-center gap-1">
+                <span
+                  className={cn(
+                    "num text-[11px] font-bold",
+                    w.actual !== null ? "text-white" : "text-slate-400",
+                  )}
+                >
+                  {value.toFixed(w.actual !== null ? 0 : 1)}
+                </span>
+                <div
+                  title={
+                    w.actual !== null
+                      ? `GW${w.event}: ${w.actual} points scored`
+                      : `GW${w.event}: ${value.toFixed(1)} projected`
+                  }
+                  className={cn(
+                    "w-full rounded-t",
+                    w.actual !== null
+                      ? "bg-brand-500"
+                      : "border border-dashed border-brand-500/50 bg-brand-500/10",
+                  )}
+                  style={{ height: `${Math.max(4, (value / maxWeek) * 120)}px` }}
+                />
+                <span className="text-[10px] font-semibold text-slate-500">GW{w.event}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <section>
         <h2 className="mb-2.5 text-[14px] font-bold text-white">Squad detail</h2>

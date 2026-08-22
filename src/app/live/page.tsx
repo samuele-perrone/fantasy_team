@@ -7,6 +7,7 @@ import { getGameData } from "@/lib/fpl/data";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import type { LiveElement } from "@/lib/fpl/types";
 import { cn } from "@/lib/utils";
+import { benchCounts, chipLabel, chipNote } from "@/lib/fpl/chips";
 
 export const revalidate = 30;
 
@@ -81,8 +82,14 @@ export default async function LivePage({ searchParams }: PageProps<"/live">) {
 
   const starters = picks.filter((p) => p.pick.position <= 11);
   const bench = picks.filter((p) => p.pick.position > 11);
-  const livePoints = starters.reduce((a, p) => a + p.points, 0);
+
+  // Multiply rather than filter by position: FPL encodes chips in the multiplier, giving
+  // bench players 1 under Bench Boost and the captain 3 under Triple Captain. Summing only
+  // positions 1-11 silently dropped every bench point of a Bench Boost gameweek.
+  const livePoints = picks.reduce((a, p) => a + p.points, 0);
   const benchPoints = bench.reduce((a, p) => a + p.raw, 0);
+  const chip = team.activeChip;
+  const benchIsScoring = benchCounts(chip);
   const played = starters.filter((p) => (p.stats?.minutes ?? 0) > 0).length;
   const toPlay = starters.length - played;
   const average = event?.average_entry_score ?? 0;
@@ -93,7 +100,12 @@ export default async function LivePage({ searchParams }: PageProps<"/live">) {
       <PageHeader
         eyebrow="My Team"
         title={`${team.name} — live`}
-        description={`Gameweek ${team.event}. Bonus shown here is provisional until each match is marked finished.`}
+        badge={chipLabel(chip)}
+        description={
+          chipNote(chip)
+            ? `Gameweek ${team.event} · ${chipLabel(chip)} active — ${chipNote(chip)} Bonus is provisional until each match is marked finished.`
+            : `Gameweek ${team.event}. Bonus shown here is provisional until each match is marked finished.`
+        }
       >
         <Link
           href={`/my-team?${query}`}
@@ -116,7 +128,12 @@ export default async function LivePage({ searchParams }: PageProps<"/live">) {
           sub={average ? `${livePoints - hits - average >= 0 ? "+" : ""}${livePoints - hits - average} vs average` : "Not yet published"}
         />
         <StatCard label="Players to play" value={toPlay} sub={`${played} of ${starters.length} started`} />
-        <StatCard label="Points on bench" value={benchPoints} sub="Before auto-subs" />
+        <StatCard
+          label={benchIsScoring ? "Bench (counting)" : "Points on bench"}
+          value={benchPoints}
+          sub={benchIsScoring ? "Included in your total" : "Before auto-subs"}
+          tone={benchIsScoring ? "brand" : "default"}
+        />
         <StatCard
           label="Overall rank"
           value={team.overallRank ? team.overallRank.toLocaleString("en-GB") : "—"}

@@ -6,19 +6,31 @@ export function PageHeader({
   eyebrow,
   title,
   description,
+  badge,
   children,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
+  /** short highlight beside the eyebrow, e.g. an active chip */
+  badge?: string | null;
   children?: React.ReactNode;
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        {eyebrow && (
-          <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">
-            {eyebrow}
+        {(eyebrow || badge) && (
+          <div className="mb-1 flex items-center gap-2">
+            {eyebrow && (
+              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">
+                {eyebrow}
+              </span>
+            )}
+            {badge && (
+              <span className="rounded bg-accent-500/20 px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-accent-400">
+                {badge}
+              </span>
+            )}
           </div>
         )}
         <h1 className="text-2xl font-bold tracking-tight text-white sm:text-[28px]">{title}</h1>
