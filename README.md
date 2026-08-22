@@ -2,8 +2,7 @@
 
 [![CI](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml/badge.svg)](https://github.com/samuele-perrone/fantasy_team/actions/workflows/ci.yml)
 
-**Live: [fantasyteamhub.com](https://fantasyteamhub.com)** (served from
-`fantasyteam.vercel.app` until DNS is switched — see [docs/RUNBOOK.md](docs/RUNBOOK.md))
+**Live: [fantasyteamhub.com](https://fantasyteamhub.com)**
 
 A private Fantasy Premier League analytics site: points projections, OPTA-style stats,
 fixture analysis, price change predictions, transfer suggestions and a squad optimiser, built

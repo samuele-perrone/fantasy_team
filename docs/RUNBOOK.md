@@ -9,8 +9,7 @@ something breaks.
 | --- | --- |
 | Repository | `github.com/samuele-perrone/fantasy_team` |
 | Hosting | Vercel project `fantasy_team` (team `samueleperrone-9210s-projects`) |
-| Current URL | `fantasyteam.vercel.app` |
-| Target domain | `fantasyteamhub.com` — added to the project, DNS not yet switched |
+| Current URL | `fantasyteamhub.com`, plus `www` and `fantasyteam.vercel.app` |
 | Database + auth | Supabase project `ebfhufyataxktvfgkjkh` |
 
 There is a second Supabase project, `yciikyzmesqcnvacurqv`, created by a marketplace install.
@@ -91,21 +90,32 @@ Google OAuth through Supabase. Two things matter and are easy to confuse:
 The app itself is origin-agnostic: the sign-in redirect is built from `location.origin` and
 the callback from the request origin.
 
-## Moving to fantasyteamhub.com
+## The domain
 
-Both `fantasyteamhub.com` and `www.fantasyteamhub.com` are attached to the Vercel project.
-The domain is registered with Squarespace, so DNS is the remaining step.
+`fantasyteamhub.com` and `www.fantasyteamhub.com` both serve the app from Vercel. DNS stays
+on Squarespace's nameservers, with two custom records:
 
-1. **DNS at Squarespace** — add an `A` record for the apex pointing at `76.76.21.21`, and a
-   `CNAME` for `www` pointing at `cname.vercel-dns.com`. Alternatively repoint the
-   nameservers to `ns1.vercel-dns.com` / `ns2.vercel-dns.com`, which hands DNS to Vercel.
-2. Wait for propagation, then `vercel domains inspect fantasyteamhub.com` to confirm.
-   Vercel issues the TLS certificate automatically.
-3. **Supabase → Authentication → URL Configuration** — add `https://fantasyteamhub.com/**`
-   and `https://www.fantasyteamhub.com/**` to the redirect allow-list, and set the Site URL
-   to `https://fantasyteamhub.com`. **Skipping this breaks sign-in on the new domain**, and
-   the failure looks like a redirect loop rather than an obvious error.
-4. Google Cloud Console needs **no change**, per the note above.
+| Type | Name | Data |
+| --- | --- | --- |
+| `A` | `@` | `76.76.21.21` |
+| `CNAME` | `www` | `cname.vercel-dns.com` |
+
+TTL is 4 hours, so allow for that when changing records — a stale local resolver will keep
+returning Squarespace's IPs long after the change is live everywhere else. Test past a cache
+with `curl --resolve fantasyteamhub.com:443:76.76.21.21 https://fantasyteamhub.com/login`.
+
+Certificates are issued by Vercel automatically.
+
+Supabase's redirect allow-list holds both hosts, which is what makes sign-in work on them.
+Google Cloud Console needed **no change**, per the note above.
+
+### Still outstanding
+
+- Squarespace's nameservers remain authoritative. Moving them to `ns1.vercel-dns.com` /
+  `ns2.vercel-dns.com` would consolidate DNS in Vercel. If that happens, recreate the SPF
+  record (`TXT @ = v=spf1 -all`); there are no MX records to preserve.
+- Pick a canonical host in Vercel's domain settings so the other redirects to it. The app
+  declares the apex as canonical via `NEXT_PUBLIC_SITE_URL`.
 
 ## Analytics
 
