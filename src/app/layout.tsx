@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getGameData } from "@/lib/fpl/data";
 import { createClient } from "@/lib/supabase/server";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -21,7 +22,15 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Canonical origin, used for absolute URLs in metadata. Set NEXT_PUBLIC_SITE_URL once the
+ * domain is live so links and social previews point at fantasyteamhub.com rather than the
+ * vercel.app deployment URL.
+ */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fantasyteamhub.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "FantasyTeamHub — FPL tools, stats and points predictions",
     template: "%s · FantasyTeamHub",
@@ -67,6 +76,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Suspense>
         <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:py-8">{children}</main>
         <SiteFooter />
+        {/* Loaded only when a measurement ID is configured, so local and preview runs stay
+            untracked. next/third-parties defers the script so it does not block paint. */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
     </html>
   );
