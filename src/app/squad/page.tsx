@@ -44,7 +44,7 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         description="Add your 15 players by hand or import them from a screenshot, then send the squad through the ratings, transfer and planner tools. Your squad lives in the page URL, so you can bookmark or share it without an account — or sign in to save it and pick it up on any device."
       >
         <Link
-          href="/my-team"
+          href="/my-team?enter=1"
           className="rounded-lg border border-pitch-600 px-4 py-2 text-[13px] font-bold text-slate-300 transition hover:border-brand-500 hover:text-white"
         >
           Use a team ID instead

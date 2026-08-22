@@ -20,7 +20,10 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   const params = await searchParams;
   const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
   const signedIn = Boolean(await getUserId());
-  const noInput = !rawId && !params.squad;
+  // ?enter=1 means "I came here to type an ID", so skip the saved-squad autoload that would
+  // otherwise replace the form with an analysis of yesterday's squad.
+  const wantsForm = Boolean(Array.isArray(params.enter) ? params.enter[0] : params.enter);
+  const noInput = !rawId && !params.squad && !wantsForm;
 
   // With nothing in the URL, fall back to what the account already knows: the saved FPL team
   // id, or failing that the most recently saved squad. Otherwise a signed-in manager lands on
@@ -375,7 +378,13 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <SquadList players={team.squad} teamCodes={team.teamCodes} />
       </section>
 
-      {team.source === "fpl" && <EntryForm action="/my-team" defaultValue={idParam} cta="Load another team" signedIn={signedIn} />}
+      <EntryForm
+        action="/my-team"
+        defaultValue={idParam}
+        label={team.source === "fpl" ? "FPL Team ID" : "Load an FPL team instead"}
+        cta={team.source === "fpl" ? "Load another team" : "Load team"}
+        signedIn={signedIn}
+      />
     </div>
   );
 }
