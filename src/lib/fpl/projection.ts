@@ -351,3 +351,24 @@ export function projectAll(
   }
   return out;
 }
+
+/**
+ * What the model expects a player to score in one specific gameweek, including gameweeks
+ * already played.
+ *
+ * This is a retrospective estimate, not a locked-in forecast: it runs today's model against
+ * that week's fixture, and today's model has seen results the original projection had not.
+ * Comparing it to the actual score shows roughly how well calibrated the model is, but a
+ * true track record needs projections snapshotted at each deadline.
+ */
+export function projectForEvent(
+  p: FplElement,
+  ctx: ProjectionContext,
+  event: number,
+): number {
+  const fixtures = (ctx.fixturesByTeam.get(p.team) ?? []).filter((f) => f.event === event);
+  if (!fixtures.length) return 0;
+
+  const mins = minutesModel(p, ctx.teamGames.get(p.team) ?? 0);
+  return fixtures.reduce((total, f) => total + projectFixture(p, f, ctx, mins).points, 0);
+}

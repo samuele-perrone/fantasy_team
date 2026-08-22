@@ -7,6 +7,9 @@ import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
 import { chipLabel } from "@/lib/fpl/chips";
 import { bestXI } from "@/lib/fpl/optimiser";
+import { projectForEvent } from "@/lib/fpl/projection";
+import { getGameData } from "@/lib/fpl/data";
+import { benchCounts } from "@/lib/fpl/chips";
 import { getUserId } from "@/lib/supabase/server";
 import { getSavedEntryId, listSquads } from "@/lib/supabase/squads";
 
@@ -150,10 +153,31 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
    * and what it projects where it has not. Ratings alone describe the squad as it stands
    * today, which says nothing about whether a given week is a good or bad one for it.
    */
-  const weeks: { event: number; actual: number | null; projected: number | null }[] = [];
+  const weeks: { event: number; actual: number | null; projected: number }[] = [];
+
+  // Played weeks get an estimate too, so the chart shows how close the model was.
+  const game = await getGameData();
+  const elementsById = new Map(game.bootstrap.elements.map((e) => [e.id, e]));
+  const chipByEvent = new Map((team.history?.chips ?? []).map((c) => [c.event, c.name]));
 
   for (const h of team.history?.current ?? []) {
-    weeks.push({ event: h.event, actual: h.points - h.event_transfers_cost, projected: null });
+    const perPlayer = team.squad.map((p) => {
+      const el = elementsById.get(p.id);
+      return el ? projectForEvent(el, game.ctx, h.event) : 0;
+    });
+
+    // Under Bench Boost every pick scores, so the estimate has to include the bench.
+    const scoped = team.squad.map((p, i) => ({ ...p, xPtsNext: perPlayer[i] }));
+    const xi = bestXI(scoped, "xPtsNext");
+    const estimate = benchCounts(chipByEvent.get(h.event))
+      ? perPlayer.reduce((a, v) => a + v, 0) + (xi.captain?.xPtsNext ?? 0)
+      : xi.startingPoints + (xi.captain?.xPtsNext ?? 0);
+
+    weeks.push({
+      event: h.event,
+      actual: h.points - h.event_transfers_cost,
+      projected: estimate,
+    });
   }
 
   // Upcoming weeks: the best XI the current squad can field in that week, plus its captain.
@@ -178,7 +202,10 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
     });
   }
 
-  const maxWeek = Math.max(1, ...weeks.map((w) => w.actual ?? w.projected ?? 0));
+  const maxWeek = Math.max(1, ...weeks.flatMap((w) => [w.actual ?? 0, w.projected]));
+  const scored = weeks.filter((w) => w.actual !== null);
+  const totalActual = scored.reduce((a, w) => a + (w.actual ?? 0), 0);
+  const totalEstimate = scored.reduce((a, w) => a + w.projected, 0);
 
   return (
     <div className="space-y-6">
@@ -415,46 +442,76 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">
           Gameweek by gameweek
           <InfoTip label="About gameweek by gameweek">
-            Solid bars are points this squad actually scored, net of any transfer hits. Hollow
-            bars are what it projects in weeks still to come, using the best eleven it could
-            field that week plus its captain.
+            Each played week shows the model&apos;s estimate beside what you actually scored,
+            net of transfer hits, with the difference underneath. Upcoming weeks show the
+            estimate alone.
+            <span className="mt-1.5 block text-slate-400">
+              The estimate for a played week is retrospective — it runs today&apos;s model
+              against that week&apos;s fixtures, and today&apos;s model has seen results the
+              original forecast had not. Treat it as a rough calibration check rather than a
+              track record.
+            </span>
           </InfoTip>
         </h2>
         <p className="mb-4 text-[12px] text-slate-500">
-          Played weeks show what you scored; upcoming weeks show what this squad projects.
+          Played weeks show the model&apos;s estimate against what you actually scored; upcoming
+          weeks show the estimate alone.
         </p>
 
         <div className="flex items-end gap-2 overflow-x-auto pb-1">
-          {weeks.map((w) => {
-            const value = w.actual ?? w.projected ?? 0;
-            return (
-              <div key={w.event} className="flex min-w-[46px] flex-1 flex-col items-center gap-1">
+          {weeks.map((w) => (
+            <div key={w.event} className="flex min-w-[52px] flex-1 flex-col items-center gap-1">
+              <span className="num text-[11px] font-bold text-white">
+                {w.actual !== null ? w.actual : w.projected.toFixed(1)}
+              </span>
+
+              <div className="flex h-[120px] w-full items-end justify-center gap-[3px]">
+                <div
+                  title={`GW${w.event}: ${w.projected.toFixed(1)} projected`}
+                  className="w-full rounded-t border border-dashed border-brand-500/50 bg-brand-500/10"
+                  style={{ height: `${Math.max(4, (w.projected / maxWeek) * 120)}px` }}
+                />
+                {w.actual !== null && (
+                  <div
+                    title={`GW${w.event}: ${w.actual} actually scored`}
+                    className="w-full rounded-t bg-brand-500"
+                    style={{ height: `${Math.max(4, (w.actual / maxWeek) * 120)}px` }}
+                  />
+                )}
+              </div>
+
+              <span className="text-[10px] font-semibold text-slate-500">GW{w.event}</span>
+              {w.actual !== null && (
                 <span
                   className={cn(
-                    "num text-[11px] font-bold",
-                    w.actual !== null ? "text-white" : "text-slate-400",
+                    "num text-[10px] font-bold",
+                    w.actual - w.projected >= 0 ? "text-brand-400" : "text-rose-400",
                   )}
                 >
-                  {value.toFixed(w.actual !== null ? 0 : 1)}
+                  {w.actual - w.projected >= 0 ? "+" : ""}
+                  {(w.actual - w.projected).toFixed(0)}
                 </span>
-                <div
-                  title={
-                    w.actual !== null
-                      ? `GW${w.event}: ${w.actual} points scored`
-                      : `GW${w.event}: ${value.toFixed(1)} projected`
-                  }
-                  className={cn(
-                    "w-full rounded-t",
-                    w.actual !== null
-                      ? "bg-brand-500"
-                      : "border border-dashed border-brand-500/50 bg-brand-500/10",
-                  )}
-                  style={{ height: `${Math.max(4, (value / maxWeek) * 120)}px` }}
-                />
-                <span className="text-[10px] font-semibold text-slate-500">GW{w.event}</span>
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-4 rounded-sm border border-dashed border-brand-500/50 bg-brand-500/10" />
+            Model estimate
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-4 rounded-sm bg-brand-500" />
+            Actually scored
+          </span>
+          {scored.length > 0 && (
+            <span className="ml-auto">
+              Across {scored.length} played week{scored.length === 1 ? "" : "s"}: estimated{" "}
+              <strong className="num text-slate-300">{totalEstimate.toFixed(0)}</strong>, scored{" "}
+              <strong className="num text-white">{totalActual}</strong>
+            </span>
+          )}
         </div>
       </section>
 
