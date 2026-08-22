@@ -14,7 +14,11 @@ npx tsc --noEmit                 # typecheck
 npx next typegen                 # generate PageProps/LayoutProps route types
 ```
 
-There is no test suite. Model and optimiser changes are verified by writing a throwaway
+Model accuracy is measured by `scripts/backtest.mjs` — snapshots before a deadline, scored
+after. **Run `npx tsx scripts/backtest.mjs score` after changing anything in `projection.ts`,
+`ratings.ts` or `news.ts`** and check the error did not get worse.
+
+There is no unit test suite. Model and optimiser changes are otherwise verified by writing a throwaway
 `.mts` script at the repo root and running it with `npx tsx`, against a real
 `bootstrap-static` snapshot rather than fixtures. Delete the script afterwards. Examples of
 what to check: squad legality (2/5/5/3, three-per-club, budget), projection sanity for known

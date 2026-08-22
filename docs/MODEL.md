@@ -78,9 +78,10 @@ the 0.55 strength slope, the 1.42 league average — all calibrated by eye again
 and sanity-checked. The *rankings* are meaningful; the absolute numbers carry more precision
 than they have earned.
 
-**There is no backtest.** Nothing has replayed a season to measure error. That is the single
-highest-value improvement available, and it would also make it possible to fit the
-coefficients properly rather than choosing them.
+**A season cannot be replayed.** FPL exposes no per-gameweek data for past seasons —
+`element-summary` carries season totals in `history_past` and per-gameweek rows only for the
+season in progress. Accuracy is therefore accumulated forward instead; see
+[Measuring accuracy](#measuring-accuracy).
 
 **Early season leans on priors.** Until roughly six matches have been played, most of a
 player's projection is last season's rate. Promoted-club players and newcomers with no prior
@@ -101,3 +102,48 @@ The gameweek chart on `/my-team` shows the model's estimate beside the actual sc
 weeks. That estimate is **retrospective**: it runs today's model against that week's fixtures,
 and today's model has seen results the original forecast had not. It is a rough calibration
 check, not a track record. A real one needs projections snapshotted at each deadline.
+
+
+## Measuring accuracy
+
+`scripts/backtest.mjs` snapshots projections before a deadline and scores them once the
+gameweek finishes. A GitHub Action runs it twice daily and commits the results to
+`backtest/`, so a track record builds over the season.
+
+```bash
+npx tsx scripts/backtest.mjs snapshot   # store projections for the upcoming gameweek
+npx tsx scripts/backtest.mjs score      # score every snapshot whose gameweek has finished
+npx tsx scripts/backtest.mjs gw1        # one-off out-of-sample check on gameweek one
+```
+
+The `gw1` mode needs no snapshot: before the season every current-season stat is zero, so
+zeroing them reconstructs exactly what the model knew before the first deadline — last
+season's priors, price and fixtures. Nothing from the result leaks back in.
+
+### First result, gameweek one
+
+Only Arsenal v Coventry had been played, so this is 62 players from a single 3-0 match. It is
+a smoke test of the harness, not a verdict on the model.
+
+| Group | n | MAE | Bias | r |
+| --- | --- | --- | --- | --- |
+| All players | 62 | 1.55 | −0.34 | 0.48 |
+| Goalkeepers | 6 | 1.04 | −0.01 | 0.93 |
+| Defenders | 18 | 1.74 | −0.96 | 0.54 |
+| Midfielders | 28 | 1.62 | −0.13 | 0.46 |
+| Forwards | 10 | 1.30 | −0.00 | 0.21 |
+| Players who actually played | 31 | 2.19 | −1.58 | 0.46 |
+
+Negative bias means under-prediction. The model under-called players who played by about 1.6
+points, concentrated in defenders — which is what a 3-0 win with a clean sheet and bonus
+looks like, and exactly the kind of single-result artefact that a larger sample should absorb.
+Ødegaard and White each returned 11 against projections near 2.
+
+Treat only the correlations as tentatively informative, since ranking is what the model is
+actually used for. Everything else needs several more gameweeks before it means anything.
+
+### What this unlocks
+
+Once enough gameweeks have accumulated, the coefficients — the rating weights, the bonus
+slope, the strength slope — can be fitted against measured error rather than chosen by eye.
+Until then they remain hand-tuned, and the caveat above stands.

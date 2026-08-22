@@ -1,0 +1,18 @@
+Out-of-sample check on GW1 — 2 clubs, 62 players
+
+  all players            n=  62  MAE=1.55  bias=-0.34  RMSE=2.43  r=0.48  (pred 1.31 vs actual 1.65)
+  GKP                    n=   6  MAE=1.04  bias=-0.01  RMSE=1.28  r=0.93  (pred 1.16 vs actual 1.17)
+  DEF                    n=  18  MAE=1.74  bias=-0.96  RMSE=2.98  r=0.54  (pred 1.15 vs actual 2.11)
+  MID                    n=  28  MAE=1.62  bias=-0.13  RMSE=2.38  r=0.46  (pred 1.51 vs actual 1.64)
+  FWD                    n=  10  MAE=1.30  bias=-0.00  RMSE=1.98  r=0.21  (pred 1.10 vs actual 1.10)
+  played (mins > 0)      n=  31  MAE=2.19  bias=-1.58  RMSE=3.17  r=0.46  (pred 1.71 vs actual 3.29)
+
+  biggest scorers, predicted vs actual:
+    White          DEF  predicted  1.67  actual  11
+    Ødegaard       MID  predicted  2.29  actual  11
+    Calafiori      DEF  predicted  3.47  actual   9
+    Saka           MID  predicted  5.48  actual   9
+    Raya           GKP  predicted  3.40  actual   6
+    Mosquera       DEF  predicted  1.33  actual   6
+    Havertz        FWD  predicted  2.24  actual   6
+    Tzolis         MID  predicted  1.07  actual   6

@@ -131,6 +131,20 @@ Google Cloud Console needed **no change**, per the note above.
   CNAME for `www`, because it is expanding its IP range. Vercel states the current records
   keep working, and they do — the badge is an upgrade prompt, not a fault.
 
+## Backtesting
+
+A scheduled workflow (`.github/workflows/backtest.yml`) runs twice daily, snapshots
+projections for the upcoming gameweek, scores any gameweek that has finished, and commits the
+results to `backtest/`. Snapshots are overwritten until the deadline passes, so the stored
+projection is the last one made before kick-off.
+
+`backtest/RESULTS.txt` holds the latest scoring run. `backtest/GW1_OUT_OF_SAMPLE.txt` is the
+one-off gameweek-one check. Run any of it by hand with `npx tsx scripts/backtest.mjs
+<snapshot|score|gw1>`.
+
+The workflow pushes to `main`, so it needs `contents: write`, which is declared in the file.
+Its commits carry `[skip ci]` to avoid triggering a pointless build.
+
 ## Analytics
 
 Google Analytics loads through `@next/third-parties` and only when `NEXT_PUBLIC_GA_ID` is

@@ -1,0 +1,46 @@
+name: Backtest
+
+# Accuracy has to be accumulated forward, because FPL exposes no per-gameweek data for past
+# seasons. This snapshots projections before each deadline and scores them once the gameweek
+# finishes, committing both back so a track record builds over the season.
+on:
+  schedule:
+    # Twice daily: early enough to catch a deadline, late enough to score a finished week.
+    - cron: "0 6,18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backtest
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Overwrites the snapshot until the deadline passes, so the stored projection is
+      # always the last one made before kick-off — which is the one worth scoring.
+      - name: Snapshot the upcoming gameweek
+        run: npx tsx scripts/backtest.mjs snapshot
+
+      - name: Score any finished gameweeks
+        run: npx tsx scripts/backtest.mjs score | tee backtest/RESULTS.txt
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backtest/
+          git diff --staged --quiet || git commit -m "Backtest: snapshot and score [skip ci]"
+          git push
