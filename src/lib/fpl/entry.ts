@@ -336,15 +336,20 @@ export function teamQueryString(params: TeamQuery): string {
 }
 
 /**
- * FPL does not expose the free transfer count, so it is reconstructed from the transfer
- * history: one earned per gameweek, rolling up to five, reset by wildcards and free hits.
+ * FPL does not expose the free transfer count, so it is reconstructed from transfer history:
+ * one earned per gameweek, rolling up to five.
+ *
+ * Gameweek one is skipped because transfers before the first deadline are unlimited and earn
+ * no rollover — counting it handed everyone two free transfers for gameweek two instead of
+ * the one they actually have.
  */
 function estimateFreeTransfers(
   current: { event: number; event_transfers: number }[],
 ): number {
   if (!current.length) return 1;
+
   let free = 1;
-  for (const gw of current) {
+  for (const gw of current.slice(1)) {
     free = Math.max(1, Math.min(5, free - gw.event_transfers + 1));
   }
   return free;

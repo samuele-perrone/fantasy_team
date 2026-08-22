@@ -1,5 +1,29 @@
 import type { Bootstrap, FplElement, FplFixture } from "./types";
 import { availabilityFor } from "./news";
+import PRIORS from "./priors.json";
+
+interface Prior {
+  m: number; s: number; xg: number; xa: number; bps: number; dc: number; sv: number;
+}
+const priors = PRIORS as Record<string, Prior>;
+
+/**
+ * FPL wipes every season stat when a new season starts, so for the first couple of months
+ * per-90 rates are computed from a handful of minutes — or from none at all, which reads as
+ * a player with no attacking output whatsoever. Last season's rates are shrunk in as a prior,
+ * worth about six matches of evidence, so early projections are sane and current-season form
+ * takes over as it accumulates.
+ */
+const PRIOR_MINUTES = 540;
+const PRIOR_GAMES = 6;
+
+function blendRate(currentPer90: number, currentMinutes: number, priorPer90: number | null): number {
+  if (priorPer90 === null) return currentPer90;
+  return (
+    (currentPer90 * currentMinutes + priorPer90 * PRIOR_MINUTES) /
+    (currentMinutes + PRIOR_MINUTES)
+  );
+}
 import {
   attackingMultiplier,
   clamp,
@@ -62,15 +86,20 @@ interface MinutesModel {
  * than a £4.0m one.
  */
 function minutesModel(p: FplElement, teamGames: number): MinutesModel {
+  const prior = priors[String(p.code)] ?? null;
   // Availability is applied per fixture rather than here, since news changes what a player
   // is worth in gameweek one without saying anything about gameweek five.
-  // Pre-season the carried-over stats still describe a full 38-game campaign.
-  const sample = teamGames > 0 ? teamGames : p.minutes > 0 ? 38 : 0;
+  const sample = teamGames;
 
   const pricePrior = clamp((p.now_cost - 40) / 60, 0, 1);
-  const prior = 0.15 + 0.6 * pricePrior;
+  const basePrior = 0.15 + 0.6 * pricePrior;
 
-  let startProb = prior;
+  // Last season's start rate is far better evidence than price alone, so it becomes the prior
+  // whenever we have it, and price only fills in for players with no history.
+  const priorStartRate = prior && prior.m > 0 ? clamp(prior.s / 38, 0, 1) : null;
+  const seed = priorStartRate === null ? basePrior : priorStartRate * 0.75 + basePrior * 0.25;
+
+  let startProb = seed;
   let subProb = 0.25;
 
   if (sample > 0) {
@@ -87,8 +116,11 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
       : Infinity;
     const newness = Number.isFinite(daysAtClub) ? clamp(1 - daysAtClub / 150, 0, 1) : 0;
 
-    const w = sample / (sample + 5 + 22 * newness);
-    startProb = observedStarts * w + prior * (1 - w);
+    // Weight current-season evidence against the seed, which already blends last season's
+    // start rate with price. A summer signing's history describes a different club, so their
+    // observed rate has to earn trust from scratch.
+    const w = sample / (sample + PRIOR_GAMES + 22 * newness);
+    startProb = observedStarts * w + seed * (1 - w);
     subProb = clamp(appearances - observedStarts, 0, 1) / Math.max(1 - observedStarts, 0.15);
     subProb = clamp(subProb, 0, 0.9);
   }
@@ -105,8 +137,13 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
 
 /** Expected bonus points per appearance, fitted against last season's bps-to-bonus curve. */
 function expectedBonus(p: FplElement, minutesShare: number): number {
-  const per90 = p.minutes > 0 ? (p.bps / p.minutes) * 90 : 0;
-  return clamp((per90 - 14) * 0.085, 0, 2.2) * minutesShare;
+  const prior = priors[String(p.code)] ?? null;
+  const bps90 = blendRate(
+    p.minutes > 0 ? (p.bps / p.minutes) * 90 : 0,
+    p.minutes,
+    prior?.bps ?? null,
+  );
+  return clamp((bps90 - 14) * 0.085, 0, 2.2) * minutesShare;
 }
 
 function per90(value: string | number, minutes: number): number {
@@ -135,7 +172,9 @@ export function buildContext(bootstrap: Bootstrap, fixtures: FplFixture[]): Proj
   for (const f of fixtures) {
     fixturesByTeam.get(f.team_h)?.push(f);
     fixturesByTeam.get(f.team_a)?.push(f);
-    if (f.finished) {
+    // finished flips well after the whistle, so a played match would otherwise count for
+    // nothing and every starter would look like they had played 1 of 38 games.
+    if (f.finished || f.finished_provisional || (f.started && f.minutes >= 90)) {
       teamGames.set(f.team_h, (teamGames.get(f.team_h) ?? 0) + 1);
       teamGames.set(f.team_a, (teamGames.get(f.team_a) ?? 0) + 1);
     }
@@ -187,8 +226,9 @@ function projectFixture(
   const csProb = cleanSheetProbability(team, opponent, isHome);
   const conceded = expectedGoals(opponent, team, !isHome);
 
-  const xg = per90(p.expected_goals, p.minutes) || p.expected_goals_per_90 || 0;
-  const xa = per90(p.expected_assists, p.minutes) || p.expected_assists_per_90 || 0;
+  const prior = priors[String(p.code)] ?? null;
+  const xg = blendRate(per90(p.expected_goals, p.minutes), p.minutes, prior?.xg ?? null);
+  const xa = blendRate(per90(p.expected_assists, p.minutes), p.minutes, prior?.xa ?? null);
 
   // Penalty takers convert at a premium the raw xG already partly reflects; nudge first takers up.
   const penBoost = p.penalties_order === 1 ? 1.12 : 1;
@@ -207,12 +247,16 @@ function projectFixture(
     points -= Math.max(0, conceded * share - 0.4) / 2;
   }
   if (p.element_type === POS.GKP) {
-    const saves90 = p.saves_per_90 || per90(p.saves, p.minutes);
+    const saves90 = blendRate(per90(p.saves, p.minutes), p.minutes, prior?.sv ?? null);
     points += (saves90 * share * (conceded / 1.4)) / 3;
     points += (p.minutes > 0 ? (p.penalties_saved / p.minutes) * 90 : 0) * share * 5;
   }
 
-  const dc90 = p.defensive_contribution_per_90 || per90(p.defensive_contribution, p.minutes);
+  const dc90 = blendRate(
+    per90(p.defensive_contribution, p.minutes),
+    p.minutes,
+    prior?.dc ?? null,
+  );
   const threshold = DC_THRESHOLD[p.element_type];
   if (threshold < 99 && dc90 > 0) {
     points += poissonAtLeast(dc90 * share, threshold) * 2 * mins.playProb;

@@ -120,6 +120,7 @@ export interface FplFixture {
   event: number | null;
   kickoff_time: string | null;
   finished: boolean;
+  finished_provisional: boolean;
   started: boolean;
   minutes: number;
   team_h: number;
