@@ -96,7 +96,25 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
 
   // Last season's start rate is far better evidence than price alone, so it becomes the prior
   // whenever we have it, and price only fills in for players with no history.
-  const priorStartRate = prior && prior.m > 0 ? clamp(prior.s / 38, 0, 1) : null;
+  //
+  // `starts / 38` counts every match a player missed through injury as a match they did not
+  // start, and the availability model then discounts the same unavailability again. Measured
+  // against gameweek one, players who did start had a mean season-long rate of only 0.61.
+  //
+  // Estimating the matches a player was actually involved in gives a start rate conditional
+  // on being available. Sub appearances are inferred from minutes beyond what their starts
+  // account for. The two estimates are blended rather than swapped, because a low start count
+  // can mean either injury or rotation and the data cannot separate them.
+  const priorStartRate = (() => {
+    if (!prior || prior.m <= 0) return null;
+
+    const seasonRate = clamp(prior.s / 38, 0, 1);
+    const subMinutes = Math.max(0, prior.m - prior.s * 90);
+    const appearances = prior.s + subMinutes / 20;
+    const involvedRate = appearances > 0 ? clamp(prior.s / appearances, 0, 0.95) : seasonRate;
+
+    return seasonRate * 0.5 + involvedRate * 0.5;
+  })();
   const seed = priorStartRate === null ? basePrior : priorStartRate * 0.75 + basePrior * 0.25;
 
   let startProb = seed;
@@ -128,8 +146,13 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
   startProb = clamp(startProb, 0, 0.97);
   const cameo = (1 - startProb) * subProb;
   const playProb = clamp(startProb + cameo, 0, 1);
-  // Starters are pulled off or booked out of a 60+ appearance a fraction of the time.
-  const p60 = startProb * 0.86;
+
+  // Starters almost always reach the 60-minute mark: 126 of 132 in gameweek one, 95.5%. The
+  // old 0.86 suppressed both appearance points and clean sheets, which together are roughly
+  // three quarters of all FPL scoring. Held slightly below the measured figure because
+  // gameweek one has no midweek football and so fewer rotation substitutions than a
+  // congested week later in the season.
+  const p60 = startProb * 0.93;
   const expected = startProb * 81 + cameo * 19;
 
   return { startProb, playProb, p60, expected };

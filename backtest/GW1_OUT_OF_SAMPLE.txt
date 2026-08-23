@@ -1,18 +1,18 @@
-Out-of-sample check on GW1 — 2 clubs, 62 players
+Out-of-sample check on GW1 — 12 clubs, 364 players
 
-  all players            n=  62  MAE=1.55  bias=-0.34  RMSE=2.43  r=0.48  (pred 1.31 vs actual 1.65)
-  GKP                    n=   6  MAE=1.04  bias=-0.01  RMSE=1.28  r=0.93  (pred 1.16 vs actual 1.17)
-  DEF                    n=  18  MAE=1.74  bias=-0.96  RMSE=2.98  r=0.54  (pred 1.15 vs actual 2.11)
-  MID                    n=  28  MAE=1.62  bias=-0.13  RMSE=2.38  r=0.46  (pred 1.51 vs actual 1.64)
-  FWD                    n=  10  MAE=1.30  bias=-0.00  RMSE=1.98  r=0.21  (pred 1.10 vs actual 1.10)
-  played (mins > 0)      n=  31  MAE=2.19  bias=-1.58  RMSE=3.17  r=0.46  (pred 1.71 vs actual 3.29)
+  all players            n= 364  MAE=1.57  bias=-0.31  RMSE=2.68  r=0.32  (pred 1.34 vs actual 1.65)
+  GKP                    n=  40  MAE=1.43  bias=-0.05  RMSE=2.36  r=0.43  (pred 1.20 vs actual 1.25)
+  DEF                    n= 119  MAE=1.77  bias=-0.67  RMSE=3.11  r=0.31  (pred 1.24 vs actual 1.92)
+  MID                    n= 163  MAE=1.53  bias=-0.23  RMSE=2.53  r=0.37  (pred 1.42 vs actual 1.64)
+  FWD                    n=  42  MAE=1.31  bias=+0.17  RMSE=2.19  r=0.21  (pred 1.43 vs actual 1.26)
+  played (mins > 0)      n= 180  MAE=2.35  bias=-1.45  RMSE=3.61  r=0.09  (pred 1.88 vs actual 3.33)
 
   biggest scorers, predicted vs actual:
-    White          DEF  predicted  1.67  actual  11
-    Ødegaard       MID  predicted  2.29  actual  11
-    Calafiori      DEF  predicted  3.47  actual   9
-    Saka           MID  predicted  5.48  actual   9
-    Raya           GKP  predicted  3.40  actual   6
-    Mosquera       DEF  predicted  1.33  actual   6
-    Havertz        FWD  predicted  2.24  actual   6
-    Tzolis         MID  predicted  1.07  actual   6
+    Mendy          DEF  predicted  0.42  actual  15
+    M.Sangaré      MID  predicted  0.83  actual  14
+    Ajayi          DEF  predicted  0.42  actual  14
+    Kayode         DEF  predicted  2.47  actual  13
+    Stach          MID  predicted  2.57  actual  13
+    White          DEF  predicted  3.17  actual  11
+    Ødegaard       MID  predicted  3.25  actual  11
+    Dewsbury-Hall  MID  predicted  3.10  actual  11

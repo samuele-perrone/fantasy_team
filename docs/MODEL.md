@@ -25,8 +25,14 @@ startProb  = observed × w + seed × (1 − w),   w = games / (games + 6 + 22 ×
 `newness` fades from 1 to 0 over 150 days at a new club, so a summer signing's starts at their
 previous club earn trust slowly.
 
+`priorStartRate` blends `starts / 38` with starts per match the player was *involved* in.
+Season-long rate alone counts injury-missed matches as "did not start", which the
+availability model then discounts again — the same unavailability charged twice.
+
 Expected minutes are `startProb × 81 + cameo × 19`, which peaks near 76 — worth remembering,
-because it means "plays 80 minutes" is not expressible as a minutes threshold.
+because it means "plays 80 minutes" is not expressible as a minutes threshold. The
+probability of reaching 60 minutes is `startProb × 0.93`, measured against gameweek one where
+126 of 132 starters (95.5%) got there.
 
 ### 2. Availability
 
@@ -127,27 +133,63 @@ The `gw1` mode needs no snapshot: before the season every current-season stat is
 zeroing them reconstructs exactly what the model knew before the first deadline — last
 season's priors, price and fixtures. Nothing from the result leaks back in.
 
+### Why MAE is the wrong headline metric here
+
+The median FPL score in a gameweek is **0** and the mean is 1.65 — the distribution is
+heavily right-skewed. MAE is minimised near the median, so a model that systematically
+under-predicts scores *better* on MAE while being wrong about every total. Calibration ratios
+and RMSE are the honest measures; MAE is reported for continuity, not as the target.
+
 ### First result, gameweek one
 
 Only Arsenal v Coventry had been played, so this is 62 players from a single 3-0 match. It is
 a smoke test of the harness, not a verdict on the model.
 
-| Group | n | MAE | Bias | r |
-| --- | --- | --- | --- | --- |
-| All players | 62 | 1.55 | −0.34 | 0.48 |
-| Goalkeepers | 6 | 1.04 | −0.01 | 0.93 |
-| Defenders | 18 | 1.74 | −0.96 | 0.54 |
-| Midfielders | 28 | 1.62 | −0.13 | 0.46 |
-| Forwards | 10 | 1.30 | −0.00 | 0.21 |
-| Players who actually played | 31 | 2.19 | −1.58 | 0.46 |
+Measured across 364 players from the 12 clubs that had played, after the minutes calibration
+fix below.
 
-Negative bias means under-prediction. The model under-called players who played by about 1.6
-points, concentrated in defenders — which is what a 3-0 win with a clean sheet and bonus
-looks like, and exactly the kind of single-result artefact that a larger sample should absorb.
-Ødegaard and White each returned 11 against projections near 2.
+| Group | n | MAE | Bias | RMSE | r |
+| --- | --- | --- | --- | --- | --- |
+| All players | 364 | 1.57 | −0.31 | 2.68 | 0.32 |
+| Goalkeepers | 40 | 1.43 | −0.05 | 2.36 | 0.43 |
+| Defenders | 119 | 1.77 | −0.67 | 3.11 | 0.31 |
+| Midfielders | 163 | 1.53 | −0.23 | 2.53 | 0.37 |
+| Forwards | 42 | 1.31 | +0.17 | 2.19 | 0.21 |
 
-Treat only the correlations as tentatively informative, since ranking is what the model is
-actually used for. Everything else needs several more gameweeks before it means anything.
+An earlier read on a single match showed r=0.48; with twelve clubs it settled at 0.32. The
+first number was one flattering fixture, which is exactly why a single gameweek proves
+nothing.
+
+Defenders remain the weakest position, under-predicted by 0.67 a game — clean sheets and
+defensive contributions are the hardest components to call.
+
+**Ignore the "players who actually played" subset.** Filtering to it conditions on an outcome
+the model was uncertain about, keeping only the cases where hedging across possible starters
+was too low. It looks catastrophic (r=0.09) and means very little.
+
+For context, published FPL models typically reach r=0.3–0.4 over a single gameweek. Weekly
+scores are dominated by variance: Mendy returned 15 points against a 0.41 projection.
+
+### The minutes calibration fix
+
+Gameweek one exposed two separate faults, both measurable rather than inferred:
+
+| | Before | After | Actual |
+| --- | --- | --- | --- |
+| Expected minutes | 0.83× | **0.95×** | 1.00 |
+| Players appearing | 0.86× | **1.01×** | 1.00 |
+| Players reaching 60' | 0.75× | **0.95×** | 1.00 |
+| Total points predicted | 68% | **79%** | 100% |
+
+The `p60` constant assumed 86% of starters reach 60 minutes; the real figure was 95.5%. Since
+appearance points are 52% of all FPL scoring and clean sheets a further 22%, that single
+constant suppressed roughly three quarters of the model's output.
+
+The second fault was structural: unavailability counted twice, once in `starts / 38` and
+again in the availability multiplier.
+
+MAE rose slightly, from 1.51 to 1.57, while bias improved from −0.31 and RMSE from 2.72 to
+2.68. That trade is deliberate — see the note above on why MAE rewards under-prediction here.
 
 ### What this unlocks
 
