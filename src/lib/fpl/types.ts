@@ -106,11 +106,33 @@ export interface FplEvent {
   chip_plays: { chip_name: string; num_played: number }[];
 }
 
+/** Rules FPL publishes for the current season, rather than assumed by this app. */
+export interface FplGameSettings {
+  squad_squadsize: number;
+  squad_squadplay: number;
+  squad_team_limit: number;
+  /** in tenths of a million, e.g. 1000 = £100.0m */
+  squad_total_spend: number;
+  transfers_sell_on_fee: number;
+  max_extra_free_transfers: number;
+}
+
+export interface FplElementType {
+  id: number;
+  singular_name_short: string;
+  /** how many of this position a squad must contain */
+  squad_select: number;
+  squad_min_play: number;
+  squad_max_play: number;
+}
+
 /** Trimmed in client.ts — only the blocks this app reads are cached. */
 export interface Bootstrap {
   events: FplEvent[];
   teams: FplTeam[];
   elements: FplElement[];
+  element_types: FplElementType[];
+  game_settings: FplGameSettings;
   total_players: number;
 }
 

@@ -7,6 +7,7 @@ import { SavedSquads } from "@/components/saved-squads";
 import { PageHeader } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { getDraft, listSquads } from "@/lib/supabase/squads";
+import { describeRules, ruleDrift } from "@/lib/fpl/rules";
 
 export const revalidate = 300;
 
@@ -15,6 +16,38 @@ export const metadata: Metadata = {
   description:
     "Enter your Fantasy Premier League squad by hand or import it from a screenshot, then run it through every analysis tool — no team ID and no login required.",
 };
+
+/**
+ * Shows which rules are being enforced and how fresh the data is. The rules are read from
+ * FPL, so if they ever change mid-season this says so rather than the optimiser silently
+ * building squads against last year's constraints.
+ */
+function DataSync({ data }: { data: Awaited<ReturnType<typeof getGameData>> }) {
+  const drift = ruleDrift(data.rules);
+  const event = data.nextEvent ?? data.currentEvent;
+  const flagged = data.bootstrap.elements.filter((p) => p.status !== "a").length;
+
+  return (
+    <div className="panel mb-5 flex flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-2.5 text-[11.5px]">
+      <span className="font-bold uppercase tracking-wider text-slate-500">Live from FPL</span>
+      <span className="text-slate-400">{describeRules(data.rules)}</span>
+      <span className="text-slate-400">
+        {flagged} flagged player{flagged === 1 ? "" : "s"}
+      </span>
+      {event && <span className="text-slate-400">{event.name} next</span>}
+      <span className="ml-auto text-slate-600">
+        refreshed at least every 5 minutes
+      </span>
+      {drift.length > 0 && (
+        <span className="w-full rounded bg-amber-500/15 px-2 py-1 text-amber-300">
+          FPL has changed the rules since this app was built: {drift.join(", ")}. Squad
+          validation follows FPL, but the optimiser still assumes the old values — worth
+          checking before trusting a generated squad.
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
   const params = await searchParams;
@@ -51,6 +84,8 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         </Link>
       </PageHeader>
 
+      <DataSync data={data} />
+
       <SavedSquads
         email={email}
         squads={saved}
@@ -79,6 +114,7 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         initialBank={Number(one(params.bank)) || draft?.bank || 0}
         initialName={one(params.name) ?? ""}
         canPersist={Boolean(email)}
+        rules={data.rules}
       />
     </div>
   );

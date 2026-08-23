@@ -6,19 +6,18 @@ import type { PlayerRow } from "@/lib/fpl/row";
 import { FixtureRun, PositionBadge } from "./ui";
 import { ScreenshotImport, type ImportMatch } from "./screenshot-import";
 import { BuilderPitch } from "./builder-pitch";
-import { FORMATIONS, optimiseSquad } from "@/lib/fpl/optimiser";
+import { optimiseSquad } from "@/lib/fpl/optimiser";
+import { formationsFor, type SquadRules } from "@/lib/fpl/rules";
 import { rowNewsLabel } from "@/lib/fpl/news";
 import { saveDraft } from "@/lib/supabase/squads";
 import { cn, money } from "@/lib/utils";
 
-const QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
 const POS_LABEL: Record<number, string> = {
   1: "Goalkeepers",
   2: "Defenders",
   3: "Midfielders",
   4: "Forwards",
 };
-const TEAM_LIMIT = 3;
 
 export type Formation = [number, number, number];
 
@@ -57,6 +56,7 @@ export function SquadBuilder({
   initialBank,
   initialName,
   canPersist = false,
+  rules,
 }: {
   players: PlayerRow[];
   teamCodes: Record<number, number>;
@@ -67,7 +67,11 @@ export function SquadBuilder({
   initialName: string;
   /** signed in, so the working squad can be autosaved to the account */
   canPersist?: boolean;
+  /** squad rules as FPL publishes them, rather than assumed here */
+  rules: SquadRules;
 }) {
+  const QUOTA = rules.quota;
+  const TEAM_LIMIT = rules.teamLimit;
   const router = useRouter();
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
@@ -294,7 +298,7 @@ export function SquadBuilder({
     const out = byId.get(id);
     if (!out) return;
 
-    const budget = squad.length === 15 ? cost + bankValue : 100;
+    const budget = squad.length === rules.squadSize ? cost + bankValue : rules.budget;
     const spare = budget - (cost - out.cost);
     const clubCount = (teamId: number) =>
       squad.filter((p) => p.teamId === teamId && p.id !== id).length;
@@ -343,7 +347,7 @@ export function SquadBuilder({
   const autoPick = () => {
     setOptimising(true);
     requestAnimationFrame(() => {
-      const budget = squad.length === 15 ? cost + bankValue : 100;
+      const budget = squad.length === rules.squadSize ? cost + bankValue : rules.budget;
 
       const scoped = scopedPlayers();
 
@@ -623,7 +627,7 @@ export function SquadBuilder({
             </button>
 
             <span className="mr-1 text-[11.5px] text-slate-500">
-              {squad.length === 15 ? `within ${money(cost + bankValue)}` : "within £100.0m"} ·
+              {squad.length === rules.squadSize ? `within ${money(cost + bankValue)}` : `within ${money(rules.budget)}`} ·
               next {AUTOPICK_HORIZON} GWs
             </span>
 
@@ -631,7 +635,7 @@ export function SquadBuilder({
               Formation
             </span>
             <div className="flex flex-wrap gap-1">
-              {FORMATIONS.map((f) => {
+              {formationsFor(rules).map((f) => {
                 const label = f.join("-");
                 const active = f[0] === formation[0] && f[1] === formation[1] && f[2] === formation[2];
                 return (

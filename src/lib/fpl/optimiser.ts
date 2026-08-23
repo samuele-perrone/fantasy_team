@@ -1,17 +1,15 @@
 import type { PlayerRow } from "./data";
 import { rowNewsLabel } from "./news";
+import { DEFAULT_RULES, formationsFor } from "./rules";
 
-export const SQUAD_QUOTA: Record<number, number> = { 1: 2, 2: 5, 3: 5, 4: 3 };
-export const TEAM_LIMIT = 3;
+// Derived from one definition rather than restated here, so the optimiser and the rest of
+// the app cannot disagree about the rules. Callers holding live rules from FPL should pass
+// them in; these defaults are what the app was built against.
+export const SQUAD_QUOTA: Record<number, number> = DEFAULT_RULES.quota;
+export const TEAM_LIMIT = DEFAULT_RULES.teamLimit;
 
 /** Every legal outfield shape: 1 GK plus 10 outfielders within FPL's positional minimums. */
-export const FORMATIONS: [number, number, number][] = [];
-for (let d = 3; d <= 5; d++) {
-  for (let m = 2; m <= 5; m++) {
-    const f = 10 - d - m;
-    if (f >= 1 && f <= 3) FORMATIONS.push([d, m, f]);
-  }
-}
+export const FORMATIONS: [number, number, number][] = formationsFor(DEFAULT_RULES);
 
 export interface XI {
   starters: PlayerRow[];

@@ -78,6 +78,23 @@ Similarly, press conference detail about *fit* players ("he'll be rotated") is n
 `scout_news_link` exists only for players already flagged, and is surfaced on `/scout` as a
 citation rather than as new signal.
 
+### Squad rules are read from FPL
+
+`SQUAD_QUOTA`, `TEAM_LIMIT` and the £100m budget were hardcoded in four places, duplicated
+between the optimiser and the builder, and quietly bet on the rules never changing. They do:
+recent seasons added the defensive contribution point, the Assistant Manager chip and a
+five-transfer rollover cap.
+
+`rules.ts` now derives them from `game_settings` and `element_types`, which meant restoring
+those blocks to the cached payload. Legal formations are generated from the published
+positional minimums rather than a hardcoded list. `DEFAULT_RULES` is the fallback and the
+single definition the optimiser's constants derive from, so the two cannot disagree.
+
+`ruleDrift()` compares live rules against what the app was built for, and the squad page
+shows a warning if they ever differ. Squad validation follows FPL immediately; the optimiser
+internals still use the defaults, so the warning matters — it is the signal that generated
+squads need checking.
+
 ## Optimiser
 
 ### Greedy sweep plus local search

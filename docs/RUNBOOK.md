@@ -131,6 +131,21 @@ Google Cloud Console needed **no change**, per the note above.
   CNAME for `www`, because it is expanding its IP range. Vercel states the current records
   keep working, and they do — the badge is an upgrade prompt, not a fault.
 
+## Data freshness
+
+| Data | Refresh |
+| --- | --- |
+| Player news, prices, ownership, squad rules (`bootstrap-static`) | 5 minutes |
+| Fixtures and difficulty | 5 minutes |
+| Live gameweek scores | 30 seconds |
+| A manager's entry and picks | 1 minute |
+| Player history (`element-summary`) | 10 minutes |
+
+Everything driving squad logic — injury news, availability, prices, set-piece order and the
+squad rules themselves — comes from `bootstrap-static` and is therefore at most five minutes
+stale. The squad page shows what it is currently enforcing, and warns if FPL's published
+rules ever diverge from what the app was built against.
+
 ## Backtesting
 
 A scheduled workflow (`.github/workflows/backtest.yml`) runs twice daily, snapshots

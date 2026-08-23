@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { getBootstrap, getFixtures } from "./client";
 import { buildContext, projectAll, type ProjectionContext } from "./projection";
+import { readRules, type SquadRules } from "./rules";
 import type { Bootstrap, FplEvent, FplFixture, FplTeam } from "./types";
 import { toRow } from "./row";
 
@@ -17,6 +18,10 @@ export interface GameData {
   currentEvent: FplEvent | null;
   nextEvent: FplEvent | null;
   seasonStarted: boolean;
+  /** squad rules as FPL currently publishes them */
+  rules: SquadRules;
+  /** when this data was fetched, for surfacing freshness */
+  fetchedAt: string;
 }
 
 /** Deduped per request — every page shares one bootstrap + fixtures fetch. */
@@ -36,6 +41,8 @@ export const getGameData = cache(async (): Promise<GameData> => {
     currentEvent,
     nextEvent,
     seasonStarted: bootstrap.events.some((e) => e.finished || e.is_current),
+    rules: readRules(bootstrap),
+    fetchedAt: new Date().toISOString(),
   };
 });
 

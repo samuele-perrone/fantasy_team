@@ -155,6 +155,22 @@ export const getBootstrap = unstable_cache(
       events: raw.events,
       teams: raw.teams,
       total_players: raw.total_players,
+      // Squad rules come from FPL rather than being assumed — they change between seasons.
+      element_types: raw.element_types.map((t) => ({
+        id: t.id,
+        singular_name_short: t.singular_name_short,
+        squad_select: t.squad_select,
+        squad_min_play: t.squad_min_play,
+        squad_max_play: t.squad_max_play,
+      })),
+      game_settings: {
+        squad_squadsize: raw.game_settings.squad_squadsize,
+        squad_squadplay: raw.game_settings.squad_squadplay,
+        squad_team_limit: raw.game_settings.squad_team_limit,
+        squad_total_spend: raw.game_settings.squad_total_spend,
+        transfers_sell_on_fee: raw.game_settings.transfers_sell_on_fee,
+        max_extra_free_transfers: raw.game_settings.max_extra_free_transfers,
+      },
       elements: raw.elements.map(slimElement),
     };
   },
