@@ -160,8 +160,22 @@ An earlier read on a single match showed r=0.48; with twelve clubs it settled at
 first number was one flattering fixture, which is exactly why a single gameweek proves
 nothing.
 
-Defenders remain the weakest position, under-predicted by 0.67 a game — clean sheets and
-defensive contributions are the hardest components to call.
+Defenders remain the weakest position, under-predicted by 0.67 a game.
+
+**An attempted fix was reverted.** Clean sheets are 37% of a defender's points, and the model
+predicted a 24.5% clean-sheet rate against 33.3% observed. Football scorelines are genuinely
+over-dispersed relative to Poisson, so a negative binomial with k=5 should be the better
+model — it gives 0.29 at league average against Poisson's 0.24, matching the Premier League's
+long-run rate of roughly 0.30.
+
+Measured, it made things worse: defender correlation fell from 0.31 to 0.27 and MAE rose from
+1.77 to 1.84. Raising every clean-sheet probability by a similar amount adds points without
+helping to separate one defender from another.
+
+Defensive contribution turned out to be *over*-predicted, 0.253 against 0.167 observed, so
+the two errors partly cancel. Both measurements come from a single gameweek — 63 defenders,
+42 with a prior — which is not enough to tune against. The theory is sound; the evidence is
+not there yet. Revisit once several gameweeks have accumulated.
 
 **Ignore the "players who actually played" subset.** Filtering to it conditions on an outcome
 the model was uncertain about, keeping only the cases where hedging across possible starters

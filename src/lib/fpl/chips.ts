@@ -47,3 +47,65 @@ export function chipNote(chip: string | null | undefined): string | null {
 export function benchCounts(chip: string | null | undefined): boolean {
   return chip === "bboost";
 }
+
+export interface ChipStatus {
+  key: string;
+  label: string;
+  note: string;
+  /** the half this entry refers to: 1 = GW1-19, 2 = GW20-38 */
+  half: 1 | 2;
+  firstEvent: number;
+  lastEvent: number;
+  /** the gameweek it was played in, if it has been */
+  usedIn: number | null;
+  /** still playable: not used, and the window has not closed */
+  available: boolean;
+  /** the window has closed unused, so it is gone */
+  expired: boolean;
+}
+
+const HALVES: { half: 1 | 2; first: number; last: number }[] = [
+  { half: 1, first: 1, last: 19 },
+  { half: 2, first: 20, last: 38 },
+];
+
+/** Chips that cannot be played in gameweek one, because they act on transfers. */
+const TRANSFER_CHIPS = new Set(["wildcard", "freehit"]);
+
+/**
+ * What is spent, what is left and when it expires.
+ *
+ * FPL issues a full set of chips per half-season. An unused first-half chip does not roll
+ * over — it is simply lost at gameweek 19 — which is the single most expensive thing a
+ * manager can forget, so expiry is tracked explicitly rather than inferred.
+ */
+export function chipStatuses(
+  used: { name: string; event: number }[],
+  currentEvent: number,
+): ChipStatus[] {
+  const out: ChipStatus[] = [];
+
+  for (const { half, first, last } of HALVES) {
+    for (const key of ["wildcard", "freehit", "bboost", "3xc"]) {
+      const meta = CHIPS[key];
+      if (!meta) continue;
+
+      const play = used.find((u) => u.name === key && u.event >= first && u.event <= last);
+      // Transfer chips are unavailable in gameweek one, when transfers are already unlimited.
+      const firstEvent = first === 1 && TRANSFER_CHIPS.has(key) ? 2 : first;
+
+      out.push({
+        key,
+        label: meta.label,
+        note: meta.note,
+        half,
+        firstEvent,
+        lastEvent: last,
+        usedIn: play?.event ?? null,
+        available: !play && currentEvent <= last,
+        expired: !play && currentEvent > last,
+      });
+    }
+  }
+  return out;
+}

@@ -127,6 +127,16 @@ and peak at 76 across the whole game, so an "80 minutes" filter matches nobody �
 expressed as a chance of starting. And no goalkeeper and only two defenders take penalties, so
 requiring penalty takers cannot fill a legal squad — it is a scoring bonus instead.
 
+### Chips are tracked per half-season
+
+FPL issues a full set of chips for gameweeks 1–19 and another for 20–38. An unused first-half
+chip is lost at gameweek 19 rather than rolling over, which is the most expensive thing a
+manager can forget, so expiry is tracked explicitly. Wildcard and Free Hit act on transfers
+and cannot be played in gameweek one, when transfers are already unlimited.
+
+Chips already played are read from the entry's history and shown as spent; recommendations
+cover only what is left.
+
 ## Auth
 
 ### The allow-list fails closed

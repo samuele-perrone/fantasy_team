@@ -44,7 +44,7 @@ npm run dev              # http://localhost:3000
 | `/transfers` | Ranked 1–3 transfer plans scored net of points hits, plus a wildcard draft |
 | `/team-builder` | Squad optimiser for any budget, with lock-in and exclusion constraints |
 | `/live` | Live gameweek points with provisional bonus, captain multipliers and chips |
-| `/planner` | Eight-week projection for your squad with chip windows picked out |
+| `/planner` | Eight-week projection, chips already played, and the best remaining window for each |
 | `/leagues` | Classic mini-league standings, movement and awards |
 | `/guides` | Scoring rules, chip strategy, blank/double gameweeks, price changes, underlying stats |
 

@@ -7,6 +7,7 @@ import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib
 import { bestXI } from "@/lib/fpl/optimiser";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { cn, DIFFICULTY_STYLES } from "@/lib/utils";
+import { chipStatuses } from "@/lib/fpl/chips";
 
 export const revalidate = 300;
 
@@ -91,6 +92,44 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
   });
 
   const maxTotal = Math.max(...weeks.map((w) => w.total), 1);
+
+  // What has been spent, what is left, and when each remaining chip expires.
+  const chips = chipStatuses(team.history?.chips ?? [], data.currentEvent?.id ?? first);
+  const spent = chips.filter((c) => c.usedIn !== null);
+
+  /** Best week in range for a chip, or null when the window does not overlap the horizon. */
+  const windowFor = (c: (typeof chips)[number]) => {
+    const inRange = weeks.filter((w) => w.event >= c.firstEvent && w.event <= c.lastEvent);
+    if (!inRange.length) return null;
+
+    switch (c.key) {
+      // Bench Boost pays for the bench, so the week the bench projects highest.
+      case "bboost":
+        return [...inRange].sort((a, b) => b.bench - a.bench)[0];
+      // Triple Captain buys variance on one player, so the highest captain ceiling.
+      case "3xc":
+        return [...inRange].sort(
+          (a, b) => (b.captain?.xPtsNext ?? 0) - (a.captain?.xPtsNext ?? 0),
+        )[0];
+      // Free Hit rescues the week this squad is weakest, usually a blank.
+      case "freehit":
+        return [...inRange].sort(
+          (a, b) => b.blanks.length - a.blanks.length || a.starting - b.starting,
+        )[0];
+      // A Wildcard is worth most before a sustained bad run rather than one bad week.
+      case "wildcard":
+        return [...inRange].sort((a, b) => a.starting - b.starting)[0];
+      default:
+        return null;
+    }
+  };
+
+  const recommendations = chips
+    .filter((c) => c.available)
+    .map((c) => ({ chip: c, week: windowFor(c) }))
+    .filter((r) => r.week !== null)
+    // One suggestion per chip type — the earlier half first.
+    .filter((r, i, arr) => arr.findIndex((x) => x.chip.key === r.chip.key) === i);
   const benchBoost = [...weeks].sort((a, b) => b.bench - a.bench)[0];
   const tripleCaptain = [...weeks].sort(
     (a, b) => (b.captain?.xPtsNext ?? 0) - (a.captain?.xPtsNext ?? 0),
@@ -115,25 +154,9 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Bench Boost window"
-          value={`GW${benchBoost.event}`}
-          sub={`${benchBoost.bench.toFixed(1)} projected off the bench`}
-          tone="brand"
-        />
-        <StatCard
-          label="Triple Captain window"
-          value={`GW${tripleCaptain.event}`}
-          sub={
-            tripleCaptain.captain
-              ? `${tripleCaptain.captain.name} at ${tripleCaptain.captain.xPtsNext.toFixed(2)} xPts`
-              : undefined
-          }
-          tone="brand"
-        />
-        <StatCard
           label="Weakest week"
           value={`GW${freeHit.event}`}
-          sub={`${freeHit.starting.toFixed(1)} from your XI — Free Hit candidate`}
+          sub={`${freeHit.starting.toFixed(1)} from your XI`}
           tone="warn"
         />
         <StatCard
@@ -142,7 +165,81 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
           sub={`${wildcard.blanks.length} of your 15 without a fixture`}
           tone="warn"
         />
+        <StatCard
+          label="Chips remaining"
+          value={chips.filter((c) => c.available).length}
+          sub={spent.length ? `${spent.length} already played` : "none played yet"}
+          tone="brand"
+        />
+        <StatCard
+          label="Best bench week"
+          value={`GW${benchBoost.event}`}
+          sub={`${benchBoost.bench.toFixed(1)} projected off the bench`}
+        />
       </div>
+
+      <section className="panel px-5 py-4">
+        <h2 className="mb-1 text-[14px] font-bold text-white">Chips</h2>
+        <p className="mb-3 text-[12px] text-slate-500">
+          FPL gives a full set per half — gameweeks 1 to 19, then 20 to 38. An unused
+          first-half chip is lost at gameweek 19 rather than rolling over.
+        </p>
+
+        {spent.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {spent.map((c) => (
+              <span
+                key={`${c.key}-${c.half}`}
+                className="flex items-center gap-1.5 rounded-lg bg-pitch-800 px-2.5 py-1 text-[12px] text-slate-400"
+              >
+                <span className="font-semibold text-slate-300">{c.label}</span>
+                played GW{c.usedIn}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {recommendations.length ? (
+          <ul className="divide-y divide-pitch-800">
+            {recommendations.map(({ chip, week }) => (
+              <li key={`${chip.key}-${chip.half}`} className="flex flex-wrap items-center gap-3 py-2">
+                <span className="w-32 shrink-0 text-[13px] font-bold text-white">
+                  {chip.label}
+                </span>
+                <span className="num rounded bg-brand-500/20 px-2 py-0.5 text-[12px] font-bold text-brand-400">
+                  GW{week!.event}
+                </span>
+                <span className="min-w-0 flex-1 text-[12px] text-slate-400">
+                  {chip.key === "bboost" && `${week!.bench.toFixed(1)} projected off your bench`}
+                  {chip.key === "3xc" &&
+                    (week!.captain
+                      ? `${week!.captain.name} at ${week!.captain.xPtsNext.toFixed(1)} xPts`
+                      : "highest captain ceiling in range")}
+                  {chip.key === "freehit" &&
+                    (week!.blanks.length
+                      ? `${week!.blanks.length} of your 15 blank that week`
+                      : `your weakest week at ${week!.starting.toFixed(1)}`)}
+                  {chip.key === "wildcard" &&
+                    `weakest projected XI in range, ${week!.starting.toFixed(1)}`}
+                </span>
+                <span className="text-[11px] text-slate-600">
+                  expires GW{chip.lastEvent}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[12.5px] text-slate-500">
+            No chips available in this window.
+          </p>
+        )}
+
+        <p className="mt-3 border-t border-pitch-800 pt-2.5 text-[11.5px] leading-relaxed text-slate-500">
+          These are the best weeks the model can see inside the next {HORIZON} gameweeks, not
+          across the season. Blank and double gameweeks are usually the right moment for Free
+          Hit and Bench Boost, and those are only confirmed a few weeks ahead.
+        </p>
+      </section>
 
       <section className="panel px-5 py-5">
         <h2 className="mb-4 text-[14px] font-bold text-white">Projected points per gameweek</h2>
