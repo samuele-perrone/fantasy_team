@@ -72,6 +72,15 @@ async function snapshot() {
   const next = boot.events.find((e) => e.is_next);
   if (!next) return console.log("No upcoming gameweek to snapshot.");
 
+  // Refuse to overwrite a snapshot once the deadline has passed — the whole point is that
+  // the stored projection is what the model believed *before* kick-off.
+  const deadline = new Date(next.deadline_time);
+  if (Date.now() > deadline.getTime()) {
+    return console.log(
+      `GW${next.id} deadline has passed; keeping the existing snapshot rather than overwriting it.`,
+    );
+  }
+
   const ctx = buildContext(boot, fixtures);
   const proj = projectAll(boot, ctx, 1);
 
@@ -89,9 +98,25 @@ async function snapshot() {
   const file = join(dir, `gw${next.id}.json`);
   await writeFile(
     file,
-    JSON.stringify({ event: next.id, takenAt: new Date().toISOString(), rows }, null, 0),
+    JSON.stringify(
+      {
+        event: next.id,
+        takenAt: new Date().toISOString(),
+        deadline: next.deadline_time,
+        // How stale the projection was when stored. Team news lands close to the deadline,
+        // so a snapshot taken hours earlier is measuring a slightly different model.
+        hoursBeforeDeadline:
+          Math.round(((deadline.getTime() - Date.now()) / 3_600_000) * 10) / 10,
+        rows,
+      },
+      null,
+      0,
+    ),
   );
-  console.log(`Snapshotted ${rows.length} projections for GW${next.id} -> ${file}`);
+  console.log(
+    `Snapshotted ${rows.length} projections for GW${next.id} ` +
+      `(${Math.round((deadline.getTime() - Date.now()) / 3_600_000)}h before deadline) -> ${file}`,
+  );
 }
 
 async function score() {
@@ -118,7 +143,11 @@ async function score() {
       .filter((r) => actual.has(r.id))
       .map((r) => ({ ...r, actual: actual.get(r.id) }));
 
-    console.log(`\nGW${snap.event}`);
+    const staleness =
+      snap.hoursBeforeDeadline !== undefined
+        ? ` (snapshot taken ${snap.hoursBeforeDeadline}h before the deadline)`
+        : "";
+    console.log(`\nGW${snap.event}${staleness}`);
     report("all players", rows);
     for (const pos of [1, 2, 3, 4]) report(POS[pos], rows.filter((r) => r.pos === pos));
     all.push(...rows);

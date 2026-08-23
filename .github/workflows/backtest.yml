@@ -5,8 +5,10 @@ name: Backtest
 # finishes, committing both back so a track record builds over the season.
 on:
   schedule:
-    # Twice daily: early enough to catch a deadline, late enough to score a finished week.
-    - cron: "0 6,18 * * *"
+    # 17:00 lands just before the usual 17:30 and 18:30 deadlines, so the stored projection
+    # includes late team news. 22:00 catches matches that finish late. The others keep the
+    # snapshot current through the week.
+    - cron: "0 5,11,17,22 * * *"
   workflow_dispatch:
 
 permissions:
