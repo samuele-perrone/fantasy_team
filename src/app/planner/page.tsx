@@ -97,39 +97,85 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
   const chips = chipStatuses(team.history?.chips ?? [], data.currentEvent?.id ?? first);
   const spent = chips.filter((c) => c.usedIn !== null);
 
-  /** Best week in range for a chip, or null when the window does not overlap the horizon. */
-  const windowFor = (c: (typeof chips)[number]) => {
-    const inRange = weeks.filter((w) => w.event >= c.firstEvent && w.event <= c.lastEvent);
-    if (!inRange.length) return null;
+  const meanWeek = weeks.reduce((a, w) => a + w.starting, 0) / Math.max(weeks.length, 1);
 
-    switch (c.key) {
-      // Bench Boost pays for the bench, so the week the bench projects highest.
-      case "bboost":
-        return [...inRange].sort((a, b) => b.bench - a.bench)[0];
-      // Triple Captain buys variance on one player, so the highest captain ceiling.
-      case "3xc":
-        return [...inRange].sort(
-          (a, b) => (b.captain?.xPtsNext ?? 0) - (a.captain?.xPtsNext ?? 0),
-        )[0];
-      // Free Hit rescues the week this squad is weakest, usually a blank.
-      case "freehit":
-        return [...inRange].sort(
-          (a, b) => b.blanks.length - a.blanks.length || a.starting - b.starting,
-        )[0];
-      // A Wildcard is worth most before a sustained bad run rather than one bad week.
-      case "wildcard":
-        return [...inRange].sort((a, b) => a.starting - b.starting)[0];
-      default:
-        return null;
+  /**
+   * Best week for a chip, with the reason, or a hold when nothing in range justifies it.
+   *
+   * Wildcard and Free Hit solve different problems and should not collapse onto the same
+   * week. A Wildcard is a permanent rebuild, so it looks for the start of a sustained bad
+   * run; a Free Hit is a one-week rescue, so it only fires for a week that is genuinely
+   * broken — a blank, or a dip well below this squad's normal level.
+   */
+  const windowFor = (
+    c: (typeof chips)[number],
+  ): { week: (typeof weeks)[number]; why: string } | { hold: string } => {
+    const inRange = weeks.filter((w) => w.event >= c.firstEvent && w.event <= c.lastEvent);
+    if (!inRange.length) {
+      // A second-half chip whose window starts beyond the horizon is not a decision yet.
+      return { hold: `second-half chip — playable from GW${c.firstEvent}` };
     }
+
+    if (c.key === "bboost") {
+      const w = [...inRange].sort((a, b) => b.bench - a.bench)[0];
+      return { week: w, why: `${w.bench.toFixed(1)} projected off your bench` };
+    }
+
+    if (c.key === "3xc") {
+      const w = [...inRange].sort(
+        (a, b) => (b.captain?.xPtsNext ?? 0) - (a.captain?.xPtsNext ?? 0),
+      )[0];
+      return w.captain
+        ? { week: w, why: `${w.captain.name} at ${w.captain.xPtsNext.toFixed(1)} xPts` }
+        : { hold: "no standout captain in range" };
+    }
+
+    if (c.key === "freehit") {
+      const blank = [...inRange]
+        .filter((w) => w.blanks.length >= 4)
+        .sort((a, b) => b.blanks.length - a.blanks.length)[0];
+      if (blank) {
+        return { week: blank, why: `${blank.blanks.length} of your 15 have no fixture` };
+      }
+      // A single bad week only justifies a Free Hit if it is far below normal.
+      const worst = [...inRange].sort((a, b) => a.starting - b.starting)[0];
+      if (worst.starting < meanWeek * 0.75) {
+        return {
+          week: worst,
+          why: `${worst.starting.toFixed(1)} against your ${meanWeek.toFixed(0)} average`,
+        };
+      }
+      return { hold: "no blank gameweek confirmed — hold it" };
+    }
+
+    if (c.key === "wildcard") {
+      // Score each possible start by the three weeks that follow it, since a Wildcard is
+      // played to fix a run rather than a single fixture.
+      const runs = inRange
+        .map((w, i) => {
+          const run = inRange.slice(i, i + 3);
+          return { week: w, mean: run.reduce((a, x) => a + x.starting, 0) / run.length };
+        })
+        .filter((r) => r.mean > 0);
+      if (!runs.length) return { hold: "not enough fixtures in range" };
+
+      const worst = [...runs].sort((a, b) => a.mean - b.mean)[0];
+      if (worst.mean >= meanWeek * 0.92) {
+        return { hold: "no sustained bad run in range — hold it" };
+      }
+      return {
+        week: worst.week,
+        why: `${worst.mean.toFixed(1)} average over the following three weeks`,
+      };
+    }
+
+    return { hold: "no recommendation" };
   };
 
   const recommendations = chips
     .filter((c) => c.available)
-    .map((c) => ({ chip: c, week: windowFor(c) }))
-    .filter((r) => r.week !== null)
-    // One suggestion per chip type — the earlier half first.
-    .filter((r, i, arr) => arr.findIndex((x) => x.chip.key === r.chip.key) === i);
+    .filter((c, i, arr) => arr.findIndex((x) => x.key === c.key) === i)
+    .map((c) => ({ chip: c, result: windowFor(c) }));
   const benchBoost = [...weeks].sort((a, b) => b.bench - a.bench)[0];
   const tripleCaptain = [...weeks].sort(
     (a, b) => (b.captain?.xPtsNext ?? 0) - (a.captain?.xPtsNext ?? 0),
@@ -201,37 +247,29 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
 
         {recommendations.length ? (
           <ul className="divide-y divide-pitch-800">
-            {recommendations.map(({ chip, week }) => (
+            {recommendations.map(({ chip, result }) => (
               <li key={`${chip.key}-${chip.half}`} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-32 shrink-0 text-[13px] font-bold text-white">
                   {chip.label}
                 </span>
-                <span className="num rounded bg-brand-500/20 px-2 py-0.5 text-[12px] font-bold text-brand-400">
-                  GW{week!.event}
-                </span>
+                {"week" in result ? (
+                  <span className="num rounded bg-brand-500/20 px-2 py-0.5 text-[12px] font-bold text-brand-400">
+                    GW{result.week.event}
+                  </span>
+                ) : (
+                  <span className="rounded bg-pitch-800 px-2 py-0.5 text-[12px] font-semibold text-slate-400">
+                    Hold
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 text-[12px] text-slate-400">
-                  {chip.key === "bboost" && `${week!.bench.toFixed(1)} projected off your bench`}
-                  {chip.key === "3xc" &&
-                    (week!.captain
-                      ? `${week!.captain.name} at ${week!.captain.xPtsNext.toFixed(1)} xPts`
-                      : "highest captain ceiling in range")}
-                  {chip.key === "freehit" &&
-                    (week!.blanks.length
-                      ? `${week!.blanks.length} of your 15 blank that week`
-                      : `your weakest week at ${week!.starting.toFixed(1)}`)}
-                  {chip.key === "wildcard" &&
-                    `weakest projected XI in range, ${week!.starting.toFixed(1)}`}
+                  {"week" in result ? result.why : result.hold}
                 </span>
-                <span className="text-[11px] text-slate-600">
-                  expires GW{chip.lastEvent}
-                </span>
+                <span className="text-[11px] text-slate-600">expires GW{chip.lastEvent}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-[12.5px] text-slate-500">
-            No chips available in this window.
-          </p>
+          <p className="text-[12.5px] text-slate-500">No chips available in this window.</p>
         )}
 
         <p className="mt-3 border-t border-pitch-800 pt-2.5 text-[11.5px] leading-relaxed text-slate-500">
