@@ -69,7 +69,7 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
   const weeks = events.map((event) => {
     // Re-rank the squad by that week's projection so the XI reflects that week's fixtures.
     const scoped = team.squad.map((p) => ({ ...p, xPtsNext: pointsIn(p, event) }));
-    const xi = bestXI(scoped, "xPtsNext");
+    const xi = bestXI(scoped, "xPtsNext", undefined, team.rules);
     const fixtureCount = team.squad.reduce(
       (a, p) => a + p.fixtures.filter((f) => f.event === event).length,
       0,

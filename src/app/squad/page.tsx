@@ -40,9 +40,9 @@ function DataSync({ data }: { data: Awaited<ReturnType<typeof getGameData>> }) {
       </span>
       {drift.length > 0 && (
         <span className="w-full rounded bg-amber-500/15 px-2 py-1 text-amber-300">
-          FPL has changed the rules since this app was built: {drift.join(", ")}. Squad
-          validation follows FPL, but the optimiser still assumes the old values — worth
-          checking before trusting a generated squad.
+          FPL has changed the rules since this app was built: {drift.join(", ")}. The
+          optimiser and validation both follow the live rules, so squads stay legal — this is
+          a heads-up that the game has changed, not a fault.
         </span>
       )}
     </div>

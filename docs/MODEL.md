@@ -104,6 +104,13 @@ and today's model has seen results the original forecast had not. It is a rough 
 check, not a track record. A real one needs projections snapshotted at each deadline.
 
 
+## Squad rules
+
+Quotas, the per-club limit, squad and XI sizes, and the budget are read from FPL's
+`game_settings` and `element_types` rather than hardcoded, and are threaded through the
+optimiser. Legal formations are generated from the published positional minimums. See
+[DECISIONS.md](DECISIONS.md).
+
 ## Measuring accuracy
 
 `scripts/backtest.mjs` snapshots projections before a deadline and scores them once the

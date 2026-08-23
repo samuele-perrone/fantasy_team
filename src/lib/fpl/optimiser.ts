@@ -1,6 +1,6 @@
 import type { PlayerRow } from "./data";
 import { rowNewsLabel } from "./news";
-import { DEFAULT_RULES, formationsFor } from "./rules";
+import { DEFAULT_RULES, formationsFor, type SquadRules } from "./rules";
 
 // Derived from one definition rather than restated here, so the optimiser and the rest of
 // the app cannot disagree about the rules. Callers holding live rules from FPL should pass
@@ -31,6 +31,7 @@ export function bestXI(
   squad: PlayerRow[],
   key: keyof PlayerRow = "xPtsNext",
   formation?: [number, number, number],
+  rules: SquadRules = DEFAULT_RULES,
 ): XI {
   const byPos = (pos: number) =>
     squad.filter((p) => p.posId === pos).sort((a, b) => score(b, key) - score(a, key));
@@ -41,7 +42,7 @@ export function bestXI(
   const fwds = byPos(4);
 
   let best: XI | null = null;
-  const shapes = formation ? [formation] : FORMATIONS;
+  const shapes = formation ? [formation] : formationsFor(rules);
 
   for (const [d, m, f] of shapes) {
     if (defs.length < d || mids.length < m || fwds.length < f || !gks.length) continue;
@@ -114,6 +115,8 @@ export interface OptimiseOptions {
   penaltyBonus?: number;
   /** lock the starting shape, e.g. [3, 4, 3] */
   formation?: [number, number, number];
+  /** squad rules as published by FPL; defaults to what the app was built against */
+  rules?: SquadRules;
 }
 
 export interface OptimiseResult {
@@ -145,9 +148,10 @@ function objectiveOf(
   opts: Required<Pick<OptimiseOptions, "key" | "benchWeight" | "includeCaptain">> & {
     penaltyBonus: number;
     formation?: [number, number, number];
+    rules: SquadRules;
   },
 ) {
-  const xi = bestXI(squad, opts.key, opts.formation);
+  const xi = bestXI(squad, opts.key, opts.formation, opts.rules);
   const captainBonus = opts.includeCaptain && xi.captain ? score(xi.captain, opts.key) : 0;
   // Preferences count only for the eleven that actually play.
   const preference = xi.starters.reduce((a, p) => a + bonusFor(p, opts.penaltyBonus), 0);
@@ -170,22 +174,32 @@ function priceFloors(pool: PlayerRow[]): PriceFloors {
  * have very different price floors, and overestimating makes the greedy reject affordable
  * picks and fail outright on a tight budget.
  */
-function minCostToComplete(counts: Record<number, number>, floors: PriceFloors): number {
+function minCostToComplete(
+  counts: Record<number, number>,
+  floors: PriceFloors,
+  rules: SquadRules,
+): number {
   let total = 0;
   for (const pos of [1, 2, 3, 4]) {
-    const needed = SQUAD_QUOTA[pos] - counts[pos];
+    const needed = rules.quota[pos] - counts[pos];
     for (let i = 0; i < needed; i++) total += floors[pos][i] ?? 4.0;
   }
   return total;
 }
 
-function canAdd(state: State, p: PlayerRow, budget: number, floors: PriceFloors): boolean {
-  if (state.counts[p.posId] >= SQUAD_QUOTA[p.posId]) return false;
-  if ((state.clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) return false;
+function canAdd(
+  state: State,
+  p: PlayerRow,
+  budget: number,
+  floors: PriceFloors,
+  rules: SquadRules,
+): boolean {
+  if (state.counts[p.posId] >= rules.quota[p.posId]) return false;
+  if ((state.clubs.get(p.teamId) ?? 0) >= rules.teamLimit) return false;
 
   // Cost of completing the squad once this player is in.
   const after = { ...state.counts, [p.posId]: state.counts[p.posId] + 1 };
-  return state.cost + p.cost + minCostToComplete(after, floors) <= budget + 1e-9;
+  return state.cost + p.cost + minCostToComplete(after, floors, rules) <= budget + 1e-9;
 }
 
 function greedy(
@@ -195,6 +209,7 @@ function greedy(
   budget: number,
   locked: PlayerRow[],
   floors: PriceFloors,
+  rules: SquadRules,
 ): PlayerRow[] | null {
   const state: State = { squad: [], cost: 0, counts: { 1: 0, 2: 0, 3: 0, 4: 0 }, clubs: new Map() };
 
@@ -206,8 +221,8 @@ function greedy(
   };
 
   for (const p of locked) {
-    if (state.counts[p.posId] >= SQUAD_QUOTA[p.posId]) continue;
-    if ((state.clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) continue;
+    if (state.counts[p.posId] >= rules.quota[p.posId]) continue;
+    if ((state.clubs.get(p.teamId) ?? 0) >= rules.teamLimit) continue;
     push(p);
   }
   if (state.cost > budget) return null;
@@ -219,11 +234,11 @@ function greedy(
     .sort((a, b) => b.v - a.v);
 
   for (const { p } of ranked) {
-    if (state.squad.length === 15) break;
-    if (canAdd(state, p, budget, floors)) push(p);
+    if (state.squad.length === rules.squadSize) break;
+    if (canAdd(state, p, budget, floors, rules)) push(p);
   }
 
-  return state.squad.length === 15 ? state.squad : null;
+  return state.squad.length === rules.squadSize ? state.squad : null;
 }
 
 /**
@@ -234,6 +249,7 @@ function cheapestLegal(
   pool: PlayerRow[],
   budget: number,
   locked: PlayerRow[],
+  rules: SquadRules,
 ): PlayerRow[] | null {
   const squad: PlayerRow[] = [];
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
@@ -248,8 +264,8 @@ function cheapestLegal(
   };
 
   for (const p of locked) {
-    if (counts[p.posId] >= SQUAD_QUOTA[p.posId]) continue;
-    if ((clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) continue;
+    if (counts[p.posId] >= rules.quota[p.posId]) continue;
+    if ((clubs.get(p.teamId) ?? 0) >= rules.teamLimit) continue;
     take(p);
   }
 
@@ -260,14 +276,14 @@ function cheapestLegal(
 
   for (const pos of [1, 2, 3, 4]) {
     for (const p of byPrice) {
-      if (counts[pos] >= SQUAD_QUOTA[pos]) break;
+      if (counts[pos] >= rules.quota[pos]) break;
       if (p.posId !== pos || squad.some((s) => s.id === p.id)) continue;
-      if ((clubs.get(p.teamId) ?? 0) >= TEAM_LIMIT) continue;
+      if ((clubs.get(p.teamId) ?? 0) >= rules.teamLimit) continue;
       take(p);
     }
   }
 
-  return squad.length === 15 && cost <= budget + 1e-9 ? squad : null;
+  return squad.length === rules.squadSize && cost <= budget + 1e-9 ? squad : null;
 }
 
 /**
@@ -281,7 +297,8 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
   const includeCaptain = options.includeCaptain ?? false;
   const penaltyBonus = options.penaltyBonus ?? 0;
   const formation = options.formation;
-  const opts = { key, benchWeight, includeCaptain, penaltyBonus, formation };
+  const rules = options.rules ?? DEFAULT_RULES;
+  const opts = { key, benchWeight, includeCaptain, penaltyBonus, formation, rules };
   const budget = options.budget;
 
   const banned = new Set(options.banned ?? []);
@@ -292,7 +309,7 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
   const locked = (options.locked ?? [])
     .map((id) => byId.get(id))
     .filter((p): p is PlayerRow => Boolean(p))
-    .slice(0, 15);
+    .slice(0, rules.squadSize);
 
   /**
    * Filters are applied hardest-first and dropped one at a time until a legal squad exists.
@@ -332,7 +349,7 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
     let bestScore = -Infinity;
 
     for (const lambda of [0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.1, 1.5, 2.2, 3.0]) {
-      const squad = greedy(pool, lambda, opts, budget, locked, floors);
+      const squad = greedy(pool, lambda, opts, budget, locked, floors, rules);
       if (!squad) continue;
       const sc = objectiveOf(squad, opts);
       if (sc > bestScore) {
@@ -345,7 +362,7 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
     // greedy unable to fill 15 slots. Falling back to the cheapest legal squad guarantees a
     // starting point whenever one exists at all, and the local search below improves it.
     if (!best) {
-      const cheapest = cheapestLegal(pool, budget, locked);
+      const cheapest = cheapestLegal(pool, budget, locked, rules);
       if (cheapest) {
         best = cheapest;
         bestScore = objectiveOf(cheapest, opts);
@@ -362,7 +379,7 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
   if (!result) {
     return {
       squad: [],
-      xi: bestXI([], key, formation),
+      xi: bestXI([], key, formation, rules),
       cost: 0,
       objective: 0,
       iterations: 0,
@@ -396,8 +413,8 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
         if (cand.cost > spare + 1e-9) continue;
         if (cand.teamId !== out.teamId) {
           const count = squad.filter((p) => p.teamId === cand.teamId).length;
-          if (count >= TEAM_LIMIT) continue;
-        } else if (clubCount > TEAM_LIMIT) continue;
+          if (count >= rules.teamLimit) continue;
+        } else if (clubCount > rules.teamLimit) continue;
 
         const trial = squad.slice();
         trial[i] = cand;
@@ -419,7 +436,7 @@ export function optimiseSquad(players: PlayerRow[], options: OptimiseOptions): O
 
   return {
     squad,
-    xi: bestXI(squad, key, formation),
+    xi: bestXI(squad, key, formation, rules),
     cost: Math.round(squad.reduce((a, p) => a + p.cost, 0) * 10) / 10,
     objective: Math.round(current * 100) / 100,
     iterations,
@@ -456,15 +473,17 @@ export function planTransfers(
     maxTransfers = 3,
     key = "xPts",
     benchWeight = 0.12,
+    rules = DEFAULT_RULES,
   }: {
     bank: number;
     freeTransfers: number;
     maxTransfers?: number;
     key?: keyof PlayerRow;
     benchWeight?: number;
+    rules?: SquadRules;
   },
 ): TransferPlan[] {
-  const opts = { key, benchWeight, includeCaptain: false, penaltyBonus: 0 };
+  const opts = { key, benchWeight, includeCaptain: false, penaltyBonus: 0, rules };
   const plans: TransferPlan[] = [];
 
   let currentSquad = squad.slice();
@@ -490,7 +509,7 @@ export function planTransfers(
         if (cand.posId !== out.posId) continue;
         if (squadIds.has(cand.id)) continue;
         if (cand.cost > funds + 1e-9) continue;
-        if ((clubCounts.get(cand.teamId) ?? 0) >= TEAM_LIMIT) continue;
+        if ((clubCounts.get(cand.teamId) ?? 0) >= rules.teamLimit) continue;
         if (cand.status === "u" || cand.status === "n") continue;
 
         const trial = currentSquad.slice();
@@ -523,7 +542,7 @@ export function planTransfers(
       hitCost,
       netGain: Math.round((gain - hitCost) * 100) / 100,
       squad: currentSquad.slice(),
-      xi: bestXI(currentSquad, key),
+      xi: bestXI(currentSquad, key, undefined, rules),
     });
   }
 

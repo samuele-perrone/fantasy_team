@@ -4,6 +4,7 @@ import { getGameData, getPlayerRows } from "./data";
 import type { PlayerRow } from "./row";
 import { bestXI, SQUAD_QUOTA, TEAM_LIMIT, type XI } from "./optimiser";
 import type { Entry, EntryPick, EntryPicks } from "./types";
+import type { SquadRules } from "./rules";
 
 export interface LoadedTeam {
   /** "fpl" when pulled from a real entry ID, "manual" when built by hand or imported */
@@ -29,6 +30,8 @@ export interface LoadedTeam {
   freeTransfers: number;
   teamCodes: Record<number, number>;
   pool: PlayerRow[];
+  /** squad rules as FPL currently publishes them */
+  rules: SquadRules;
   history: Awaited<ReturnType<typeof getEntryHistory>> | null;
 }
 
@@ -39,7 +42,7 @@ async function baseContext(horizon: number) {
   const [data, rows] = await Promise.all([getGameData(), getPlayerRows(horizon)]);
   const teamCodes: Record<number, number> = {};
   for (const t of data.bootstrap.teams) teamCodes[t.id] = t.code;
-  return { data, rows, byId: new Map(rows.map((r) => [r.id, r])), teamCodes };
+  return { data, rows, byId: new Map(rows.map((r) => [r.id, r])), teamCodes, rules: data.rules };
 }
 
 /** Build the XI/bench split described by an ordered pick list. */
@@ -72,7 +75,7 @@ function xiFromPicks(
 }
 
 export async function loadTeam(entryId: number, horizon = 5): Promise<LoadedTeam> {
-  const { data, byId, rows, teamCodes } = await baseContext(horizon);
+  const { data, byId, rows, teamCodes, rules } = await baseContext(horizon);
 
   let entry: Entry;
   try {
@@ -127,7 +130,7 @@ export async function loadTeam(entryId: number, horizon = 5): Promise<LoadedTeam
     activeChip: picks.active_chip,
     eventTransfersCost: picks.entry_history?.event_transfers_cost ?? 0,
     squad,
-    xi: bestXI(squad, "xPtsNext"),
+    xi: bestXI(squad, "xPtsNext", undefined, rules),
     actual: xiFromPicks(squad, picks.picks, captain, vice),
     captainId: captain,
     viceCaptainId: vice,
@@ -137,6 +140,7 @@ export async function loadTeam(entryId: number, horizon = 5): Promise<LoadedTeam
     freeTransfers: estimateFreeTransfers(history?.current ?? []),
     teamCodes,
     pool: rows,
+    rules,
     history,
   };
 }
@@ -204,7 +208,7 @@ export async function loadManualTeam(
   input: ManualSquadInput,
   horizon = 5,
 ): Promise<LoadedTeam> {
-  const { data, byId, rows, teamCodes } = await baseContext(horizon);
+  const { data, byId, rows, teamCodes, rules } = await baseContext(horizon);
 
   const seen = new Set<number>();
   const squad = input.ids
@@ -218,7 +222,7 @@ export async function loadManualTeam(
   if (errors.length) throw new InvalidSquad(errors.join(" "));
 
   // The order the ids arrive in is the pick order: 1–11 start, 12–15 sit on the bench.
-  const optimal = bestXI(squad, "xPtsNext");
+  const optimal = bestXI(squad, "xPtsNext", undefined, rules);
   const starterIds = new Set(
     squad.length === 15 && input.ids.length === 15
       ? squad.slice(0, 11).map((p) => p.id)
@@ -269,6 +273,7 @@ export async function loadManualTeam(
     freeTransfers: input.freeTransfers ?? 1,
     teamCodes,
     pool: rows,
+    rules,
     history: null,
   };
 }

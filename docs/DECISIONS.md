@@ -90,10 +90,15 @@ those blocks to the cached payload. Legal formations are generated from the publ
 positional minimums rather than a hardcoded list. `DEFAULT_RULES` is the fallback and the
 single definition the optimiser's constants derive from, so the two cannot disagree.
 
+The rules are threaded all the way through the solver — `bestXI`, the greedy sweep, the
+budget reserve, the cheapest-legal fallback, the local search and the transfer planner all
+take them as a parameter rather than reading module constants. Verified by solving against
+hypothetical rule sets: a 16-man squad with three keepers, a ten-a-side XI, a four-per-club
+limit and a £110m budget all produce legal squads matching those rules.
+
 `ruleDrift()` compares live rules against what the app was built for, and the squad page
-shows a warning if they ever differ. Squad validation follows FPL immediately; the optimiser
-internals still use the defaults, so the warning matters — it is the signal that generated
-squads need checking.
+notes any difference. Since the solver follows the live rules, that notice is informational
+rather than a warning that output is wrong.
 
 ## Optimiser
 

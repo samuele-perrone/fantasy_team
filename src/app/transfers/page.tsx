@@ -66,12 +66,14 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
     freeTransfers: team.freeTransfers,
     maxTransfers: 3,
     key: "xPts",
+    rules: team.rules,
   });
 
   const wildcard = optimiseSquad(team.pool, {
     budget: team.squadValue + team.bank,
     key: "xPts",
     benchWeight: 0.12,
+    rules: team.rules,
   });
   const currentScore = team.squad.reduce((a, p) => a + p.xPts, 0);
   const wildcardGain = wildcard.xi.startingPoints - team.xi.starters.reduce((a, p) => a + p.xPts, 0);

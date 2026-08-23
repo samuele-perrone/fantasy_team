@@ -168,7 +168,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
 
     // Under Bench Boost every pick scores, so the estimate has to include the bench.
     const scoped = team.squad.map((p, i) => ({ ...p, xPtsNext: perPlayer[i] }));
-    const xi = bestXI(scoped, "xPtsNext");
+    const xi = bestXI(scoped, "xPtsNext", undefined, team.rules);
     const estimate = benchCounts(chipByEvent.get(h.event))
       ? perPlayer.reduce((a, v) => a + v, 0) + (xi.captain?.xPtsNext ?? 0)
       : xi.startingPoints + (xi.captain?.xPtsNext ?? 0);
@@ -194,7 +194,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         .filter((f) => f.event === event)
         .reduce((a, f) => a + f.xPts, 0),
     }));
-    const xi = bestXI(scoped, "xPtsNext");
+    const xi = bestXI(scoped, "xPtsNext", undefined, team.rules);
     weeks.push({
       event,
       actual: null,

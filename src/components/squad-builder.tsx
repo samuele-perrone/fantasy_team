@@ -363,6 +363,7 @@ export function SquadBuilder({
         minStartProb: prefs.nailed ? 0.75 : undefined,
         maxNextDifficulty: prefs.easyFixture ? 3 : undefined,
         penaltyBonus: prefs.penalties ? 1.5 : 0,
+        rules,
       });
 
       if (result.squad.length !== 15) {

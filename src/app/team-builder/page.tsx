@@ -42,6 +42,7 @@ export default async function TeamBuilderPage({ searchParams }: PageProps<"/team
     benchWeight,
     locked,
     banned,
+    rules: data.rules,
   });
 
   const byId = new Map(rows.map((r) => [r.id, r]));
