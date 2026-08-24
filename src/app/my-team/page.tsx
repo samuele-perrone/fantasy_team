@@ -8,6 +8,7 @@ import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
 import { chipLabel } from "@/lib/fpl/chips";
 import { bestXI } from "@/lib/fpl/optimiser";
 import { projectForEvent } from "@/lib/fpl/projection";
+import { simulateGameweek } from "@/lib/fpl/simulate";
 import { getGameData } from "@/lib/fpl/data";
 import { benchCounts } from "@/lib/fpl/chips";
 import { getUserId } from "@/lib/supabase/server";
@@ -203,6 +204,30 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   }
 
   const maxWeek = Math.max(1, ...weeks.flatMap((w) => [w.actual ?? 0, w.projected]));
+
+  // A projection is a mean. What a manager actually wants to know is the range, and how
+  // often a big week is even possible with this squad.
+  const nextEventId = game.ctx.nextEvent;
+  const outcome = simulateGameweek(
+    team.actual.starters,
+    team.squad.find((p) => p.id === team.captainId) ?? team.xi.captain,
+    game.ctx,
+    nextEventId,
+  );
+  const withTripleCaptain = simulateGameweek(
+    team.actual.starters,
+    team.squad.find((p) => p.id === team.captainId) ?? team.xi.captain,
+    game.ctx,
+    nextEventId,
+    { captainMultiplier: 3 },
+  );
+  const withBenchBoost = simulateGameweek(
+    team.actual.starters,
+    team.squad.find((p) => p.id === team.captainId) ?? team.xi.captain,
+    game.ctx,
+    nextEventId,
+    { bench: team.actual.bench },
+  );
   const scored = weeks.filter((w) => w.actual !== null);
   const totalActual = scored.reduce((a, w) => a + (w.actual ?? 0), 0);
   const totalEstimate = scored.reduce((a, w) => a + w.projected, 0);
@@ -437,6 +462,79 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           </div>
         </section>
       </div>
+
+      <section className="panel px-5 py-4">
+        <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">
+          What this squad could score
+          <InfoTip label="About the range">
+            Four thousand simulated gameweeks, resampling each player from the same components
+            the projection is built from — minutes, goals, assists, clean sheets, defensive
+            contributions and bonus.
+            <span className="mt-1.5 block text-slate-400">
+              A projection is an average. Points arrive in lumps of 4 to 13, so the spread
+              matters more than the mean when you are chasing a big week.
+            </span>
+          </InfoTip>
+        </h2>
+        <p className="mb-4 text-[12px] text-slate-500">
+          Gameweek {nextEventId}, based on your XI as picked.
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Typical week" value={outcome.median} sub="Half your weeks land near here" />
+          <StatCard
+            label="Usual range"
+            value={`${outcome.lower}–${outcome.upper}`}
+            sub="The middle half of outcomes"
+          />
+          <StatCard label="Good week" value={outcome.p90} sub="Top 10% for this squad" tone="brand" />
+          <StatCard label="Great week" value={outcome.p99} sub="Top 1% for this squad" tone="brand" />
+        </div>
+
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[420px] text-[12.5px]">
+            <thead>
+              <tr className="border-b border-pitch-800 text-[10px] uppercase tracking-wide text-slate-500">
+                <th className="py-1.5 text-left">Chance of</th>
+                <th className="text-right">As picked</th>
+                <th className="text-right">Triple Captain</th>
+                <th className="text-right">Bench Boost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(
+                [
+                  ["60+ points", "chanceOf60"],
+                  ["80+ points", "chanceOf80"],
+                  ["100+ points", "chanceOf100"],
+                ] as const
+              ).map(([label, key]) => (
+                <tr key={key} className="border-b border-pitch-800/50">
+                  <td className="py-1.5 text-slate-400">{label}</td>
+                  <td className="num py-1.5 text-right font-semibold text-white">
+                    {(outcome[key] * 100).toFixed(1)}%
+                  </td>
+                  <td className="num py-1.5 text-right text-brand-400">
+                    {(withTripleCaptain[key] * 100).toFixed(1)}%
+                  </td>
+                  <td className="num py-1.5 text-right text-brand-400">
+                    {(withBenchBoost[key] * 100).toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-3 text-[11.5px] leading-relaxed text-slate-500">
+          Chips shift the odds but do not transform them. The largest lever on a big week is
+          the squad itself — see{" "}
+          <Link href={`/transfers?${query}`} className="text-brand-400 hover:underline">
+            AI transfers
+          </Link>{" "}
+          for what would raise this ceiling.
+        </p>
+      </section>
 
       <section className="panel px-5 py-4">
         <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">

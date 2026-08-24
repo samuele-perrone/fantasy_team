@@ -110,6 +110,21 @@ and today's model has seen results the original forecast had not. It is a rough 
 check, not a track record. A real one needs projections snapshotted at each deadline.
 
 
+## Outcome ranges
+
+`simulate.ts` resamples a gameweek from the same components the projection is built from,
+producing a distribution rather than a single mean. This exists because a projection of 41
+says nothing about whether 80 is reachable — FPL points arrive in lumps of 4 to 13, so the
+spread matters more than the average when chasing a big week.
+
+Measured on a real mid-table squad projecting ~41: median 52, middle half 43–61, top 10% at
+71, top 1% at 90. The chance of 80+ was 2.5% as picked, rising to 8.4% with Triple Captain and
+9.4% with Bench Boost — but 21.7% with the optimiser's best £100m squad. Squad quality is
+roughly an order of magnitude more important than chip timing for reaching a big score.
+
+Note the simulated median (52) sits above the projection (41), which is consistent with the
+model's known under-prediction: it predicted 79% of actual points in gameweek one.
+
 ## Squad rules
 
 Quotas, the per-club limit, squad and XI sizes, and the budget are read from FPL's
