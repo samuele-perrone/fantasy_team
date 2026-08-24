@@ -29,7 +29,7 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
 
   let team;
   try {
-    team = await resolveTeam(params, HORIZON);
+    team = await resolveTeam(params, 38);
   } catch (e) {
     return (
       <div>
@@ -62,6 +62,10 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
       </div>
     );
   }
+
+  // The squad carries fixtures for the whole remaining season, so both the eight-week detail
+  // and the season-long wildcard search read from the same projections.
+  const seasonSquad = team.squad;
 
   /** Points a squad member is projected for in one specific gameweek. */
   const pointsIn = (p: PlayerRow, event: number) =>
@@ -98,6 +102,44 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
   const spent = chips.filter((c) => c.usedIn !== null);
 
   const meanWeek = weeks.reduce((a, w) => a + w.starting, 0) / Math.max(weeks.length, 1);
+
+  /**
+   * A Wildcard is a permanent rebuild, so timing it against the next eight gameweeks was
+   * looking through a keyhole. Fixtures are published for the whole season, so the squad is
+   * projected across every remaining gameweek and the worst sustained run is found.
+   *
+   * Beyond roughly eight weeks this is effectively a fixture-difficulty read: current form
+   * and injury news do not extend that far, so what remains is who your players face. That
+   * is the right signal for Wildcard timing anyway, but it is not a points forecast.
+   */
+  const lastEvent = data.events[data.events.length - 1]?.id ?? 38;
+  const seasonWeeks: { event: number; starting: number }[] = [];
+
+  for (let event = first; event <= lastEvent; event++) {
+    const scoped = seasonSquad.map((p) => ({
+      ...p,
+      xPtsNext: p.fixtures.filter((f) => f.event === event).reduce((a, f) => a + f.xPts, 0),
+    }));
+    seasonWeeks.push({ event, starting: bestXI(scoped, "xPtsNext", undefined, team.rules).startingPoints });
+  }
+
+  const RUN = 5;
+  const seasonMean =
+    seasonWeeks.reduce((a, w) => a + w.starting, 0) / Math.max(seasonWeeks.length, 1);
+
+  // Score every possible start by the run that follows it, ignoring the tail where a full
+  // run does not fit.
+  const runs = seasonWeeks
+    .map((w, i) => {
+      const run = seasonWeeks.slice(i, i + RUN);
+      return run.length === RUN
+        ? { event: w.event, mean: run.reduce((a, x) => a + x.starting, 0) / RUN }
+        : null;
+    })
+    .filter((r): r is { event: number; mean: number } => r !== null);
+
+  const worstRun = [...runs].sort((a, b) => a.mean - b.mean)[0] ?? null;
+  const bestRun = [...runs].sort((a, b) => b.mean - a.mean)[0] ?? null;
 
   /**
    * Best week for a chip, with the reason, or a hold when nothing in range justifies it.
@@ -149,23 +191,21 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
     }
 
     if (c.key === "wildcard") {
-      // Score each possible start by the three weeks that follow it, since a Wildcard is
-      // played to fix a run rather than a single fixture.
-      const runs = inRange
-        .map((w, i) => {
-          const run = inRange.slice(i, i + 3);
-          return { week: w, mean: run.reduce((a, x) => a + x.starting, 0) / run.length };
-        })
-        .filter((r) => r.mean > 0);
-      if (!runs.length) return { hold: "not enough fixtures in range" };
+      // Searched across the whole season rather than the visible horizon, then clipped to
+      // this chip's own window.
+      const candidates = runs.filter(
+        (r) => r.event >= c.firstEvent && r.event <= c.lastEvent,
+      );
+      if (!candidates.length) return { hold: "no run in this chip's window" };
 
-      const worst = [...runs].sort((a, b) => a.mean - b.mean)[0];
-      if (worst.mean >= meanWeek * 0.92) {
-        return { hold: "no sustained bad run in range — hold it" };
+      const worst = [...candidates].sort((a, b) => a.mean - b.mean)[0];
+      if (worst.mean >= seasonMean * 0.92) {
+        return { hold: "no sustained bad run this half — hold it" };
       }
+      const week = seasonWeeks.find((w) => w.event === worst.event);
       return {
-        week: worst.week,
-        why: `${worst.mean.toFixed(1)} average over the following three weeks`,
+        week: { ...weeks[0], event: worst.event, starting: week?.starting ?? worst.mean },
+        why: `${worst.mean.toFixed(1)} average over GW${worst.event}–${worst.event + RUN - 1}, against a ${seasonMean.toFixed(0)} season average`,
       };
     }
 
@@ -272,9 +312,49 @@ export default async function PlannerPage({ searchParams }: PageProps<"/planner"
           <p className="text-[12.5px] text-slate-500">No chips available in this window.</p>
         )}
 
+        {worstRun && bestRun && (
+          <div className="mt-3 border-t border-pitch-800 pt-3">
+            <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              Season-long fixture outlook
+            </div>
+            <div className="flex items-end gap-[3px] overflow-x-auto pb-1">
+              {seasonWeeks.map((w) => {
+                const max = Math.max(...seasonWeeks.map((x) => x.starting), 1);
+                const isWorst =
+                  w.event >= worstRun.event && w.event < worstRun.event + RUN;
+                return (
+                  <div
+                    key={w.event}
+                    title={`GW${w.event}: ${w.starting.toFixed(1)} projected`}
+                    className="flex min-w-[12px] flex-1 flex-col items-center gap-0.5"
+                  >
+                    <div
+                      className={cn(
+                        "w-full rounded-t",
+                        isWorst ? "bg-amber-500" : "bg-pitch-600",
+                      )}
+                      style={{ height: `${Math.max(3, (w.starting / max) * 54)}px` }}
+                    />
+                    {w.event % 5 === 0 && (
+                      <span className="text-[8px] text-slate-600">{w.event}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[11.5px] text-slate-500">
+              Worst five-week run starts <strong className="text-amber-300">GW{worstRun.event}</strong>{" "}
+              at {worstRun.mean.toFixed(1)} a week; best starts GW{bestRun.event} at{" "}
+              {bestRun.mean.toFixed(1)}. Season average {seasonMean.toFixed(1)}.
+            </p>
+          </div>
+        )}
+
         <p className="mt-3 border-t border-pitch-800 pt-2.5 text-[11.5px] leading-relaxed text-slate-500">
-          These are the best weeks the model can see inside the next {HORIZON} gameweeks, not
-          across the season. Blank and double gameweeks are usually the right moment for Free
+          Bench Boost, Triple Captain and Free Hit are timed against the next {HORIZON}
+          gameweeks; the Wildcard is searched across the whole season. Beyond roughly eight
+          weeks the projection is effectively a fixture-difficulty read, since form and injury
+          news do not reach that far. Blank and double gameweeks are usually the right moment for Free
           Hit and Bench Boost, and those are only confirmed a few weeks ahead.
         </p>
       </section>

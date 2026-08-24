@@ -137,6 +137,22 @@ and cannot be played in gameweek one, when transfers are already unlimited.
 Chips already played are read from the entry's history and shown as spent; recommendations
 cover only what is left.
 
+### The Wildcard is timed across the season, not the horizon
+
+Wildcard timing originally searched the visible eight gameweeks and returned the weakest week
+in that window, which on a real entry meant recommending GW9 for a dip that was ordinary.
+Fixtures are published for the whole season and projecting all of it costs 10ms, so the
+search now covers every remaining gameweek and scores each candidate by the five-week run
+that follows it, clipped to the chip's own half-season window.
+
+Beyond roughly eight weeks this is effectively a fixture-difficulty read — form and injury
+news do not reach that far — which is the right signal for Wildcard timing but is not a
+points forecast, and the page says so.
+
+The result is usually "hold": a fifteen-man squad drawn from many clubs averages fixture
+swings away, so the season-long spread on a balanced squad is only a couple of points a week.
+A weak signal reported as weak is more useful than a confident pick from noise.
+
 ### Hits need a margin, not just a positive net gain
 
 Recommending the plan with the highest net gain meant recommending two hits, −8 points
