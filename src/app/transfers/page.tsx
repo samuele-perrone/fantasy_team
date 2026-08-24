@@ -78,10 +78,33 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
   const currentScore = team.squad.reduce((a, p) => a + p.xPts, 0);
   const wildcardGain = wildcard.xi.startingPoints - team.xi.starters.reduce((a, p) => a + p.xPts, 0);
 
-  const bestPlan = plans.reduce<TransferPlan | null>(
+  /**
+   * Which plan to actually recommend.
+   *
+   * Picking the highest net gain alone recommends taking hits on edges far smaller than the
+   * model's own error — measured at 1.57 points per player per gameweek, against plans that
+   * differ by well under a point per gameweek. A hit costs 4 points with certainty, so a
+   * projected edge should clear the hits by a real margin before it is worth taking one.
+   *
+   * The margin required is the hit cost again: a plan taking one hit must beat the best
+   * hit-free plan by more than 4 points, two hits by more than 8, and so on. Below that the
+   * safer plan is recommended and the aggressive one is still shown, labelled.
+   */
+  const freePlans = plans.filter((p) => p.hitCost === 0);
+  const bestFree = freePlans.reduce<TransferPlan | null>(
     (best, p) => (!best || p.netGain > best.netGain ? p : best),
     null,
   );
+  const freeBaseline = bestFree?.netGain ?? 0;
+
+  const bestPlan =
+    plans.reduce<TransferPlan | null>((best, p) => {
+      // Require the projected edge to clear the hits taken, on top of paying for them.
+      const margin = p.hitCost;
+      const clears = p.hitCost === 0 || p.netGain > freeBaseline + margin;
+      if (!clears) return best;
+      return !best || p.netGain > best.netGain ? p : best;
+    }, null) ?? bestFree;
 
   return (
     <div className="space-y-6">
@@ -104,7 +127,13 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
         <StatCard
           label="Best plan"
           value={bestPlan ? `${bestPlan.moves.length} move${bestPlan.moves.length > 1 ? "s" : ""}` : "Hold"}
-          sub={bestPlan ? `+${bestPlan.netGain.toFixed(2)} pts after hits` : "No move beats holding"}
+          sub={
+            bestPlan
+              ? bestPlan.hitCost === 0
+                ? `+${bestPlan.netGain.toFixed(2)} pts, no hit taken`
+                : `+${bestPlan.netGain.toFixed(2)} pts after a −${bestPlan.hitCost} hit`
+              : "No move beats holding"
+          }
           tone="brand"
         />
         <StatCard
@@ -123,6 +152,12 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
       ) : (
         <section className="space-y-4">
           <h2 className="text-[15px] font-bold text-white">Transfer plans</h2>
+          <p className="-mt-2 text-[12px] leading-relaxed text-slate-500">
+            A hit costs 4 points with certainty, so a plan is only recommended when its
+            projected edge clears the hits with room to spare. The model&apos;s measured error
+            is about 1.6 points per player per gameweek, and plans often differ by less than
+            that — in which case the safer plan is the honest call.
+          </p>
           {plans.map((plan, i) => (
             <div
               key={i}
@@ -138,6 +173,14 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
                 {plan === bestPlan && (
                   <span className="rounded bg-brand-500/20 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-brand-400">
                     Recommended
+                  </span>
+                )}
+                {plan !== bestPlan && plan.hitCost > 0 && (
+                  <span
+                    title={`This plan beats the best hit-free plan by ${(plan.netGain - freeBaseline).toFixed(2)} points, which does not clear the ${plan.hitCost}-point hit by a safe margin given the model's error of about 1.6 points per player per gameweek.`}
+                    className="rounded bg-pitch-800 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-slate-500"
+                  >
+                    Not worth the hit
                   </span>
                 )}
                 <div className="ml-auto flex items-center gap-4 text-[12.5px]">

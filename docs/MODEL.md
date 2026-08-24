@@ -125,6 +125,13 @@ roughly an order of magnitude more important than chip timing for reaching a big
 Note the simulated median (52) sits above the projection (41), which is consistent with the
 model's known under-prediction: it predicted 79% of actual points in gameweek one.
 
+## Using the error honestly
+
+MAE of about 1.6 points per player per gameweek is not just a scoreboard number — it bounds
+what the model can legitimately claim. Transfer plans that differ by less than that per
+player are not distinguishable, which is why taking a hit requires the projected edge to
+clear the hit cost with a margin rather than merely exceed it.
+
 ## Squad rules
 
 Quotas, the per-club limit, squad and XI sizes, and the budget are read from FPL's

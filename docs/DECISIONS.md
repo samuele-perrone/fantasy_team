@@ -137,6 +137,17 @@ and cannot be played in gameweek one, when transfers are already unlimited.
 Chips already played are read from the entry's history and shown as spent; recommendations
 cover only what is left.
 
+### Hits need a margin, not just a positive net gain
+
+Recommending the plan with the highest net gain meant recommending two hits, −8 points
+certain, for a projected edge of 2.65 points over five gameweeks — about 0.5 a gameweek
+spread across three swapped players. The model's measured error is 1.57 points per player per
+gameweek, so the claimed edge was far smaller than the error on any one of them.
+
+A plan taking hits is now only recommended when it beats the best hit-free plan by more than
+the hits cost again: one hit must clear by 4 points, two by 8. Aggressive plans are still
+shown, labelled "not worth the hit" with the reasoning on hover, rather than hidden.
+
 ## Auth
 
 ### The allow-list fails closed
