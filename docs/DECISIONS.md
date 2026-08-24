@@ -259,3 +259,34 @@ was deleted.
 
 Rewrites kept every caveat and every number. "Nobody scores 10 because your bench drags the
 average down" says exactly what "cheap enablers cap the composite near 6.5" said.
+
+### The AI panel explains; it does not calculate
+
+The obvious way to build "ask about your squad" is to hand the model the raw data and let it
+reason. That was rejected: an LLM doing arithmetic over 15 players would sooner or later print
+a number that disagreed with the number next to it on the page, and the whole site's credibility
+rests on those numbers being consistent.
+
+So `squad-brief.ts` ships **conclusions, not just data** — the best XI, the captaincy gap, the
+ranked transfer plans with their hit costs already netted off, the chip windows. The model's
+job is to select, compare and explain, which is what it is good at.
+
+This was worth doing carefully. Testing on `claude-3-haiku`, the question *"is it worth a -4 to
+bring in Welbeck?"* got the answer "yes, the -4 is worth it" — when that transfer is **free**,
+because the manager had a free transfer and the brief said `hit 0`. The model had accepted the
+false premise in the question instead of checking. The brief now spells out the free-transfer
+count and annotates every plan as `FREE, no points deducted` or `costs N points`, and the
+system prompt has an explicit rule about correcting false premises.
+
+That failure is also an argument for the model tier mattering: a weak model will take the
+question's word for things a stronger one checks.
+
+### Model choice is resolved at runtime, not pinned
+
+`resolveModel()` walks an ordered list of Claude models and caches the first the gateway will
+serve. Pinning the best one would 403 on a free tier; pinning a weak one would stay weak after
+a top-up. Resolving at runtime means the account tier — not a deploy — decides.
+
+The probe costs a request, which is the one thing a rate-limited tier cannot spare, so results
+are cached for 15 minutes and the preferred model is tried for real before any fallback is
+probed.

@@ -5,7 +5,8 @@
 **Live: [fantasyteamhub.com](https://fantasyteamhub.com)**
 
 A private Fantasy Premier League analytics site: points projections, player stats, fixture
-analysis, transfer suggestions and squad building, built on the official FPL API.
+analysis, transfer suggestions and squad building, built on the official FPL API — plus a
+Claude-backed panel that answers questions about your own squad.
 
 The site sits behind Google sign-in and an email allow-list, so only permitted accounts can
 see anything.
@@ -32,7 +33,7 @@ Six pages, plus the player profile. The site was deliberately cut down from eigh
 | Route | What it does |
 | --- | --- |
 | `/` | Deadline countdown, best captain picks, best value, injury doubts |
-| `/my-team` | Your squad — ratings, best XI, captaincy verdict, live score, chips, week-by-week history |
+| `/my-team` | Your squad — ratings, best XI, captaincy verdict, live score, chips, week-by-week history, and an **Ask about your squad** panel backed by Claude |
 | `/transfers` | Ranked 1–3 transfer plans scored net of hits, plus a season-wide wildcard view |
 | `/players` | Every player ranked, across five column groups (projection, season, attack, defence, market) |
 | `/players/[id]` | Player profile — projections per fixture, underlying stats, gameweek history, past seasons |

@@ -36,17 +36,24 @@ export function Pitch({
 
   return (
     <div>
+      {/*
+       * The FPL pitch: green, striped, and marked out like the real thing. The stripes are a
+       * repeating-linear-gradient rather than an image so it scales to any width without
+       * banding, and the markings sit on top at low opacity.
+       */}
       <div
-        className="relative overflow-hidden rounded-2xl border border-pitch-700 px-2 py-5"
+        className="relative overflow-hidden rounded-t-2xl border border-b-0 border-pitch-700 px-1.5 pb-4 pt-5 sm:px-3"
         style={{
-          background:
-            "linear-gradient(180deg,#0d2a1c 0%,#0f3323 45%,#0b2418 100%)",
+          backgroundColor: "#0e8a44",
+          backgroundImage:
+            "repeating-linear-gradient(180deg,rgba(255,255,255,.055) 0 42px,transparent 42px 84px)," +
+            "linear-gradient(180deg,#12a352 0%,#0e8a44 55%,#0a6f37 100%)",
         }}
       >
         <PitchMarkings />
-        <div className="relative space-y-5">
+        <div className="relative space-y-4 sm:space-y-6">
           {rows.map((line, i) => (
-            <div key={i} className="flex flex-wrap items-start justify-center gap-x-1 gap-y-4 sm:gap-x-2">
+            <div key={i} className="flex flex-wrap items-start justify-center gap-x-1 gap-y-3 sm:gap-x-3">
               {line.map((p) => (
                 <Shirt
                   key={p.id}
@@ -63,11 +70,15 @@ export function Pitch({
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-pitch-700 bg-pitch-850 px-2 py-4">
-        <div className="mb-3 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      {/* FPL puts the bench on its own paler strip directly under the pitch, not a separate card. */}
+      <div
+        className="rounded-b-2xl border border-t-0 border-pitch-700 px-1.5 pb-4 pt-3 sm:px-3"
+        style={{ backgroundColor: "#0a5c2f" }}
+      >
+        <div className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/60">
           Bench
         </div>
-        <div className="flex flex-wrap items-start justify-center gap-x-1 gap-y-4 sm:gap-x-2">
+        <div className="flex flex-wrap items-start justify-center gap-x-1 gap-y-3 sm:gap-x-3">
           {xi.bench.map((p, i) => (
             <Shirt
               key={p.id}
@@ -107,29 +118,32 @@ function Shirt({
   return (
     <Link
       href={`/players/${player.id}`}
-      className="group relative w-[60px] shrink-0 text-center sm:w-[78px] md:w-[92px]"
+      className="group relative w-[62px] shrink-0 text-center sm:w-[80px] md:w-[94px]"
       title={player.news || undefined}
     >
-      <div className="relative mx-auto h-[48px] w-[42px]">
+      <div className="relative mx-auto h-[46px] w-[42px] sm:h-[54px] sm:w-[50px]">
         <Image
           src={shirtUrl(teamCode, player.posId === 1)}
           alt=""
-          width={42}
-          height={48}
+          width={50}
+          height={54}
           unoptimized
-          className={cn("h-full w-full object-contain transition group-hover:scale-110", unavailable && "opacity-55")}
+          className={cn(
+            "h-full w-full object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,.35)] transition group-hover:-translate-y-0.5",
+            unavailable && "opacity-55",
+          )}
         />
         {isCaptain && <Armband label="C" />}
         {!isCaptain && isVice && <Armband label="V" muted />}
         {benchOrder && (
-          <span className="absolute -left-1 top-0 rounded bg-pitch-700 px-1 text-[9px] font-bold text-slate-400">
+          <span className="absolute -left-1.5 top-0 grid h-[17px] w-[17px] place-items-center rounded-full bg-white/85 text-[9px] font-black text-[#37003c]">
             {benchOrder}
           </span>
         )}
         {unavailable && (
           <span
             className={cn(
-              "absolute -right-1 top-0 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] font-black text-white",
+              "absolute -right-1 top-0 grid h-4 w-4 place-items-center rounded-full text-[9px] font-black text-white ring-2 ring-black/20",
               player.status === "d" ? "bg-amber-500" : "bg-rose-500",
             )}
           >
@@ -138,13 +152,22 @@ function Shirt({
         )}
       </div>
 
-      <div className="mt-1 truncate rounded-t bg-pitch-950/85 px-1 text-[11px] font-bold text-white">
-        {player.name}
+      {/* FPL's two-tone card: purple name plate over a mint stat plate. */}
+      <div className="mt-1 overflow-hidden rounded-[3px] shadow-[0_1px_2px_rgba(0,0,0,.3)]">
+        <div
+          className="truncate px-1 py-[3px] text-[10.5px] font-bold leading-tight text-white sm:text-[11.5px]"
+          style={{ backgroundColor: "#37003c" }}
+        >
+          {player.name}
+        </div>
+        <div
+          className="num truncate px-1 py-[2px] text-[10px] font-black leading-tight sm:text-[11px]"
+          style={{ backgroundColor: "#00ff87", color: "#37003c" }}
+        >
+          {Number.isFinite(value) ? value.toFixed(metric === "cost" ? 1 : 2) : "—"}
+        </div>
       </div>
-      <div className="num truncate rounded-b bg-brand-500 px-1 text-[10.5px] font-bold text-pitch-950">
-        {Number.isFinite(value) ? value.toFixed(metric === "cost" ? 1 : 2) : "—"}
-      </div>
-      <div className="mt-0.5 text-[9.5px] uppercase tracking-wide text-slate-400">
+      <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/70">
         {player.team} · {metricLabel}
       </div>
     </Link>
@@ -166,21 +189,31 @@ function Armband({ label, muted }: { label: string; muted?: boolean }) {
   );
 }
 
+/**
+ * Only the top half of a pitch is drawn — the XI is laid out keeper-first from the top, so
+ * the goal, box and centre circle land where the eye expects them. preserveAspectRatio is
+ * "none" deliberately: the markings stretch with the card rather than boxing its height.
+ */
 function PitchMarkings() {
   return (
     <svg
       viewBox="0 0 340 420"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-25"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.38]"
       aria-hidden
     >
-      <rect x="6" y="6" width="328" height="408" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <line x1="6" y1="210" x2="334" y2="210" stroke="#fff" strokeWidth="1.5" />
-      <circle cx="170" cy="210" r="46" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="90" y="6" width="160" height="62" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="90" y="352" width="160" height="62" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="132" y="6" width="76" height="26" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="132" y="388" width="76" height="26" fill="none" stroke="#fff" strokeWidth="1.5" />
+      <g fill="none" stroke="#fff" strokeWidth="2">
+        <rect x="5" y="5" width="330" height="410" />
+        {/* penalty box, six-yard box and spot at the defending end */}
+        <rect x="88" y="5" width="164" height="66" />
+        <rect x="132" y="5" width="76" height="28" />
+        <circle cx="170" cy="52" r="1.8" fill="#fff" />
+        {/* the D */}
+        <path d="M132 71 A 44 44 0 0 0 208 71" />
+        {/* halfway line and centre circle at the bottom edge of the card */}
+        <line x1="5" y1="415" x2="335" y2="415" />
+        <circle cx="170" cy="415" r="52" />
+      </g>
     </svg>
   );
 }

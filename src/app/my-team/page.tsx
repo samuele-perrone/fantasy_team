@@ -6,6 +6,7 @@ import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/comp
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
 import { bestXI } from "@/lib/fpl/optimiser";
+import { AskPanel } from "@/components/ask-panel";
 import { projectForEvent } from "@/lib/fpl/projection";
 import { simulateGameweek } from "@/lib/fpl/simulate";
 import { getGameData } from "@/lib/fpl/data";
@@ -274,12 +275,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         >
           See transfers →
         </Link>
-        <Link
-          href={team.source === "manual" ? `/planner?${query}` : `/live?${query}`}
-          className="rounded-lg border border-pitch-600 px-4 py-2 text-[13px] font-bold text-slate-300 transition hover:border-brand-500 hover:text-white"
-        >
-          {team.source === "manual" ? "Planner" : "Live rank"}
-        </Link>
+        {/* Live rank and the planner both live on this page now, so their buttons went with them. */}
         {team.source === "manual" && (
           <Link
             href={`/squad?${query}`}
@@ -289,6 +285,8 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           </Link>
         )}
       </PageHeader>
+
+      <AskPanel teamQuery={query} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {anyMinutes ? (

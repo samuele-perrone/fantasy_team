@@ -98,8 +98,13 @@ export function BuilderPitch({
   return (
     <div>
       <div
-        className="relative overflow-hidden rounded-2xl border border-pitch-700 px-2 py-4"
-        style={{ background: "linear-gradient(180deg,#0d2a1c 0%,#0f3323 45%,#0b2418 100%)" }}
+        className="relative overflow-hidden rounded-t-2xl border border-b-0 border-pitch-700 px-2 py-4"
+        style={{
+          backgroundColor: "#0e8a44",
+          backgroundImage:
+            "repeating-linear-gradient(180deg,rgba(255,255,255,.055) 0 42px,transparent 42px 84px)," +
+            "linear-gradient(180deg,#12a352 0%,#0e8a44 55%,#0a6f37 100%)",
+        }}
       >
         <PitchMarkings />
 
@@ -130,8 +135,11 @@ export function BuilderPitch({
         </div>
       </div>
 
-      <div className="mt-2 rounded-2xl border border-pitch-700 bg-pitch-850 px-2 py-3">
-        <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <div
+        className="rounded-b-2xl border border-t-0 border-pitch-700 px-2 py-3"
+        style={{ backgroundColor: "#0a5c2f" }}
+      >
+        <div className="mb-2 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/60">
           Bench
         </div>
         <div className="flex flex-wrap items-start justify-center gap-x-1 gap-y-3">
@@ -367,21 +375,23 @@ function PitchSlot({
         )}
       </div>
 
-      <div
-        className={cn(
-          "mt-1 truncate rounded-t px-1 text-[10.5px] font-bold",
-          benched ? "bg-pitch-950/70 text-slate-400" : "bg-pitch-950/85 text-white",
-        )}
-      >
-        {p.name}
-      </div>
-      <div
-        className={cn(
-          "num truncate rounded-b px-1 text-[10px] font-bold",
-          benched ? "bg-pitch-600 text-slate-200" : "bg-brand-500 text-pitch-950",
-        )}
-      >
-        {money(p.cost)}
+      <div className="mt-1 overflow-hidden rounded-[3px] shadow-[0_1px_2px_rgba(0,0,0,.3)]">
+        <div
+          className="truncate px-1 py-[3px] text-[10.5px] font-bold leading-tight text-white"
+          style={{ backgroundColor: benched ? "#4a2350" : "#37003c" }}
+        >
+          {p.name}
+        </div>
+        <div
+          className="num truncate px-1 py-[2px] text-[10px] font-black leading-tight"
+          style={
+            benched
+              ? { backgroundColor: "#7fd8b0", color: "#37003c" }
+              : { backgroundColor: "#00ff87", color: "#37003c" }
+          }
+        >
+          {money(p.cost)}
+        </div>
       </div>
     </button>
   );
@@ -437,14 +447,18 @@ function PitchMarkings() {
     <svg
       viewBox="0 0 340 420"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-20"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.38]"
       aria-hidden
     >
-      <rect x="6" y="6" width="328" height="408" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <line x1="6" y1="210" x2="334" y2="210" stroke="#fff" strokeWidth="1.5" />
-      <circle cx="170" cy="210" r="46" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="90" y="6" width="160" height="62" fill="none" stroke="#fff" strokeWidth="1.5" />
-      <rect x="90" y="352" width="160" height="62" fill="none" stroke="#fff" strokeWidth="1.5" />
+      <g fill="none" stroke="#fff" strokeWidth="2">
+        <rect x="5" y="5" width="330" height="410" />
+        <rect x="88" y="5" width="164" height="66" />
+        <rect x="132" y="5" width="76" height="28" />
+        <circle cx="170" cy="52" r="1.8" fill="#fff" />
+        <path d="M132 71 A 44 44 0 0 0 208 71" />
+        <line x1="5" y1="415" x2="335" y2="415" />
+        <circle cx="170" cy="415" r="52" />
+      </g>
     </svg>
   );
 }

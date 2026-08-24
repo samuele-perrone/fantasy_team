@@ -197,3 +197,33 @@ if (false && !signedIn && !isPublic) return redirectTo("/login", pathname + sear
 
 **Restore it from git afterwards** (`git checkout src/proxy.ts`) and confirm
 `grep -c 'if (false &&' src/proxy.ts` returns 0 before committing.
+
+## Ask about your squad (the AI panel)
+
+`/my-team` has an **Ask about your squad** panel backed by Claude through the **Vercel AI
+Gateway**. There is no API key to manage: the gateway authenticates with the deployment's
+`VERCEL_OIDC_TOKEN`, which Vercel injects automatically and `vercel env pull` fetches for local
+development.
+
+**What the account tier decides.** The gateway serves models according to the Vercel plan, not
+the code. On the **free tier** only `anthropic/claude-3-haiku` is served, and it is rate
+limited to roughly one request every few minutes — enough to prove the wiring, not enough to
+use. Adding credits at *Vercel → AI Gateway → top up* unlocks the current Claude models.
+
+`src/lib/ai/model.ts` walks an ordered candidate list and caches the winner for 15 minutes, so
+**a top-up upgrades the answers without a code change or a redeploy** — the next cache miss
+picks up the better model. To pin one explicitly, set `FTH_AI_MODEL`:
+
+```bash
+vercel env add FTH_AI_MODEL          # e.g. anthropic/claude-sonnet-5
+```
+
+**Cost control.** `/api/ask` calls `getUserId()` before spending anything, so it is gated by
+the same allow-list as the rest of the site — the proxy does not cover API routes. Threads are
+capped at 24 messages and 2000 characters per message.
+
+**Where the numbers come from.** The model never does the maths. `src/lib/ai/squad-brief.ts`
+renders the squad, the projections, the ranked transfer plans and the chip state as text, all
+computed by the same code that renders the pages, and the prompt tells the model to use those
+figures rather than derive its own. That is what keeps the chat from contradicting the page it
+sits on.

@@ -56,6 +56,19 @@ There are six pages plus the player profile; ten earlier routes are permanent re
 `next.config.ts`. Before adding a page, check whether it is a column, a sort or a section on
 one of the six — the last cut existed because the site had a page per idea.
 
+### The AI panel
+
+`/api/ask` streams Claude through the Vercel AI Gateway (OIDC auth — no key). Three rules:
+
+- **the model explains, it never calculates.** `src/lib/ai/squad-brief.ts` hands it conclusions
+  already computed by `optimiser.ts` and `projection.ts`, so the chat cannot contradict the
+  page. Adding a number the model derives itself breaks that guarantee.
+- **the route re-checks `getUserId()`** — the proxy matcher does not cover API routes, and
+  every call costs money
+- **the model is resolved at runtime**, not pinned: `resolveModel()` walks a candidate list and
+  caches what the account tier will actually serve. A free tier serves only `claude-3-haiku`
+  and rate-limits it heavily, which is enough to test the wiring and not much else.
+
 ### Auth and gating
 
 `src/proxy.ts` (Next 16's rename of middleware) refreshes the Supabase session **and** gates
