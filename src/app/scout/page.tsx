@@ -144,7 +144,7 @@ export default async function ScoutPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <ScoutList title="Captain shortlist" subtitle="Highest projected next gameweek" rows={captains} metric="xPtsNext" suffix="xPts" />
+        <ScoutList title="Captain shortlist" subtitle="Highest projected next gameweek" rows={captains} metric="xPtsNext" suffix="Points" />
         <ScoutList title="Differentials" subtitle="Under 6% owned, next 5 GWs" rows={differentials} metric="xPts" suffix="5 GW" />
         <ScoutList title="Budget enablers" subtitle="£5.5m or less with minutes" rows={budget} metric="xPts" suffix="5 GW" />
       </section>

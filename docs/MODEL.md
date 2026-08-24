@@ -99,8 +99,9 @@ season, so a player in a hot streak is not distinguished from their baseline.
 **Rotation is invisible.** The model knows minutes history and news, not a manager's intent.
 Nothing in the API says "he will be rested for the cup".
 
-**Price change predictions** on `/prices` use a community heuristic — net transfers over an
-ownership-scaled threshold. FPL has never published the real formula.
+**Price change predictions** used a community heuristic — net transfers over an
+ownership-scaled threshold — since FPL has never published the real formula. The `/prices`
+page was removed in the six-page cut; the heuristic is no longer surfaced anywhere.
 
 ## Retrospective estimates
 

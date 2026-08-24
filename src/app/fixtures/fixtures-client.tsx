@@ -9,7 +9,7 @@ import { badgeUrl, cn, DIFFICULTY_STYLES } from "@/lib/utils";
 type View = "overall" | "attack" | "defence";
 
 const VIEWS: { value: View; label: string; help: string }[] = [
-  { value: "overall", label: "Overall FDR", help: "The official Fantasy Premier League fixture difficulty rating." },
+  { value: "overall", label: "Overall", help: "The official Fantasy Premier League fixture difficulty rating." },
   { value: "attack", label: "Attacking", help: "How easy each opponent is to score against — use it to time your attackers." },
   { value: "defence", label: "Clean sheets", help: "How likely each fixture is to yield a clean sheet — use it to time your defenders." },
 ];
@@ -155,7 +155,7 @@ export function FixturesClient({
                           {fixtures.map((f, i) => (
                             <span
                               key={`${f.opponentId}-${i}`}
-                              title={`${f.isHome ? "vs" : "away to"} ${f.opponent} · FDR ${f.difficulty} · xGF ${f.xGF.toFixed(2)} · xGA ${f.xGA.toFixed(2)} · CS ${Math.round(f.csProb * 100)}%`}
+                              title={`${f.isHome ? "vs" : "away to"} ${f.opponent} · difficulty ${f.difficulty}/5 · expected to score ${f.xGF.toFixed(2)}, concede ${f.xGA.toFixed(2)} · clean sheet ${Math.round(f.csProb * 100)}%`}
                               className={cn(
                                 "flex h-[26px] min-w-[54px] items-center justify-center rounded text-[11px] font-bold",
                                 DIFFICULTY_STYLES[ratingOf(f)],

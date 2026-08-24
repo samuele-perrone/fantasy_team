@@ -669,7 +669,7 @@ export function SquadBuilder({
               [
                 ["fitOnly", "Fully fit", "Excludes injured, doubtful, suspended and just-returned players"],
                 ["nailed", "Nailed starters", "At least a 75% chance of starting. Expected minutes peak near 76 across the whole game, so a literal 80-minute threshold would match nobody"],
-                ["easyFixture", "Kind next fixture", "Next match rated FDR 3 or easier"],
+                ["easyFixture", "Kind next fixture", "Next match rated 3 or easier out of 5"],
                 ["penalties", "Penalty takers", "Favours penalty takers rather than requiring them — no keeper and only two defenders in the game take them"],
               ] as const
             ).map(([k, label, help]) => (
@@ -857,7 +857,7 @@ export function SquadBuilder({
                 <PositionBadge pos={p.pos} />
                 <span className="w-32 truncate font-semibold text-white">{p.name}</span>
                 <FixtureRun fixtures={p.fixtures} />
-                <span className="num ml-auto text-slate-400">{p.xPts.toFixed(1)} xPts</span>
+                <span className="num ml-auto text-slate-400">{p.xPts.toFixed(1)} pts</span>
               </li>
             ))}
           </ul>

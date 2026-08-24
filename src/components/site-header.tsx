@@ -27,10 +27,8 @@ export function SiteHeader({
   // needing an effect that would trigger a second render pass.
   const [menu, setMenu] = useState<MenuState>({ path: pathname, group: null, mobile: false });
   const stale = menu.path !== pathname;
-  const open = stale ? null : menu.group;
   const mobileOpen = stale ? false : menu.mobile;
 
-  const setOpen = (group: string | null) => setMenu({ path: pathname, group, mobile: false });
   const setMobileOpen = (mobile: boolean) =>
     setMenu({ path: pathname, group: null, mobile });
 
@@ -49,44 +47,24 @@ export function SiteHeader({
           </span>
         </Link>
 
-        {!bare && <nav className="ml-4 hidden items-center lg:flex" onMouseLeave={() => setOpen(null)}>
-          {NAV.map((group) => (
-            <div key={group.label} className="relative" onMouseEnter={() => setOpen(group.label)}>
-              <button
-                type="button"
-                onClick={() => setOpen(open === group.label ? null : group.label)}
+        {!bare && (
+          <nav className="ml-4 hidden items-center gap-0.5 lg:flex">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
                 className={cn(
-                  "flex items-center gap-1 rounded-lg px-3 py-2 text-[13.5px] font-medium transition",
-                  open === group.label
+                  "rounded-lg px-3 py-2 text-[13.5px] font-medium transition",
+                  pathname === item.href
                     ? "bg-pitch-800 text-white"
                     : "text-slate-300 hover:bg-pitch-800/60 hover:text-white",
                 )}
               >
-                {group.label}
-                <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 opacity-60" aria-hidden>
-                  <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
-              </button>
-
-              {open === group.label && (
-                <div className="absolute left-0 top-full w-[340px] pt-2">
-                  <div className="panel overflow-hidden p-1.5 shadow-2xl shadow-black/60">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        className="block rounded-lg px-3 py-2 transition hover:bg-pitch-700/70"
-                      >
-                        <div className="text-[13.5px] font-semibold text-white">{item.label}</div>
-                        <div className="text-[11.5px] leading-tight text-slate-400">{item.desc}</div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>}
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         <div className="ml-auto flex items-center gap-3">
           {!bare && (
@@ -144,24 +122,18 @@ export function SiteHeader({
             </div>
           </div>
 
-          {NAV.map((group) => (
-            <div key={group.label} className="mb-4">
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                {group.label}
-              </div>
-              <div className="grid grid-cols-2 gap-1">
-                {group.items.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="rounded-lg bg-pitch-800/60 px-3 py-2 text-[13px] font-medium text-slate-200"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
+          <div className="grid grid-cols-2 gap-1.5">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-lg bg-pitch-800/60 px-3 py-2.5"
+              >
+                <div className="text-[13.5px] font-semibold text-white">{item.label}</div>
+                <div className="text-[11px] leading-tight text-slate-500">{item.desc}</div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </header>

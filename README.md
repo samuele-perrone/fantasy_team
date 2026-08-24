@@ -4,9 +4,8 @@
 
 **Live: [fantasyteamhub.com](https://fantasyteamhub.com)**
 
-A private Fantasy Premier League analytics site: points projections, OPTA-style stats,
-fixture analysis, price change predictions, transfer suggestions and a squad optimiser, built
-on the official FPL API.
+A private Fantasy Premier League analytics site: points projections, player stats, fixture
+analysis, transfer suggestions and squad building, built on the official FPL API.
 
 The site sits behind Google sign-in and an email allow-list, so only permitted accounts can
 see anything.
@@ -25,28 +24,25 @@ npm run dev              # http://localhost:3000
   they do, including the bugs that shaped them
 - **[docs/MODEL.md](docs/MODEL.md)** — how projections are calculated, and their known limits
 
-## Tools
+## Pages
+
+Six pages, plus the player profile. The site was deliberately cut down from eighteen — see
+[docs/DECISIONS.md](docs/DECISIONS.md) for what was folded in where.
 
 | Route | What it does |
 | --- | --- |
-| `/` | Dashboard — deadline countdown, captain shortlist, value picks, differentials, market movement |
-| `/predictions` | Projected points for every player over the next 1, 3, 5 or 8 gameweeks |
-| `/players` | Every player ranked across five column groups (projection, season, attack, defence, market) |
+| `/` | Deadline countdown, best captain picks, best value, injury doubts |
+| `/my-team` | Your squad — ratings, best XI, captaincy verdict, live score, chips, week-by-week history |
+| `/transfers` | Ranked 1–3 transfer plans scored net of hits, plus a season-wide wildcard view |
+| `/players` | Every player ranked, across five column groups (projection, season, attack, defence, market) |
 | `/players/[id]` | Player profile — projections per fixture, underlying stats, gameweek history, past seasons |
-| `/compare` | Up to four players side by side across 27 metrics |
-| `/fixtures` | Fixture difficulty ticker for all 20 clubs, with separate attacking and clean sheet views |
-| `/prices` | Predicted price risers and fallers tonight, plus season-long movement |
-| `/match-centre` | Live scores, goalscorers and provisional bonus points |
-| `/scout` | Injuries, doubts and bans linked to the club's press conference; predicted lineups |
-| `/set-pieces` | Penalty, corner and free-kick takers for every club |
 | `/squad` | Build a squad by hand, import one from a screenshot, or auto-pick the best |
-| `/my-team` | Load your squad — ratings, optimal XI, captaincy verdict, gameweek-by-gameweek |
-| `/transfers` | Ranked 1–3 transfer plans scored net of points hits, plus a wildcard draft |
-| `/team-builder` | Squad optimiser for any budget, with lock-in and exclusion constraints |
-| `/live` | Live gameweek points with bonus and chips, plus season history at `#history` |
-| `/planner` | Eight-week projection, chips already played, and the best remaining window for each |
-| `/leagues` | Classic mini-league standings, movement and awards |
-| `/guides` | Scoring rules, chip strategy, blank/double gameweeks, price changes, underlying stats |
+| `/fixtures` | Fixture difficulty ticker for all 20 clubs, with attacking and clean sheet views |
+| `/scout` | Injuries, doubts and bans, captain shortlist, differentials and budget enablers |
+
+Removed routes (`/predictions`, `/team-builder`, `/live`, `/planner`, `/compare`,
+`/set-pieces`, `/guides`, `/match-centre`, `/prices`, `/leagues`) are kept as permanent
+redirects in `next.config.ts` so old links and bookmarks still land somewhere useful.
 
 ## Architecture
 

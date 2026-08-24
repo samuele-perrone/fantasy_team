@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     template: "%s · FantasyTeamHub",
   },
   description:
-    "Points predictions, OPTA stats, fixture analysis, price change alerts, AI transfer suggestions and squad optimisation for Fantasy Premier League.",
+    "Points predictions, player stats, fixture analysis, transfer suggestions and squad building for Fantasy Premier League.",
 };
 
 async function HeaderWithDeadline() {

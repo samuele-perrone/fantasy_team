@@ -19,7 +19,7 @@ export interface PitchProps {
 export function Pitch({
   xi,
   metric = "xPtsNext",
-  metricLabel = "xPts",
+  metricLabel = "Points",
   captainId,
   viceCaptainId,
   teamCodes,
@@ -199,9 +199,9 @@ export function SquadList({
           <tr className="border-b border-pitch-700 text-[10.5px] uppercase tracking-wide text-slate-500">
             <th className="px-3 py-2 text-left">Player</th>
             <th className="text-right">£</th>
-            <th className="text-right">xPts GW</th>
-            <th className="text-right">xPts run</th>
-            <th className="text-right">xMins</th>
+            <th className="text-right">Points</th>
+            <th className="text-right">Next 5</th>
+            <th className="text-right">Minutes</th>
             <th className="text-right">Rating</th>
             <th className="px-3 text-left">Fixtures</th>
           </tr>

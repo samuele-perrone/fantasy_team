@@ -34,7 +34,7 @@ mask this locally.
 `README.md`, `docs/RUNBOOK.md`, `docs/DECISIONS.md` and `docs/MODEL.md` are the project's
 memory across sessions. **Update them in the same change as the code**, not afterwards:
 
-- new route or tool → README route table
+- new or removed route → README page table (and a redirect in `next.config.ts` if removed)
 - anything operational (env vars, schema, domains, deploy behaviour) → RUNBOOK
 - a non-obvious choice, or a bug whose fix would look like dead weight later → DECISIONS
 - a change to how projections are calculated, or a new limitation → MODEL
@@ -50,6 +50,12 @@ component consumes) → `optimiser.ts` for anything that picks a squad.
 `PlayerRow` is the seam between server and client. Server components hold `FplElement`;
 everything crossing into a client component is a `PlayerRow`.
 
+### Pages
+
+There are six pages plus the player profile; ten earlier routes are permanent redirects in
+`next.config.ts`. Before adding a page, check whether it is a column, a sort or a section on
+one of the six — the last cut existed because the site had a page per idea.
+
 ### Auth and gating
 
 `src/proxy.ts` (Next 16's rename of middleware) refreshes the Supabase session **and** gates
@@ -61,8 +67,10 @@ the whole site. Two rules it exists to enforce:
   and again in `getUserId()`
 
 Because everything is gated, `curl` returns 307 on every page. To verify rendering locally,
-temporarily neuter the redirect in `proxy.ts`, then restore it from git and confirm no bypass
-remains before committing.
+add `""` to `PUBLIC_PREFIXES` — the match is `pathname === p || pathname.startsWith(`${p}/`)`,
+so an empty prefix opens everything while `"/"` only matches the home page. Back the file up
+first, restore it from the backup afterwards, and grep to confirm no bypass remains before
+committing.
 
 ### Projections
 
@@ -84,6 +92,13 @@ what was given up. `bestXI` takes an optional fixed formation.
 ## Conventions
 
 - Server components by default; `"use client"` only for genuine interactivity
+- **The interface speaks football, not model.** `xPts`, `xMins`, `FDR`, `BPS`, "composite",
+  "calibration" are code and docs vocabulary — user-visible `label`, `title` and prose say
+  "Points", "Minutes", "Difficulty", "Chance of starting". Note that `key`, `metric` and
+  `defaultSort` props hold `keyof PlayerRow` and must keep the field names; renaming those
+  silently renders nothing (TypeScript catches it, so never skip `npx tsc --noEmit`).
+- Simplifying language must not inflate confidence — the retrospective-estimate caveat and the
+  ~1.6 points-per-player error margin are load-bearing and stay, in plainer words
 - Tailwind v4, theme tokens defined in `globals.css` (`pitch-*`, `brand-*`, `accent-*`,
   `fdr-*`), plus `panel` and `num` utilities
 - Comments explain *why*, especially where code guards against a specific FPL API behaviour

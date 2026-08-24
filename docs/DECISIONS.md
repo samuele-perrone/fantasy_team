@@ -205,3 +205,41 @@ fifteen, because a squad being built is incomplete by definition.
 Twice now, adding a convenient autoload has hidden a control: `/my-team` loading a saved squad
 removed the team-ID form, and before that the saved-squad list was only on `/squad`. When
 adding an autoload, check what the user can no longer reach.
+
+### Eighteen pages became six
+
+The site had grown a page per idea, and the result was a menu that had to be studied rather
+than read. Two problems compounded: the same player table appeared under four different
+names, and the answer to "what should I do this week?" was spread across `/my-team`, `/live`
+and `/planner`.
+
+The cut is by question asked, not by feature removed:
+
+| Was | Now |
+| --- | --- |
+| `/live`, `/planner`, chip timing, season history | folded into `/my-team` |
+| `/predictions`, `/compare`, `/set-pieces`, `/prices` | columns and sorts on `/players` |
+| `/team-builder` | the auto-pick already on `/squad` |
+| `/match-centre` | fixture detail on `/fixtures` |
+| `/leagues`, `/guides` | dropped — neither answered a team decision |
+
+Everything removed is a permanent redirect in `next.config.ts`. Nothing was deleted from
+`src/lib`, so the model, optimiser and simulation are untouched.
+
+### The interface stopped speaking in model terms
+
+`xPts`, `xMins`, `FDR`, `BPS`, "composite rating", "calibration check" — the UI had been
+written in the vocabulary of the code behind it. These now read as "Points", "Minutes",
+"Difficulty", "Starts?" and plain sentences.
+
+Two rules came out of doing it:
+
+- **Field names are not labels.** A bulk rename of `"xPts"` also hit `key: "xPts"` and
+  `metric="xPts"`, which index `PlayerRow`. Those are identifiers and must keep their names;
+  only the rendered `label`/`title` changes. TypeScript caught it — `keyof PlayerRow` is what
+  made the mistake visible rather than silently rendering `undefined`.
+- **Keep the honest caveats, drop the vocabulary.** The retrospective-estimate warning and the
+  1.6-points-per-player error margin both stayed, reworded. Simplifying the language must not
+  quietly upgrade how confident the app sounds.
+
+The technical terms remain in `docs/` and throughout `src/lib` — that is where they belong.

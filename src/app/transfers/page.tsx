@@ -10,7 +10,7 @@ import { cn, money } from "@/lib/utils";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "AI Transfers",
+  title: "Transfers",
   description:
     "Ranked Fantasy Premier League transfer suggestions for your squad, scored on projected points gained over the next five gameweeks and net of any points hit.",
 };
@@ -26,7 +26,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
   } catch (e) {
     return (
       <div>
-        <PageHeader eyebrow="My Team" title="AI Transfers" />
+        <PageHeader eyebrow="My Team" title="Transfers" />
         <EntryForm action="/transfers" defaultValue={idParam} />
         <div className="panel mt-4 px-5 py-4 text-[13.5px] text-amber-300">
           {e instanceof EntryNotFound || e instanceof InvalidSquad
@@ -42,8 +42,8 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
       <div>
         <PageHeader
           eyebrow="My Team"
-          title="AI Transfers"
-          description="Load your squad and the model searches every legal single, double and triple transfer, scoring each on projected points gained across the next five gameweeks and charging 4 points for every move beyond your free transfers."
+          title="Transfers"
+          description="Load your squad and we check every legal one, two and three-player move, scoring each on the points it gains over the next five gameweeks — and counting the 4-point cost of every transfer beyond your free ones."
         />
         <EntryForm action="/transfers" />
         <div className="panel mt-4 px-5 py-4 text-[13.5px] text-slate-300">
@@ -110,7 +110,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
     <div className="space-y-6">
       <PageHeader
         eyebrow="My Team"
-        title="AI Transfers"
+        title="Transfers"
         description={`${team.name} · ${money(team.bank)} in the bank · ${team.freeTransfers} free transfer${team.freeTransfers === 1 ? "" : "s"} · projections over the next 5 gameweeks.`}
       >
         <Link
@@ -153,10 +153,10 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
         <section className="space-y-4">
           <h2 className="text-[15px] font-bold text-white">Transfer plans</h2>
           <p className="-mt-2 text-[12px] leading-relaxed text-slate-500">
-            A hit costs 4 points with certainty, so a plan is only recommended when its
-            projected edge clears the hits with room to spare. The model&apos;s measured error
-            is about 1.6 points per player per gameweek, and plans often differ by less than
-            that — in which case the safer plan is the honest call.
+            A hit costs you 4 points for certain, so we only recommend a move when the
+            expected gain beats that by a clear margin. Our per-player estimates are typically
+            off by around 1.6 points a week, and rival plans are often closer than that — when
+            it is that tight, staying put is the honest answer.
           </p>
           {plans.map((plan, i) => (
             <div
@@ -177,7 +177,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
                 )}
                 {plan !== bestPlan && plan.hitCost > 0 && (
                   <span
-                    title={`This plan beats the best hit-free plan by ${(plan.netGain - freeBaseline).toFixed(2)} points, which does not clear the ${plan.hitCost}-point hit by a safe margin given the model's error of about 1.6 points per player per gameweek.`}
+                    title={`This plan beats the best no-hit plan by only ${(plan.netGain - freeBaseline).toFixed(2)} points — not enough to justify the ${plan.hitCost}-point hit, since our estimates are typically off by about 1.6 points per player per week.`}
                     className="rounded bg-pitch-800 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-slate-500"
                   >
                     Not worth the hit
@@ -232,7 +232,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
       <section>
         <h2 className="mb-1 text-[15px] font-bold text-white">Wildcard draft</h2>
         <p className="mb-3 text-[13px] text-slate-400">
-          The best legal 15 the optimiser can build with your {money(team.squadValue + team.bank)}{" "}
+          The best legal 15 we can build with your {money(team.squadValue + team.bank)}{" "}
           budget, ignoring your current squad entirely. Projected {wildcard.xi.startingPoints.toFixed(1)}{" "}
           points from the starting XI over the next 5 gameweeks.
         </p>

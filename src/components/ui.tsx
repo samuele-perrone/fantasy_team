@@ -94,7 +94,7 @@ export function FixtureRun({ fixtures, max = 5 }: { fixtures: FixtureChip[]; max
         <DifficultyPill
           key={`${f.event}-${f.opponentId}-${i}`}
           difficulty={f.difficulty}
-          title={`GW${f.event} · ${f.isHome ? "vs" : "at"} ${f.opponent} · FDR ${f.difficulty} · ${f.xPts.toFixed(1)} xPts`}
+          title={`GW${f.event} · ${f.isHome ? "vs" : "at"} ${f.opponent} · difficulty ${f.difficulty}/5 · ${f.xPts.toFixed(1)} pts`}
         >
           {f.opponent}
           {f.isHome ? "" : " (a)"}

@@ -5,21 +5,22 @@ import { Pitch, SquadList } from "@/components/pitch";
 import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
-import { chipLabel } from "@/lib/fpl/chips";
 import { bestXI } from "@/lib/fpl/optimiser";
 import { projectForEvent } from "@/lib/fpl/projection";
 import { simulateGameweek } from "@/lib/fpl/simulate";
 import { getGameData } from "@/lib/fpl/data";
-import { benchCounts } from "@/lib/fpl/chips";
+import { benchCounts, chipLabel, chipStatuses } from "@/lib/fpl/chips";
+import { getLive } from "@/lib/fpl/client";
+import type { LiveElement } from "@/lib/fpl/types";
 import { getUserId } from "@/lib/supabase/server";
 import { getSavedEntryId, listSquads } from "@/lib/supabase/squads";
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Pick & Rating — Rate my FPL team",
+  title: "My Team — how your FPL squad looks",
   description:
-    "Load your Fantasy Premier League squad and get a rating for every pick, the optimal starting XI, captaincy advice and the weak links to move on.",
+    "Load your Fantasy Premier League squad to see a rating for every pick, the best starting XI, who to captain and which players are holding you back.",
 };
 
 export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">) {
@@ -61,7 +62,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   } catch (e) {
     return (
       <div>
-        <PageHeader eyebrow="My Team" title="Pick & Rating" />
+        <PageHeader eyebrow="My Team" title="My Team" />
         <EntryForm action="/my-team" defaultValue={idParam} signedIn={signedIn} />
         <div className="panel mt-4 px-5 py-4 text-[13.5px] text-amber-300">
           {e instanceof EntryNotFound || e instanceof InvalidSquad
@@ -86,8 +87,8 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
       <div>
         <PageHeader
           eyebrow="My Team"
-          title="Pick & Rating"
-          description="Enter your FPL team ID to load your squad. Every player is rated on projected points, minutes security and fixture run, and the model tells you the best XI, captain and the picks holding you back."
+          title="My Team"
+          description="Enter your FPL team ID to load your squad. Every player is rated on projected points, how likely they are to play and how kind their fixtures look — then we tell you the best XI, who to captain and which picks are holding you back."
         />
         <EntryForm action="/my-team" signedIn={signedIn} />
         {params.error && (
@@ -207,6 +208,29 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
 
   // A projection is a mean. What a manager actually wants to know is the range, and how
   // often a big week is even possible with this squad.
+  // Live score, when a gameweek is actually in progress.
+  let live: LiveElement[] = [];
+  if (team.source === "fpl") {
+    try {
+      live = (await getLive(team.event)).elements;
+    } catch {
+      live = [];
+    }
+  }
+  const liveById = new Map(live.map((e) => [e.id, e.stats]));
+  const livePoints = team.picks.reduce(
+    (a, p) => a + (liveById.get(p.element)?.total_points ?? 0) * p.multiplier,
+    0,
+  );
+  const anyMinutes = team.picks.some((p) => (liveById.get(p.element)?.minutes ?? 0) > 0);
+  const toPlay = team.picks
+    .filter((p) => p.position <= 11)
+    .filter((p) => (liveById.get(p.element)?.minutes ?? 0) === 0).length;
+
+  const chips = chipStatuses(team.history?.chips ?? [], team.event);
+  const chipsLeft = chips.filter((c) => c.available).length;
+  const chipsUsed = chips.filter((c) => c.usedIn !== null);
+
   const nextEventId = game.ctx.nextEvent;
   const outcome = simulateGameweek(
     team.actual.starters,
@@ -248,7 +272,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           href={`/transfers?${query}`}
           className="rounded-lg bg-brand-500 px-4 py-2 text-[13px] font-bold text-pitch-950 transition hover:bg-brand-400"
         >
-          AI transfers →
+          See transfers →
         </Link>
         <Link
           href={team.source === "manual" ? `/planner?${query}` : `/live?${query}`}
@@ -267,20 +291,23 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
       </PageHeader>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {team.source === "fpl" ? (
+        {anyMinutes ? (
           <StatCard
-            label="Overall points"
+            label={`Gameweek ${team.event} so far`}
+            value={livePoints - team.eventTransfersCost}
+            sub={toPlay ? `${toPlay} still to play` : "All players done"}
+            tone="brand"
+          />
+        ) : team.source === "fpl" ? (
+          <StatCard
+            label="Total points"
             value={(team.overallPoints ?? 0).toLocaleString("en-GB")}
             sub={
               team.overallRank ? `Rank ${team.overallRank.toLocaleString("en-GB")}` : "Unranked"
             }
           />
         ) : (
-          <StatCard
-            label="Squad source"
-            value="Manual"
-            sub="Built by hand — not linked to an FPL entry"
-          />
+          <StatCard label="Squad" value="Built by hand" sub="Not linked to an FPL team" />
         )}
         <StatCard
           label="Squad value"
@@ -290,7 +317,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <StatCard
           label="Free transfers"
           value={team.freeTransfers}
-          sub={team.source === "fpl" ? "Estimated from history" : "Assumed"}
+          sub={chipsLeft ? `${chipsLeft} chips left` : "No chips left"}
         />
         <StatCard
           label="Squad rating"
@@ -346,13 +373,13 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
               <Verdict tone={captainIsOptimal ? "good" : "warn"}>
                 {captainIsOptimal ? (
                   <>
-                    Captaincy is optimal — <strong>{captainAdvice?.name}</strong> is your highest
-                    projected starter at {captainAdvice?.xPtsNext.toFixed(2)} xPts.
+                    Good captain pick — <strong>{captainAdvice?.name}</strong> is your highest
+                    projected starter at {captainAdvice?.xPtsNext.toFixed(2)} points.
                   </>
                 ) : (
                   <>
                     Consider captaining <strong>{captainAdvice?.name}</strong> (
-                    {captainAdvice?.xPtsNext.toFixed(2)} xPts) instead — worth about{" "}
+                    {captainAdvice?.xPtsNext.toFixed(2)} pts) instead — worth about{" "}
                     {(
                       (captainAdvice?.xPtsNext ?? 0) -
                       (team.squad.find((p) => p.id === team.captainId)?.xPtsNext ?? 0)
@@ -380,10 +407,10 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
                       </span>
                     ))}{" "}
                     — worth {(team.xi.startingPoints - team.actual.startingPoints).toFixed(2)}{" "}
-                    points in the model&apos;s {team.xi.formation}.
+                    points in the best {team.xi.formation}.
                   </>
                 ) : (
-                  <>Your starting XI already matches the model&apos;s optimal lineup.</>
+                  <>Your starting XI is already the best one available.</>
                 )}
               </Verdict>
 
@@ -415,7 +442,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
                 ))}
                 . See the{" "}
                 <Link href={`/transfers?${query}`} className="text-brand-400 hover:underline">
-                  AI transfer suggestions
+                  transfer suggestions
                 </Link>
                 .
               </Verdict>
@@ -467,12 +494,12 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">
           What this squad could score
           <InfoTip label="About the range">
-            Four thousand simulated gameweeks, resampling each player from the same components
-            the projection is built from — minutes, goals, assists, clean sheets, defensive
-            contributions and bonus.
+            We play out this gameweek four thousand times, rolling the dice each time on who
+            starts, who scores, who assists, who keeps a clean sheet and who picks up bonus.
             <span className="mt-1.5 block text-slate-400">
-              A projection is an average. Points arrive in lumps of 4 to 13, so the spread
-              matters more than the mean when you are chasing a big week.
+              A single projected number is just the average. Real weeks are lumpy — a haul is 4
+              to 13 points at once — so when you need a big score, the range matters more than
+              the average.
             </span>
           </InfoTip>
         </h2>
@@ -530,7 +557,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           Chips shift the odds but do not transform them. The largest lever on a big week is
           the squad itself — see{" "}
           <Link href={`/transfers?${query}`} className="text-brand-400 hover:underline">
-            AI transfers
+            See transfers
           </Link>{" "}
           for what would raise this ceiling.
         </p>
@@ -540,20 +567,19 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <h2 className="mb-1 flex items-center gap-1.5 text-[14px] font-bold text-white">
           Gameweek by gameweek
           <InfoTip label="About gameweek by gameweek">
-            Each played week shows the model&apos;s estimate beside what you actually scored,
-            net of transfer hits, with the difference underneath. Upcoming weeks show the
-            estimate alone.
+            Each played week shows our estimate beside what you actually scored, after
+            transfer hits, with the difference underneath. Upcoming weeks show the estimate
+            alone.
             <span className="mt-1.5 block text-slate-400">
-              The estimate for a played week is retrospective — it runs today&apos;s model
-              against that week&apos;s fixtures, and today&apos;s model has seen results the
-              original forecast had not. Treat it as a rough calibration check rather than a
-              track record.
+              For weeks already played, the estimate is worked out now — using results it
+              would not have known at the time. So it is a rough sense check, not a record of
+              what we would have told you before the deadline.
             </span>
           </InfoTip>
         </h2>
         <p className="mb-4 text-[12px] text-slate-500">
-          Played weeks show the model&apos;s estimate against what you actually scored; upcoming
-          weeks show the estimate alone.
+          Played weeks show our estimate against what you actually scored; upcoming weeks show
+          the estimate alone.
         </p>
 
         <div className="flex items-end gap-2 overflow-x-auto pb-1">
@@ -624,6 +650,57 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <h2 className="mb-2.5 text-[14px] font-bold text-white">Squad detail</h2>
         <SquadList players={team.squad} teamCodes={team.teamCodes} />
       </section>
+
+      {team.history?.current?.length ? (
+        <section className="panel px-5 py-4">
+          <h2 className="mb-1 text-[14px] font-bold text-white">Your season</h2>
+          <p className="mb-3 text-[12px] text-slate-500">Every gameweek you have played.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-[12.5px]">
+              <thead>
+                <tr className="border-b border-pitch-800 text-[10px] uppercase tracking-wide text-slate-500">
+                  <th className="py-1.5 text-left">GW</th>
+                  <th className="text-right">Points</th>
+                  <th className="text-right">On bench</th>
+                  <th className="text-right">Transfers</th>
+                  <th className="text-right">Rank</th>
+                  <th className="text-right">Chip</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...team.history.current].reverse().map((h) => {
+                  const chip = (team.history?.chips ?? []).find((c) => c.event === h.event);
+                  return (
+                    <tr key={h.event} className="border-b border-pitch-800/50">
+                      <td className="num py-1.5 text-slate-400">{h.event}</td>
+                      <td className="num py-1.5 text-right font-bold text-white">
+                        {h.points - h.event_transfers_cost}
+                      </td>
+                      <td className="num py-1.5 text-right text-slate-500">{h.points_on_bench}</td>
+                      <td className="num py-1.5 text-right text-slate-400">
+                        {h.event_transfers}
+                        {h.event_transfers_cost ? ` (\u2212${h.event_transfers_cost})` : ""}
+                      </td>
+                      <td className="num py-1.5 text-right text-slate-400">
+                        {h.overall_rank?.toLocaleString("en-GB") ?? "\u2014"}
+                      </td>
+                      <td className="py-1.5 text-right text-[11.5px] text-accent-400">
+                        {chip ? chipLabel(chip.name) : ""}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {chipsUsed.length > 0 && (
+            <p className="mt-3 border-t border-pitch-800 pt-2.5 text-[11.5px] text-slate-500">
+              Chips played: {chipsUsed.map((c) => `${c.label} (GW${c.usedIn})`).join(", ")}.
+              {chipsLeft > 0 && ` ${chipsLeft} left.`}
+            </p>
+          )}
+        </section>
+      ) : null}
 
       <EntryForm
         action="/my-team"

@@ -6,9 +6,9 @@ import { PageHeader } from "@/components/ui";
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "OPTA Stats & Player Rankings",
+  title: "Players",
   description:
-    "Every Fantasy Premier League player ranked on underlying OPTA data — xG, xA, defensive contributions, BPS, ownership and modelled points projections.",
+    "Every Fantasy Premier League player ranked on the numbers that matter — goals, assists, minutes, defensive work, ownership and projected points.",
 };
 
 export default async function PlayersPage() {
@@ -19,7 +19,7 @@ export default async function PlayersPage() {
     <div>
       <PageHeader
         eyebrow="Toolbox"
-        title="OPTA Stats & Player Rankings"
+        title="Players"
         description="Every player in the game, ranked on the underlying numbers. Switch between projection, season, attacking, defensive and market views — every column sorts, and the heat map highlights the leaders in the filtered set."
       />
       <PlayerTable rows={rows} teams={teams} defaultGroup="form" defaultSort="totalPoints" />

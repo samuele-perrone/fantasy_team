@@ -98,14 +98,6 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
             </div>
           </div>
 
-          <div className="ml-auto flex gap-2">
-            <Link
-              href={`/compare?ids=${player.id}`}
-              className="rounded-lg border border-pitch-600 px-3.5 py-2 text-[12.5px] font-semibold text-slate-300 transition hover:border-brand-500 hover:text-white"
-            >
-              Compare
-            </Link>
-          </div>
         </div>
 
         {player.news && (
@@ -117,15 +109,15 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
         )}
 
         <div className="grid grid-cols-2 divide-x divide-pitch-800 sm:grid-cols-3 lg:grid-cols-6">
-          <Metric label="xPts next GW" value={row.xPtsNext.toFixed(2)} tone="brand" />
-          <Metric label="xPts next 8" value={row.xPts.toFixed(1)} />
-          <Metric label="xMins" value={String(row.xMins)} />
-          <Metric label="Start prob" value={`${Math.round(row.startProb * 100)}%`} />
+          <Metric label="Points next week" value={row.xPtsNext.toFixed(2)} tone="brand" />
+          <Metric label="Next 8 weeks" value={row.xPts.toFixed(1)} />
+          <Metric label="Minutes" value={String(row.xMins)} />
+          <Metric label="Chance of starting" value={`${Math.round(row.startProb * 100)}%`} />
           <Metric label="Rating" value={row.rating.toFixed(1)} tone="brand" />
           <Metric
             label={`${POSITIONS[player.element_type]} rank`}
             value={`#${rankAmongPeers}`}
-            sub="by 8 GW xPts"
+            sub="by points over 8 weeks"
           />
         </div>
       </div>
@@ -138,10 +130,10 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
               <tr className="border-b border-pitch-800 text-[10.5px] uppercase tracking-wide text-slate-500">
                 <th className="py-1.5 text-left">GW</th>
                 <th className="text-left">Opponent</th>
-                <th className="text-right">FDR</th>
-                <th className="text-right">CS%</th>
-                <th className="text-right">Return%</th>
-                <th className="text-right">xPts</th>
+                <th className="text-right">Difficulty</th>
+                <th className="text-right">Clean sheet</th>
+                <th className="text-right">Goal or assist</th>
+                <th className="text-right">Points</th>
               </tr>
             </thead>
             <tbody>

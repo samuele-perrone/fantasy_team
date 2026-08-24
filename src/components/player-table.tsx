@@ -26,11 +26,11 @@ const COLUMN_GROUPS: Record<string, { label: string; columns: Column[] }> = {
   predictions: {
     label: "Predictions",
     columns: [
-      { key: "xPtsNext", label: "xPts", title: "Projected points, next gameweek", align: "right", value: (r) => r.xPtsNext, render: (r) => <span className="font-bold text-brand-400">{n(r.xPtsNext, 2)}</span>, heat: true },
-      { key: "xPts", label: "xPts (run)", title: "Projected points over the selected horizon", align: "right", value: (r) => r.xPts, render: (r) => n(r.xPts, 1), heat: true },
-      { key: "xMins", label: "xMins", title: "Projected minutes next gameweek", align: "right", value: (r) => r.xMins, render: (r) => String(r.xMins) },
-      { key: "startProb", label: "Start%", title: "Probability of starting", align: "right", value: (r) => r.startProb, render: (r) => `${Math.round(r.startProb * 100)}%` },
-      { key: "rating", label: "Rating", title: "Composite 0–10 rating", align: "right", value: (r) => r.rating, render: (r) => <Rating value={r.rating} />, heat: true },
+      { key: "xPtsNext", label: "Points", title: "Projected points, next gameweek", align: "right", value: (r) => r.xPtsNext, render: (r) => <span className="font-bold text-brand-400">{n(r.xPtsNext, 2)}</span>, heat: true },
+      { key: "xPts", label: "Next 5", title: "Projected points over the selected horizon", align: "right", value: (r) => r.xPts, render: (r) => n(r.xPts, 1), heat: true },
+      { key: "xMins", label: "Minutes", title: "Projected minutes next gameweek", align: "right", value: (r) => r.xMins, render: (r) => String(r.xMins) },
+      { key: "startProb", label: "Starts?", title: "Probability of starting", align: "right", value: (r) => r.startProb, render: (r) => `${Math.round(r.startProb * 100)}%` },
+      { key: "rating", label: "Rating", title: "Our overall score for this player, out of 10", align: "right", value: (r) => r.rating, render: (r) => <Rating value={r.rating} />, heat: true },
       { key: "value", label: "Value", title: "Projected points per £m over the horizon", align: "right", value: (r) => r.value, render: (r) => n(r.value, 2), heat: true },
     ],
   },
@@ -43,7 +43,7 @@ const COLUMN_GROUPS: Record<string, { label: string; columns: Column[] }> = {
       { key: "minutes", label: "Mins", align: "right", value: (r) => r.minutes },
       { key: "starts", label: "Starts", align: "right", value: (r) => r.starts },
       { key: "bonus", label: "Bonus", align: "right", value: (r) => r.bonus, heat: true },
-      { key: "bps", label: "BPS", align: "right", value: (r) => r.bps },
+      { key: "bps", label: "BPS", title: "Bonus points system score — decides who gets the 3/2/1 bonus", align: "right", value: (r) => r.bps },
     ],
   },
   attack: {

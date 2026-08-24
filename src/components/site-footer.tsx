@@ -11,25 +11,15 @@ export function SiteFooter() {
   return (
     <footer className="mt-12 border-t border-pitch-800 bg-pitch-950/60">
       <div className="mx-auto max-w-[1500px] px-4 py-10">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {NAV.map((group) => (
-            <div key={group.label}>
-              <div className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                {group.label}
-              </div>
-              <ul className="space-y-1.5">
-                {group.items.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-[13px] text-slate-400 transition hover:text-brand-400"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-[13px] text-slate-400 transition hover:text-brand-400"
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
         <p className="mt-8 border-t border-pitch-800 pt-6 text-[11.5px] leading-relaxed text-slate-600">

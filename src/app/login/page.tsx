@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           Sign in to continue
         </h1>
         <p className="mt-2 text-[13.5px] leading-relaxed text-slate-400">
-          Points projections, OPTA stats, fixture analysis, an AI squad optimiser and saved
+          Points projections, player stats, fixture analysis, squad building and saved
           squads — all behind your account.
         </p>
 

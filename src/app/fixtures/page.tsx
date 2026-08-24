@@ -47,7 +47,7 @@ export default async function FixturesPage({ searchParams }: PageProps<"/fixture
         <StatCard
           label="Easiest run"
           value={easiest?.short ?? "—"}
-          sub={easiest ? `${easiest.avgDifficulty.toFixed(2)} avg FDR` : undefined}
+          sub={easiest ? `${easiest.avgDifficulty.toFixed(2)} average difficulty` : undefined}
           tone="brand"
         />
         <StatCard
