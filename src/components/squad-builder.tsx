@@ -667,10 +667,10 @@ export function SquadBuilder({
             </span>
             {(
               [
-                ["fitOnly", "Fully fit", "Excludes injured, doubtful, suspended and just-returned players"],
-                ["nailed", "Nailed starters", "At least a 75% chance of starting. Expected minutes peak near 76 across the whole game, so a literal 80-minute threshold would match nobody"],
-                ["easyFixture", "Kind next fixture", "Next match rated 3 or easier out of 5"],
-                ["penalties", "Penalty takers", "Favours penalty takers rather than requiring them — no keeper and only two defenders in the game take them"],
+                ["fitOnly", "Fully fit", "Leaves out anyone injured, doubtful, suspended or just back from a lay-off"],
+                ["nailed", "Regular starters", "Players with at least a 75% chance of starting. Even the safest picks get subbed or rested sometimes, so no one is ever a certainty"],
+                ["easyFixture", "Kind next fixture", "Their next match is rated 3 or easier out of 5"],
+                ["penalties", "Penalty takers", "Leans towards penalty takers without insisting on them — no keeper and only two defenders in the game take penalties"],
               ] as const
             ).map(([k, label, help]) => (
               <label
@@ -692,7 +692,7 @@ export function SquadBuilder({
           <div className="relative mt-2 border-t border-pitch-800 pt-2">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                title="FPL only marks a player unavailable once a transfer completes, so a rumoured or agreed move is invisible to the data. Exclude those players by hand."
+                title="FPL only flags a player once a transfer actually goes through, so a rumoured or agreed move does not show up here. Leave those players out yourself."
                 className="text-[11px] font-bold uppercase tracking-wider text-slate-500"
               >
                 Never pick

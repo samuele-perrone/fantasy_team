@@ -40,7 +40,7 @@ export default async function FixturesPage({ searchParams }: PageProps<"/fixture
       <PageHeader
         eyebrow="Toolbox"
         title="Fixture Analyser"
-        description={`Difficulty ticker for every club from gameweek ${fromEvent} to ${fromEvent + horizon - 1}. The attacking and clean sheet views replace the official rating with an expected goals model, so a fixture can be great for your forwards and terrible for your defenders at the same time.`}
+        description={`How hard the games look for every club, gameweek ${fromEvent} to ${fromEvent + horizon - 1}. The attacking and clean sheet views rate each match on the goals we expect rather than on the official number — so the same fixture can be great for your forwards and awful for your defenders.`}
       />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -53,7 +53,7 @@ export default async function FixturesPage({ searchParams }: PageProps<"/fixture
         <StatCard
           label="Most expected goals"
           value={bestAttack?.short ?? "—"}
-          sub={bestAttack ? `${bestAttack.totalXGF.toFixed(1)} xGF over ${horizon} GWs` : undefined}
+          sub={bestAttack ? `${bestAttack.totalXGF.toFixed(1)} goals expected over ${horizon} GWs` : undefined}
         />
         <StatCard
           label="Best clean sheet run"

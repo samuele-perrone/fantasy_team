@@ -58,7 +58,7 @@ export function SavedSquads({
           <p className="text-[12px] text-slate-500">
             {email
               ? "Saved to your account and available on any device."
-              : "Sign in to save squads to your account. Everything here works without an account too — your squad lives in the page URL."}
+              : "Sign in to save squads to your account. Everything here works without one too — your squad is stored in the page address."}
           </p>
         </div>
         <AuthButton email={email} />

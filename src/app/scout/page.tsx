@@ -62,7 +62,7 @@ export default async function ScoutPage() {
       <PageHeader
         eyebrow="Planners"
         title="Team News & Scout Picks"
-        description="Every flagged player in the game with their official status, linked to the club's own press conference where FPL cites one, plus predicted lineups derived from start probability."
+        description="Every injured, doubtful or suspended player, with the club's own press conference where FPL links to one — plus the eleven we think each club will start."
       />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -152,8 +152,9 @@ export default async function ScoutPage() {
       <section>
         <h2 className="mb-1 text-[15px] font-bold text-white">Predicted lineups</h2>
         <p className="mb-3 text-[13px] text-slate-400">
-          The eleven players at each club with the highest modelled start probability, shaped into
-          a 4-4-2. Treat it as a data prior, not a manager&apos;s team sheet.
+          The eleven players at each club most likely to start, arranged in a 4-4-2. This is
+          worked out from minutes and team news — it is a good guess, not the manager&apos;s
+          actual team sheet.
         </p>
         <div className="grid gap-4 lg:grid-cols-2">
           {lineups.map(({ team, lines, fixtures }) => (

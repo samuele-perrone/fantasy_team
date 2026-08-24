@@ -74,7 +74,7 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
       <PageHeader
         eyebrow="My Team"
         title="Build your squad"
-        description="Add your 15 players by hand or import them from a screenshot, then send the squad through the ratings, transfer and planner tools. Your squad lives in the page URL, so you can bookmark or share it without an account — or sign in to save it and pick it up on any device."
+        description="Add your 15 players by hand, import them from a screenshot, or let us pick the best squad for your budget. Your squad is stored in the page address, so you can bookmark or share it without an account — or sign in to save it and pick it up on any device."
       >
         <Link
           href="/my-team?enter=1"

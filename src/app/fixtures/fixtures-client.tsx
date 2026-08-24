@@ -11,7 +11,7 @@ type View = "overall" | "attack" | "defence";
 const VIEWS: { value: View; label: string; help: string }[] = [
   { value: "overall", label: "Overall", help: "The official Fantasy Premier League fixture difficulty rating." },
   { value: "attack", label: "Attacking", help: "How easy each opponent is to score against — use it to time your attackers." },
-  { value: "defence", label: "Clean sheets", help: "How likely each fixture is to yield a clean sheet — use it to time your defenders." },
+  { value: "defence", label: "Clean sheets", help: "How likely each match is to end in a clean sheet — use it to time your defenders." },
 ];
 
 export function FixturesClient({
@@ -108,8 +108,17 @@ export function FixturesClient({
                 </th>
               ))}
               <th className="px-3 py-2 text-right">Avg</th>
-              <th className="px-3 py-2 text-right">
-                {view === "attack" ? "xGF" : view === "defence" ? "xCS" : "xGD"}
+              <th
+                className="px-3 py-2 text-right"
+                title={
+                  view === "attack"
+                    ? "Goals we expect this club to score across these fixtures"
+                    : view === "defence"
+                      ? "Clean sheets we expect this club to keep across these fixtures"
+                      : "Goals we expect them to score minus goals we expect them to concede"
+                }
+              >
+                {view === "attack" ? "Goals" : view === "defence" ? "Clean sheets" : "Goal diff"}
               </th>
             </tr>
           </thead>
@@ -185,8 +194,8 @@ export function FixturesClient({
       </div>
 
       <p className="mt-2 text-[11.5px] text-slate-600">
-        UPPERCASE = home fixture, lowercase = away. Hover any cell for expected goals and clean
-        sheet probability.
+        UPPERCASE = home fixture, lowercase = away. Hover any cell for the goals we expect and
+        the chance of a clean sheet.
       </p>
     </div>
   );

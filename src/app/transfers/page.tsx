@@ -232,9 +232,9 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
       <section>
         <h2 className="mb-1 text-[15px] font-bold text-white">Wildcard draft</h2>
         <p className="mb-3 text-[13px] text-slate-400">
-          The best legal 15 we can build with your {money(team.squadValue + team.bank)}{" "}
-          budget, ignoring your current squad entirely. Projected {wildcard.xi.startingPoints.toFixed(1)}{" "}
-          points from the starting XI over the next 5 gameweeks.
+          The best 15 we can build with your {money(team.squadValue + team.bank)} budget,
+          starting from scratch and ignoring who you own now. The first eleven are on track for{" "}
+          {wildcard.xi.startingPoints.toFixed(1)} points over the next 5 gameweeks.
         </p>
         <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
           <Pitch xi={wildcard.xi} metric="xPts" metricLabel="5 GW" teamCodes={team.teamCodes} />
@@ -277,8 +277,8 @@ export default async function TransfersPage({ searchParams }: PageProps<"/transf
               </div>
             </div>
             <p className="mt-4 border-t border-pitch-800 pt-3 text-[11.5px] text-slate-500">
-              Your current 15 project {currentScore.toFixed(1)} points across all players over the
-              same window, at a squad cost of {money(team.squadValue)}.
+              Your current 15 are on track for {currentScore.toFixed(1)} points over the same
+              five weeks, and cost {money(team.squadValue)}.
             </p>
           </div>
         </div>

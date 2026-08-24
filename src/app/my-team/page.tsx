@@ -265,7 +265,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         description={
           team.source === "manual"
             ? `Hand-built squad · projections for gameweek ${team.event}`
-            : `${team.managerName} · squad as at gameweek ${team.event}`
+            : `${team.managerName} · squad as of gameweek ${team.event}`
         }
       >
         <Link
@@ -331,12 +331,12 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           sub={`${squadBand.label} · average across 15 players`}
           info={
             <>
-              Each player scores 0–10 on projected points, value for money and how likely they
-              are to start. This is the average across your 15.
+              Every player gets a score out of 10 for points, value and how likely they are to
+              play. This is the average across all 15 of yours.
               <span className="mt-1.5 block text-slate-400">
-                Because it includes your bench and cheap enablers, the realistic ceiling is
-                about <strong className="text-brand-400">6.5</strong> — that is what a
-                fully optimised £100m squad scores.
+                Your bench and your cheap fill-in players drag the average down, so nobody
+                scores 10. About <strong className="text-brand-400">6.5</strong> is as good as
+                it gets — that is what the best possible £100m squad would score.
               </span>
               <span className="mt-1.5 block text-slate-500">
                 6.0+ elite · 5.0+ strong · 4.0+ fair · below 4 weak
@@ -453,9 +453,10 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
             <h2 className="mb-2.5 flex items-center gap-1.5 text-[14px] font-bold text-white">
               Player ratings
               <InfoTip label="About player ratings">
-                Each player is scored 0–10 on projected points, points per £m and minutes
-                security. Individuals spread much wider than the squad average — the median
-                regular starter sits near 3.3, and only the best premiums reach 9–10.
+                Each player is scored out of 10 on the points we expect, what they cost, and
+                how safe their place in the team is. These spread much wider than the squad
+                average: a typical regular starter is around 3.3, and only the very best
+                expensive players reach 9 or 10.
                 <span className="mt-1.5 block text-slate-500">
                   7.0+ elite · 5.0+ strong · 3.0+ fair · below 3 weak
                 </span>
@@ -497,9 +498,9 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
             We play out this gameweek four thousand times, rolling the dice each time on who
             starts, who scores, who assists, who keeps a clean sheet and who picks up bonus.
             <span className="mt-1.5 block text-slate-400">
-              A single projected number is just the average. Real weeks are lumpy — a haul is 4
-              to 13 points at once — so when you need a big score, the range matters more than
-              the average.
+              A single projected number is only the average. Real weeks are streaky — a good
+              return lands 4 to 13 points in one go — so when you need a big score, the range
+              matters more than the average.
             </span>
           </InfoTip>
         </h2>
@@ -554,8 +555,8 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         </div>
 
         <p className="mt-3 text-[11.5px] leading-relaxed text-slate-500">
-          Chips shift the odds but do not transform them. The largest lever on a big week is
-          the squad itself — see{" "}
+          Chips improve your odds, but they do not transform them. What really decides a big
+          week is the squad itself — see{" "}
           <Link href={`/transfers?${query}`} className="text-brand-400 hover:underline">
             See transfers
           </Link>{" "}
@@ -630,7 +631,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-4 rounded-sm border border-dashed border-brand-500/50 bg-brand-500/10" />
-            Model estimate
+            Our estimate
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-4 rounded-sm bg-brand-500" />

@@ -243,3 +243,19 @@ Two rules came out of doing it:
   quietly upgrade how confident the app sounds.
 
 The technical terms remain in `docs/` and throughout `src/lib` — that is where they belong.
+
+### A second language pass, from the rendered page
+
+The first pass removed the vocabulary — `xPts`, `FDR`, `BPS`. Reading the *rendered* text
+afterwards showed the sentences were still written for someone who already knew the model:
+"cheap enablers", "minutes security", "the median regular starter", "treat it as a data
+prior", "the largest lever on a big week".
+
+Grepping the source finds terms; it does not find dense writing. What worked was dumping the
+visible text of every page — including `title` attributes, where the worst offenders were
+hiding — and reading it as prose. That is also how the stale "send the squad through the
+ratings, transfer and planner tools" line on `/squad` surfaced, three weeks after `/planner`
+was deleted.
+
+Rewrites kept every caveat and every number. "Nobody scores 10 because your bench drags the
+average down" says exactly what "cheap enablers cap the composite near 6.5" said.

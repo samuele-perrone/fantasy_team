@@ -20,7 +20,7 @@ export default async function PlayersPage() {
       <PageHeader
         eyebrow="Toolbox"
         title="Players"
-        description="Every player in the game, ranked on the underlying numbers. Switch between projection, season, attacking, defensive and market views — every column sorts, and the heat map highlights the leaders in the filtered set."
+        description="Every player in the game, ranked. Switch between what we expect next, season so far, attacking, defending and who is being bought and sold. Click any column to sort by it, and the colours show who leads whatever you have filtered to."
       />
       <PlayerTable rows={rows} teams={teams} defaultGroup="form" defaultSort="totalPoints" />
     </div>

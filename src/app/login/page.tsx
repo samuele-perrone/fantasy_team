@@ -84,7 +84,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </li>
           <li className="flex gap-2">
             <span className="text-brand-400">•</span>
-            Only you can read your data — enforced in the database, not just the app
+            Only you can read your data — locked down at the database itself, not just in the app
           </li>
         </ul>
       </div>
