@@ -218,8 +218,12 @@ export default async function LivePage({ searchParams }: PageProps<"/live">) {
       </section>
 
       {team.history?.current?.length ? (
-        <section className="panel px-5 py-4">
-          <h2 className="mb-3 text-[14px] font-bold text-white">Season so far</h2>
+        <section id="history" className="panel scroll-mt-20 px-5 py-4">
+          <h2 className="mb-1 text-[14px] font-bold text-white">Season history</h2>
+          <p className="mb-3 text-[12px] text-slate-500">
+            Every gameweek you have played: points, what you left on the bench, transfers and
+            their cost, and how your rank and squad value moved.
+          </p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-[12.5px]">
               <thead>

@@ -18,6 +18,7 @@ export const NAV: NavGroup[] = [
       { href: "/transfers", label: "AI Transfers", desc: "Ranked transfer suggestions for your team" },
       { href: "/team-builder", label: "AI Teams", desc: "Optimal 15 under any budget" },
       { href: "/live", label: "Live Rank", desc: "Live points, bonus and projected rank" },
+      { href: "/live#history", label: "Season History", desc: "Every gameweek: points, rank, transfers, value" },
       { href: "/leagues", label: "Mini-Leagues", desc: "Standings, live tables and awards" },
     ],
   },

@@ -43,7 +43,7 @@ npm run dev              # http://localhost:3000
 | `/my-team` | Load your squad — ratings, optimal XI, captaincy verdict, gameweek-by-gameweek |
 | `/transfers` | Ranked 1–3 transfer plans scored net of points hits, plus a wildcard draft |
 | `/team-builder` | Squad optimiser for any budget, with lock-in and exclusion constraints |
-| `/live` | Live gameweek points with provisional bonus, captain multipliers and chips |
+| `/live` | Live gameweek points with bonus and chips, plus season history at `#history` |
 | `/planner` | Eight-week projection, chips already played, and the best remaining window for each |
 | `/leagues` | Classic mini-league standings, movement and awards |
 | `/guides` | Scoring rules, chip strategy, blank/double gameweeks, price changes, underlying stats |
