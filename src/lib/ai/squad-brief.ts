@@ -15,20 +15,33 @@ import { money } from "@/lib/utils";
  * The model's job is to explain, compare and answer follow-ups over settled numbers.
  */
 
-function line(p: PlayerRow, extra?: string): string {
+function detail(p: PlayerRow): string {
   const bits = [
     `${p.name} (${p.pos}, ${p.team}, ${money(p.cost)})`,
     `next GW ${p.xPtsNext.toFixed(2)}pts`,
     `next 5 ${p.xPts.toFixed(1)}pts`,
-    `${p.xMins} mins`,
+    `${p.xMins} mins expected`,
     `${Math.round(p.startProb * 100)}% to start`,
+    // Season minutes and starts answer "has he actually been playing?", which a projection
+    // alone cannot — a low-minutes player can still project well on rate stats.
+    `season: ${p.starts} start${p.starts === 1 ? "" : "s"}, ${p.minutes} mins played`,
     `rating ${p.rating.toFixed(1)}/10`,
   ];
   if (p.status !== "a") {
-    bits.push(`FLAGGED: ${p.news || p.status}${p.availability !== null ? ` (${p.availability}%)` : ""}`);
+    // FPL's news string usually already contains the percentage, so only append it when it
+    // does not — otherwise the line reads "75% chance of playing — 75% chance of playing".
+    const news = p.news || "no detail given";
+    const hasPct = p.availability !== null && news.includes(`${p.availability}%`);
+    bits.push(
+      `FLAGGED (${p.status}): ${news}` +
+        (p.availability !== null && !hasPct ? ` — ${p.availability}% chance of playing` : ""),
+    );
   }
-  if (extra) bits.push(extra);
-  return `- ${bits.join(" · ")}`;
+  return bits.join(" · ");
+}
+
+function line(p: PlayerRow, extra?: string): string {
+  return `- ${detail(p)}${extra ? ` · ${extra}` : ""}`;
 }
 
 export function buildSquadBrief(team: LoadedTeam): string {
@@ -116,15 +129,18 @@ export function buildSquadBrief(team: LoadedTeam): string {
   if (!plans.length) {
     out.push("- No transfer improves the squad.");
   }
-  for (const plan of plans) {
-    const moves = plan.moves
-      .map((m) => `${m.out.name} -> ${m.in.name} (${money(m.in.cost)})`)
-      .join("; ");
+  for (const [i, plan] of plans.entries()) {
     out.push(
-      `- ${plan.moves.length} transfer(s): ${moves} | gain ${plan.gain.toFixed(2)}, ` +
+      `PLAN ${i + 1} — ${plan.moves.length} transfer(s): gain ${plan.gain.toFixed(2)}, ` +
         `hit ${plan.hitCost} (${plan.hitCost === 0 ? "FREE, no points deducted" : `costs ${plan.hitCost} points`})` +
         `, net ${plan.netGain.toFixed(2)}`,
     );
+    // Incoming players get the same detail as the manager's own, or the model has no way to
+    // judge whether a suggested signing is injured, rotated or simply not playing.
+    for (const m of plan.moves) {
+      out.push(`    OUT: ${detail(m.out)}`);
+      out.push(`    IN:  ${detail(m.in)}`);
+    }
   }
 
   out.push("");
@@ -151,6 +167,9 @@ How to answer:
 - Use the numbers in the brief. They come from the same projections the rest of the site shows, so your answer must agree with what the manager can see on the page. Never invent a number, a fixture, an injury or a price.
 - Do not accept a false premise in the question. If the manager asks "is it worth a -4 for X" but the brief shows that move costs no hit, correct them: say it is free and they are not paying 4 points. Check the hit figure in the brief before discussing any cost.
 - A points hit costs 4 points for certain. Our per-player estimates are typically off by about 1.6 points a week, so if a plan's gain does not clearly beat the hit, say to hold. Do not talk anyone into a -4 for a marginal gain.
+- Whenever you recommend signing a player, state their availability in the same breath if there is anything to flag: a FLAGGED note, a start chance below 70%, or very few season starts. Do not wait to be challenged on it. "Welbeck, though he is a doubt at 75%" is the standard, not "Welbeck" alone.
+- The brief DOES carry injury and team news, in the FLAGGED field, and season starts and minutes for every player named. Never say you have no injury or team news on someone who appears in the brief — read their line. Only say you lack information about a player who is not in the brief at all.
+- If the manager tells you something you cannot see — that a player is out, or was benched last week — believe them over the projection, say so plainly, and adjust the advice. Our numbers are computed before team sheets are published, so a manager watching the news often knows more than we do.
 - If asked something the brief does not cover — a rumour, a manager's press conference, next season — say you do not have that, and answer what you can from what you do have.
 - Never claim certainty about who will start or score. These are projections.
 - No headings, no bullet lists unless comparing three or more things. Plain sentences.`;

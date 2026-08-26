@@ -304,3 +304,20 @@ transient rate limit — wait ten seconds — was reported to the manager as *"a
 went and looked at their billing page because of it.
 
 Any message matching several branches must be tested against the narrowest one first.
+
+### The brief must describe incoming players as fully as owned ones
+
+The first version of `squad-brief.ts` rendered the manager's own 15 in full — minutes, start
+chance, rating, injury news — and rendered transfer targets as `Name (£6.0m)`.
+
+The result was an assistant that recommended signing Welbeck and, when told he was not
+playing, replied *"I don't have injury or team news on Welbeck, so I can't confirm that"*. The
+site did have it: he was flagged doubtful at 75%, with 0 starts and 0 minutes. Nobody had
+passed it along.
+
+An LLM cannot reason about what it was not sent. Any player the brief *names* now carries the
+same detail, and the prompt forbids claiming ignorance about anyone who appears in it.
+
+Season starts and minutes were added at the same time, because a projection alone cannot
+answer "has he actually been playing?" — a player with no minutes can still project well on
+last season's rates via `priors.json`, which is exactly the case that caused the complaint.
