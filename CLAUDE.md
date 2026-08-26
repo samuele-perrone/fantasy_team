@@ -58,16 +58,16 @@ one of the six — the last cut existed because the site had a page per idea.
 
 ### The AI panel
 
-`/api/ask` streams Claude through the Vercel AI Gateway (OIDC auth — no key). Three rules:
+`/api/ask` streams Claude through the Anthropic API (`ANTHROPIC_API_KEY`). Three rules:
 
 - **the model explains, it never calculates.** `src/lib/ai/squad-brief.ts` hands it conclusions
   already computed by `optimiser.ts` and `projection.ts`, so the chat cannot contradict the
   page. Adding a number the model derives itself breaks that guarantee.
 - **the route re-checks `getUserId()`** — the proxy matcher does not cover API routes, and
   every call costs money
-- **the model is resolved at runtime**, not pinned: `resolveModel()` walks a candidate list and
-  caches what the account tier will actually serve. A free tier serves only `claude-3-haiku`
-  and rate-limits it heavily, which is enough to test the wiring and not much else.
+- **the model is pinned** in `src/lib/ai/model.ts`, overridable by `FTH_AI_MODEL`. The Vercel
+  AI Gateway was tried first and dropped: it needs no key, but serves models by Vercel plan,
+  and a free plan gives `claude-3-haiku` at roughly one request every few minutes.
 
 ### Auth and gating
 

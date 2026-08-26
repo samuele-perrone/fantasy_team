@@ -1,77 +1,25 @@
 import "server-only";
-import { generateText } from "ai";
+import { anthropic } from "@ai-sdk/anthropic";
+import type { LanguageModel } from "ai";
 
 /**
  * Which Claude model answers squad questions.
  *
- * The Vercel AI Gateway authenticates through the deployment's OIDC token, so there is no key
- * to manage — but the *account tier* decides which models it will serve, and a free tier is
- * restricted to older ones. Rather than pinning a model that 403s until someone tops up, or
- * pinning a weak one forever, this tries the best first and falls back.
+ * This talks to the Anthropic API directly with `ANTHROPIC_API_KEY`, rather than through the
+ * Vercel AI Gateway. The gateway needs no key — it authenticates with the deployment's OIDC
+ * token — but it serves models according to the Vercel *plan*, and a free plan is restricted
+ * to `claude-3-haiku` and rate-limits it to roughly one request every few minutes. An
+ * Anthropic key has no such gate, so the model is simply pinned here.
  *
- * The practical effect: adding credits upgrades the answers with no code change and no
- * redeploy — the probe simply starts succeeding once the cache expires.
+ * Override with `FTH_AI_MODEL` to try a different one without a code change.
  */
-const CANDIDATES = [
-  "anthropic/claude-sonnet-5",
-  "anthropic/claude-sonnet-4.5",
-  "anthropic/claude-haiku-4.5",
-  "anthropic/claude-3-haiku",
-] as const;
+const DEFAULT_MODEL = "claude-sonnet-5";
 
-export interface ResolvedModel {
-  id: string;
-  /** true when we could not reach the preferred model and dropped to an older one */
-  degraded: boolean;
+export function chatModel(): LanguageModel {
+  return anthropic(process.env.FTH_AI_MODEL?.trim() || DEFAULT_MODEL);
 }
 
-let cached: { value: ResolvedModel; at: number } | null = null;
-
-/** Re-probe this often, so a top-up is picked up without a deploy. */
-const TTL_MS = 15 * 60 * 1000;
-
-/**
- * A probe costs a request, and a rate-limited tier is exactly where requests are scarce — so
- * walking the whole list on every question is self-defeating. The result is cached, and a
- * failed probe is remembered too, so the chain is walked at most once per TTL rather than
- * once per question.
- */
-async function serves(id: string): Promise<boolean> {
-  try {
-    await generateText({ model: id, prompt: "hi", maxOutputTokens: 1 });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export async function resolveModel(): Promise<ResolvedModel> {
-  const override = process.env.FTH_AI_MODEL?.trim();
-  if (override) return { id: override, degraded: false };
-
-  if (cached && Date.now() - cached.at < TTL_MS) return cached.value;
-
-  for (const [i, id] of CANDIDATES.entries()) {
-    // The preferred model needs no probe: try it for real and let the route surface any
-    // error. Only once it has failed is it worth spending requests to find a fallback.
-    if (i === 0) {
-      const value: ResolvedModel = { id, degraded: false };
-      if (await serves(id)) {
-        cached = { value, at: Date.now() };
-        return value;
-      }
-      continue;
-    }
-    if (await serves(id)) {
-      const value: ResolvedModel = { id, degraded: true };
-      cached = { value, at: Date.now() };
-      return value;
-    }
-  }
-
-  // Nothing answered. Return the preferred one anyway so the caller surfaces the real
-  // gateway error rather than a vague "no model" of our own invention.
-  const value: ResolvedModel = { id: CANDIDATES[0], degraded: false };
-  cached = { value, at: Date.now() };
-  return value;
+/** True when the key is missing, so the UI can say so instead of failing at the gateway. */
+export function isConfigured(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }

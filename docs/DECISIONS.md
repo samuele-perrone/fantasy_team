@@ -281,12 +281,26 @@ system prompt has an explicit rule about correcting false premises.
 That failure is also an argument for the model tier mattering: a weak model will take the
 question's word for things a stronger one checks.
 
-### Model choice is resolved at runtime, not pinned
+### Anthropic directly, not the Vercel AI Gateway
 
-`resolveModel()` walks an ordered list of Claude models and caches the first the gateway will
-serve. Pinning the best one would 403 on a free tier; pinning a weak one would stay weak after
-a top-up. Resolving at runtime means the account tier — not a deploy — decides.
+The panel was built on the gateway first, because it needs no key — the deployment's OIDC
+token authenticates it. That is genuinely the lowest-friction option and it worked.
 
-The probe costs a request, which is the one thing a rate-limited tier cannot spare, so results
-are cached for 15 minutes and the preferred model is tried for real before any fallback is
-probed.
+It was replaced because the gateway serves models by **Vercel plan**. On a free plan that
+meant `claude-3-haiku` only, rate-limited to about one request every few minutes. Both limits
+are invisible in the code and unfixable from it.
+
+An earlier version tried to cope by resolving the model at runtime — walking a candidate list
+and caching whichever the gateway would serve. That was the right shape for the gateway's
+constraint, and it is now dead weight: an Anthropic key has no tier gate, so the model is
+simply pinned and overridable by `FTH_AI_MODEL`. Deleting the probe also removed its worst
+property, which was spending a request to discover it had no requests to spare.
+
+### Order the error branches by specificity, not by likelihood
+
+The gateway's rate-limit message reads *"Free tier requests on this model are rate-limited.
+Upgrade to paid credits…"*. The handler tested for credit/billing wording first, so a
+transient rate limit — wait ten seconds — was reported to the manager as *"add credits"*. They
+went and looked at their billing page because of it.
+
+Any message matching several branches must be tested against the narrowest one first.

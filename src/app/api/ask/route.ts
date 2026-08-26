@@ -8,7 +8,7 @@ import {
 import { getUserId } from "@/lib/supabase/server";
 import { resolveTeam, EntryNotFound, InvalidSquad, type TeamQuery } from "@/lib/fpl/entry";
 import { buildSquadBrief, SYSTEM_PROMPT } from "@/lib/ai/squad-brief";
-import { resolveModel } from "@/lib/ai/model";
+import { chatModel, isConfigured } from "@/lib/ai/model";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -28,6 +28,13 @@ export async function POST(req: Request) {
     body = await req.json();
   } catch {
     return new Response("Bad request", { status: 400 });
+  }
+
+  if (!isConfigured()) {
+    return new Response(
+      "Claude is not configured yet — add an ANTHROPIC_API_KEY environment variable.",
+      { status: 503 },
+    );
   }
 
   const messages = (body.messages ?? []).slice(-MAX_MESSAGES);
@@ -63,10 +70,8 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  const model = await resolveModel();
-
   const result = streamText({
-    model: model.id,
+    model: chatModel(),
     system: `${SYSTEM_PROMPT}\n\n=== THE MANAGER'S SQUAD ===\n${brief}`,
     messages: await convertToModelMessages(messages),
   });
@@ -74,15 +79,22 @@ export async function POST(req: Request) {
   return createUIMessageStreamResponse({
     stream: toUIMessageStream({
       stream: result.stream,
-      // The default masks errors as "An error occurred", which hides the one failure the user
-      // can actually act on: the gateway refusing a model on their plan.
+      // The default masks everything as "An error occurred", which hides the failures the
+      // manager can actually act on. Order matters here: a rate-limit message can also
+      // mention billing, so it has to be matched before any credit/quota wording or a
+      // "wait a moment" problem gets reported as "go and pay someone".
       onError: (error) => {
         const message =
           error instanceof Error ? error.message : typeof error === "string" ? error : "Unknown error";
-        if (/free tier|credit|quota|billing/i.test(message)) {
-          return "Your Vercel AI plan will not serve a model right now — add credits to the AI Gateway and try again.";
+        if (/rate.?limit|429|overloaded/i.test(message)) {
+          return "Claude is busy right now — give it a few seconds and ask again.";
         }
-        if (/rate.?limit/i.test(message)) return "Rate limited — give it a moment and ask again.";
+        if (/api.?key|authentication|unauthorized|401/i.test(message)) {
+          return "The Claude API key is missing or rejected. Check ANTHROPIC_API_KEY.";
+        }
+        if (/credit|quota|billing|insufficient/i.test(message)) {
+          return "The Claude account has no credit left. Top it up at console.anthropic.com and try again.";
+        }
         return message;
       },
     }),
