@@ -321,3 +321,22 @@ same detail, and the prompt forbids claiming ignorance about anyone who appears 
 Season starts and minutes were added at the same time, because a projection alone cannot
 answer "has he actually been playing?" — a player with no minutes can still project well on
 last season's rates via `priors.json`, which is exactly the case that caused the complaint.
+
+### The brief describes matches, not just players
+
+The first briefs were a list of players with projections attached. Asked "who should I move
+on?", the assistant could answer; asked anything about the football — who is favourite, who is
+most likely to score — it had nothing to work with, because none of that reached it.
+
+`matchContext()` now groups the manager's players by the fixture they are actually in, and
+gives each match a favourite and an expected-goals line, each player a goal/assist/clean-sheet
+chance, and the week a ranked "most likely to return" list. Last gameweek's real scores go in
+too, since a manager asking about transfers is usually reacting to what just happened.
+
+The data was always there — `FixtureProjection` carries `goalProb`, `assistProb`, `returnProb`
+and `cleanSheetProb` — but `PlayerRow.FixtureChip` keeps only difficulty and points, so the
+brief reads the projection directly rather than the row.
+
+One trap worth recording: the squad on file belongs to `team.event`, while the projections
+describe the week *after* it. Filtering fixtures on `team.event` silently produced an empty
+section. The brief now states both explicitly, so the model cannot advise on a locked week.

@@ -3,6 +3,9 @@ import type { LoadedTeam } from "@/lib/fpl/entry";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { planTransfers } from "@/lib/fpl/optimiser";
 import { chipStatuses } from "@/lib/fpl/chips";
+import { getGameData } from "@/lib/fpl/data";
+import { projectPlayer } from "@/lib/fpl/projection";
+import { expectedGoals } from "@/lib/fpl/ratings";
 import { money } from "@/lib/utils";
 
 /**
@@ -44,7 +47,114 @@ function line(p: PlayerRow, extra?: string): string {
   return `- ${detail(p)}${extra ? ` · ${extra}` : ""}`;
 }
 
-export function buildSquadBrief(team: LoadedTeam): string {
+/**
+ * The match each of the manager's players is actually involved in this week: who is favourite,
+ * how many goals each side is expected to score, and each player's own chance of a goal or
+ * assist.
+ *
+ * A per-player points projection alone reads as a number with no story behind it. "Man Utd are
+ * favourites at home to Ipswich, 2.1 goals to 0.9, and Bruno has a 42% chance of a goal or
+ * assist" is the same model output in the terms a manager actually thinks in — and it lets the
+ * assistant answer "who's most likely to score?" rather than deflecting.
+ */
+async function matchContext(team: LoadedTeam): Promise<string[]> {
+  const data = await getGameData();
+  const elementsById = new Map(data.bootstrap.elements.map((e) => [e.id, e]));
+  const out: string[] = [];
+
+  interface Involved {
+    player: PlayerRow;
+    goalProb: number;
+    assistProb: number;
+    returnProb: number;
+    cleanSheetProb: number;
+  }
+  // Keyed by fixture so team-mates are grouped under one match rather than repeated.
+  const byFixture = new Map<
+    number,
+    { event: number; home: number; away: number; players: Involved[] }
+  >();
+
+  for (const p of team.squad) {
+    const el = elementsById.get(p.id);
+    if (!el) continue;
+    // horizon 1 yields the player's next fixture, or two in a double gameweek. Filtering on
+    // team.event would find nothing: that is the week whose picks are locked, while the
+    // projections describe the week still to come.
+    const proj = projectPlayer(el, data.ctx, 1);
+    for (const f of proj.fixtures) {
+      const home = f.isHome ? p.teamId : f.opponent;
+      const away = f.isHome ? f.opponent : p.teamId;
+      const entry = byFixture.get(f.fixtureId) ?? {
+        event: f.event,
+        home,
+        away,
+        players: [],
+      };
+      entry.players.push({
+        player: p,
+        goalProb: f.goalProb,
+        assistProb: f.assistProb,
+        returnProb: f.returnProb,
+        cleanSheetProb: f.cleanSheetProb,
+      });
+      byFixture.set(f.fixtureId, entry);
+    }
+  }
+
+  if (!byFixture.size) return out;
+
+  const name = (id: number) => data.teams.get(id)?.name ?? "?";
+
+  out.push("");
+  const ev = [...byFixture.values()][0]?.event;
+  out.push(`NEXT GAMEWEEK (GW${ev}) — the matches your players are involved in:`);
+  for (const fx of byFixture.values()) {
+    const homeR = data.ctx.ratings.get(fx.home);
+    const awayR = data.ctx.ratings.get(fx.away);
+    let headline = `${name(fx.home)} v ${name(fx.away)}`;
+    if (homeR && awayR) {
+      const hg = expectedGoals(homeR, awayR, true);
+      const ag = expectedGoals(awayR, homeR, false);
+      const margin = hg - ag;
+      const favourite =
+        Math.abs(margin) < 0.25
+          ? "too close to call"
+          : `${margin > 0 ? name(fx.home) : name(fx.away)} favourite`;
+      headline += ` — ${favourite}, expected goals ${hg.toFixed(2)} v ${ag.toFixed(2)}`;
+    }
+    out.push(`- ${headline}`);
+    for (const inv of fx.players) {
+      out.push(
+        `    ${inv.player.name} (${inv.player.pos}): ` +
+          `${Math.round(inv.returnProb * 100)}% chance of a goal or assist ` +
+          `(goal ${Math.round(inv.goalProb * 100)}%, assist ${Math.round(inv.assistProb * 100)}%)` +
+          (inv.player.posId <= 2
+            ? `, ${Math.round(inv.cleanSheetProb * 100)}% clean sheet`
+            : ""),
+      );
+    }
+  }
+
+  const likeliest = [...byFixture.values()]
+    .flatMap((f) => f.players)
+    .sort((a, b) => b.returnProb - a.returnProb)
+    .slice(0, 5);
+  if (likeliest.length) {
+    out.push("");
+    out.push(
+      "MOST LIKELY TO SCORE OR ASSIST this week: " +
+        likeliest
+          .map((i) => `${i.player.name} ${Math.round(i.returnProb * 100)}%`)
+          .join(", ") +
+        ".",
+    );
+  }
+
+  return out;
+}
+
+export async function buildSquadBrief(team: LoadedTeam): Promise<string> {
   const captain = team.squad.find((p) => p.id === team.captainId);
   const vice = team.squad.find((p) => p.id === team.viceCaptainId);
   const best = team.xi.captain;
@@ -72,14 +182,22 @@ export function buildSquadBrief(team: LoadedTeam): string {
 
   const out: string[] = [];
 
-  out.push(`GAMEWEEK ${team.event} is the one being picked.`);
+  // The squad on file belongs to team.event; the advice is about the week after it. Saying so
+  // explicitly stops the model advising on a gameweek that is already locked.
+  out.push(
+    `The squad below is as it stood in GW${team.event}. Advice should be about the NEXT ` +
+      `gameweek, whose fixtures are listed further down — not about GW${team.event}, which is done.`,
+  );
   out.push(
     `Manager: ${team.managerName ?? "unknown"}. Team: ${team.name}. ` +
       `Squad value ${money(team.squadValue)}, ${money(team.bank)} in the bank, ` +
       `${team.freeTransfers} free transfer${team.freeTransfers === 1 ? "" : "s"}.`,
   );
   if (team.overallPoints !== null) {
-    out.push(`Season so far: ${team.overallPoints} points, overall rank ${team.overallRank ?? "n/a"}.`);
+    out.push(
+      `Season so far: ${team.overallPoints} points, overall rank ` +
+        `${team.overallRank?.toLocaleString("en-GB") ?? "n/a"}.`,
+    );
   }
   if (team.activeChip) out.push(`Chip active this week: ${team.activeChip}.`);
 
@@ -96,6 +214,34 @@ export function buildSquadBrief(team: LoadedTeam): string {
   out.push("");
   out.push("BENCH, in order:");
   team.actual.bench.forEach((p, i) => out.push(line(p, `bench ${i + 1}`)));
+
+  out.push(...(await matchContext(team)));
+
+  // What actually happened, as distinct from what is projected. A manager asking "who should I
+  // move on?" is usually reacting to last week, so the assistant needs to have seen it too.
+  const history = team.history?.current ?? [];
+  const last = history.length ? history[history.length - 1] : null;
+  if (last) {
+    out.push("");
+    out.push(
+      `LAST GAMEWEEK (GW${last.event}): you scored ${last.points} points` +
+        (last.event_transfers_cost ? ` after a ${last.event_transfers_cost}-point hit` : "") +
+        `, overall rank ${last.overall_rank?.toLocaleString("en-GB") ?? "n/a"}.`,
+    );
+    const scorers = [...team.squad]
+      .filter((p) => p.eventPoints > 0)
+      .sort((a, b) => b.eventPoints - a.eventPoints)
+      .slice(0, 8);
+    if (scorers.length) {
+      out.push(
+        `  Your scorers: ${scorers.map((p) => `${p.name} ${p.eventPoints}`).join(", ")}.`,
+      );
+    }
+    const blanks = team.squad.filter((p) => p.eventPoints <= 0);
+    if (blanks.length) {
+      out.push(`  Returned nothing: ${blanks.map((p) => p.name).join(", ")}.`);
+    }
+  }
 
   out.push("");
   out.push("OUR OWN CONCLUSIONS (already computed — use these, do not recalculate):");
@@ -161,7 +307,10 @@ export function buildSquadBrief(team: LoadedTeam): string {
 
 export const SYSTEM_PROMPT = `You are the assistant inside FantasyTeamHub, a Fantasy Premier League site. You are talking to the manager whose squad is described below.
 
+The brief below gives you, for this gameweek: every player you own with their minutes, start chance, injury news and season record; the actual match each of them plays, which side is favourite and by how many expected goals; each player's chance of a goal or assist; what happened last gameweek; ranked transfer plans with their real cost; and the chip situation. Ground every answer in it.
+
 How to answer:
+- Lead with the football, not the projection. "Man Utd are big favourites at home and Bruno has the best chance of a return in your squad" reads better than "Bruno projects 7.29".
 - Talk about football, not models. Say "points", "minutes", "chance of starting", "how hard the fixture is". Never say xPts, xMins, xG, FDR, BPS, expected value, variance, or calibration.
 - Be direct and short. Two or three sentences for a simple question. Lead with the answer, then one line of why.
 - Use the numbers in the brief. They come from the same projections the rest of the site shows, so your answer must agree with what the manager can see on the page. Never invent a number, a fixture, an injury or a price.

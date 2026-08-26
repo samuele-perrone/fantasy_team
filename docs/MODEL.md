@@ -233,3 +233,24 @@ MAE rose slightly, from 1.51 to 1.57, while bias improved from −0.31 and RMSE 
 Once enough gameweeks have accumulated, the coefficients — the rating weights, the bonus
 slope, the strength slope — can be fitted against measured error rather than chosen by eye.
 Until then they remain hand-tuned, and the caveat above stands.
+
+## Newness cuts one way
+
+A summer signing carries a full season of starts from a different club. Reading those as a
+guaranteed place in the new side is how a squad player gets modelled as nailed, so
+`minutesModel` inflates the shrinkage denominator by `22 * newness` for anyone recently
+transferred, deliberately making current-season evidence earn trust slowly.
+
+Applied symmetrically that backfires. A signing who is fit, available and simply **not being
+picked** is the clearest possible evidence about their role — and the newness term was
+suppressing it. Measured against a real case: a £6.0m forward with 0 starts and 0 minutes had
+the games that actually describe him weighted at **4.2%**, against 95.8% for last season
+elsewhere. He came out at 67% to start and was the top transfer recommendation on the site.
+
+The term now applies only while a player is *outperforming* their seed. Newness slows the
+climb, not the fall. Effect on live data: that forward moved 67% → 60% and 17.3 → 15.4 points
+over five gameweeks, and players whose observed rate already beat their seed were untouched.
+
+**This is not yet backtested.** `backtest.mjs gw1` predicts gameweek one from pre-season data,
+where no games have been played, so the branch never executes and the scores are identical
+either way. The first real measurement is the GW2 score.

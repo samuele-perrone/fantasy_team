@@ -137,7 +137,15 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
     // Weight current-season evidence against the seed, which already blends last season's
     // start rate with price. A summer signing's history describes a different club, so their
     // observed rate has to earn trust from scratch.
-    const w = sample / (sample + PRIOR_GAMES + 22 * newness);
+    //
+    // That distrust is deliberately one-sided. It exists to stop a history of starts
+    // elsewhere reading as a guaranteed place here — so it applies while the player is
+    // outperforming the seed. Applied to a signing who is *not* being picked it does the
+    // opposite of its purpose: not starting at the club they have actually joined is the most
+    // relevant evidence available, and suppressing it left a player with no minutes at 4%
+    // weight on the only games that describe him. Newness slows the climb, not the fall.
+    const beatingSeed = observedStarts >= seed;
+    const w = sample / (sample + PRIOR_GAMES + (beatingSeed ? 22 * newness : 0));
     startProb = observedStarts * w + seed * (1 - w);
     subProb = clamp(appearances - observedStarts, 0, 1) / Math.max(1 - observedStarts, 0.15);
     subProb = clamp(subProb, 0, 0.9);

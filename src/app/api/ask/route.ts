@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   try {
     const team = await resolveTeam(query, 5);
     if (!team) return new Response("No squad loaded", { status: 400 });
-    brief = buildSquadBrief(team);
+    brief = await buildSquadBrief(team);
   } catch (e) {
     if (e instanceof EntryNotFound || e instanceof InvalidSquad) {
       return new Response("Could not load that squad", { status: 400 });
