@@ -36,32 +36,65 @@ export function AskPanel({ teamQuery }: { teamQuery: string }) {
     setInput("");
   }
 
-  if (!open) {
-    return (
+  // The trigger sits inline in the page header; the conversation opens over the page rather
+  // than inside it, so an unopened panel costs no vertical space at all.
+  return (
+    <>
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent-500 px-5 py-3 text-[14px] font-bold text-white transition hover:bg-accent-400 sm:w-auto"
+        className="flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-4 py-2 text-[13px] font-bold text-white transition hover:bg-accent-400"
       >
         <Sparkle />
         Ask about your squad
       </button>
-    );
-  }
+      {open && <Conversation onClose={() => setOpen(false)} {...{ messages, status, error, input, setInput, ask, scroller, busy }} />}
+    </>
+  );
+}
 
+interface ConversationProps {
+  onClose: () => void;
+  messages: ReturnType<typeof useChat>["messages"];
+  status: ReturnType<typeof useChat>["status"];
+  error: ReturnType<typeof useChat>["error"];
+  input: string;
+  setInput: (v: string) => void;
+  ask: (text: string) => void;
+  scroller: React.RefObject<HTMLDivElement | null>;
+  busy: boolean;
+}
+
+function Conversation({
+  onClose,
+  messages,
+  status,
+  error,
+  input,
+  setInput,
+  ask,
+  scroller,
+  busy,
+}: ConversationProps) {
   return (
-    <section className="panel overflow-hidden">
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-hidden
+      />
+      <section className="panel fixed inset-x-3 bottom-3 z-50 flex max-h-[80vh] flex-col overflow-hidden shadow-2xl shadow-black/60 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[420px]">
       <div className="flex items-center gap-2 border-b border-pitch-800 px-4 py-3">
         <Sparkle />
         <h2 className="text-[14px] font-bold text-white">Ask about your squad</h2>
         <button
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className="ml-auto rounded-lg px-2 py-1 text-[12px] font-semibold text-slate-400 transition hover:bg-pitch-800 hover:text-white"
         >
           Close
         </button>
       </div>
 
-      <div ref={scroller} className="max-h-[420px] space-y-3 overflow-y-auto px-4 py-4">
+      <div ref={scroller} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {!messages.length && (
           <>
             <p className="text-[12.5px] leading-relaxed text-slate-400">
@@ -142,7 +175,8 @@ export function AskPanel({ teamQuery }: { teamQuery: string }) {
         Answers use our projections, which are typically off by about 1.6 points per player per
         week. Treat them as a steer, not a certainty.
       </p>
-    </section>
+      </section>
+    </>
   );
 }
 

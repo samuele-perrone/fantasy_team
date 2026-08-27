@@ -17,7 +17,7 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
         {(eyebrow || badge) && (
           <div className="mb-1 flex items-center gap-2">
@@ -33,9 +33,9 @@ export function PageHeader({
             )}
           </div>
         )}
-        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-[28px]">{title}</h1>
+        <h1 className="text-xl font-bold tracking-tight text-white sm:text-[24px]">{title}</h1>
         {description && (
-          <p className="mt-1.5 max-w-3xl text-[13.5px] leading-relaxed text-slate-400">
+          <p className="mt-0.5 max-w-3xl text-[12.5px] leading-snug text-slate-400">
             {description}
           </p>
         )}
@@ -164,14 +164,14 @@ export function StatCard({
 }) {
   return (
     // Raised so the tooltip paints above neighbouring cards in the stats grid.
-    <div className={cn("panel px-4 py-3", Boolean(info) && "relative z-30")}>
+    <div className={cn("panel px-3.5 py-2.5", Boolean(info) && "relative z-30")}>
       <div className="flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
         {label}
         {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
       </div>
       <div
         className={cn(
-          "num mt-1 text-[22px] font-bold leading-none",
+          "num mt-0.5 text-[20px] font-bold leading-none",
           valueClassName ??
             cn(
               tone === "brand" && "text-brand-400",

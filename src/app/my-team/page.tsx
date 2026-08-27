@@ -258,7 +258,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   const totalEstimate = scored.reduce((a, w) => a + w.projected, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         eyebrow="My Team"
         badge={chipLabel(team.activeChip)}
@@ -269,6 +269,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
             : `${team.managerName} · squad as of gameweek ${team.event}`
         }
       >
+        <AskPanel teamQuery={query} />
         <Link
           href={`/transfers?${query}`}
           className="rounded-lg bg-brand-500 px-4 py-2 text-[13px] font-bold text-pitch-950 transition hover:bg-brand-400"
@@ -286,9 +287,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         )}
       </PageHeader>
 
-      <AskPanel teamQuery={query} />
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
         {anyMinutes ? (
           <StatCard
             label={`Gameweek ${team.event} so far`}

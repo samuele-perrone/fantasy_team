@@ -74,7 +74,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<SiteHeader deadline={null} gwLabel="" email={null} />}>
           <HeaderWithDeadline />
         </Suspense>
-        <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-6 sm:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-4 sm:py-5">{children}</main>
         <SiteFooter />
         {/* Loaded only when a measurement ID is configured, so local and preview runs stay
             untracked. next/third-parties defers the script so it does not block paint. */}

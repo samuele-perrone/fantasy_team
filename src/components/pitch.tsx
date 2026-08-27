@@ -42,7 +42,7 @@ export function Pitch({
        * banding, and the markings sit on top at low opacity.
        */}
       <div
-        className="relative overflow-hidden rounded-t-2xl border border-b-0 border-pitch-700 px-1.5 pb-4 pt-5 sm:px-3"
+        className="relative overflow-hidden rounded-t-2xl border border-b-0 border-pitch-700 px-1.5 pb-3 pt-4 sm:px-3"
         style={{
           backgroundColor: "#0e8a44",
           backgroundImage:
@@ -51,7 +51,7 @@ export function Pitch({
         }}
       >
         <PitchMarkings />
-        <div className="relative space-y-4 sm:space-y-6">
+        <div className="relative space-y-3 sm:space-y-4">
           {rows.map((line, i) => (
             <div key={i} className="flex flex-wrap items-start justify-center gap-x-1 gap-y-3 sm:gap-x-3">
               {line.map((p) => (
@@ -72,10 +72,10 @@ export function Pitch({
 
       {/* FPL puts the bench on its own paler strip directly under the pitch, not a separate card. */}
       <div
-        className="rounded-b-2xl border border-t-0 border-pitch-700 px-1.5 pb-4 pt-3 sm:px-3"
+        className="rounded-b-2xl border border-t-0 border-pitch-700 px-1.5 pb-3 pt-2.5 sm:px-3"
         style={{ backgroundColor: "#0a5c2f" }}
       >
-        <div className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/60">
+        <div className="mb-2 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/60">
           Bench
         </div>
         <div className="flex flex-wrap items-start justify-center gap-x-1 gap-y-3 sm:gap-x-3">
