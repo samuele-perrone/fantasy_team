@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { PlayerRow } from "@/lib/fpl/data";
 import { cn, heatStyle, money } from "@/lib/utils";
-import { FixtureRun, PlayerLink, PositionBadge, StatusDot } from "./ui";
+import { FixtureRun, PlayerFlag, PlayerLink, PositionBadge } from "./ui";
 
 type Align = "left" | "right";
 
@@ -346,7 +346,7 @@ export function PlayerTable({
                   <div className="flex items-center gap-2">
                     <PositionBadge pos={r.pos} />
                     <PlayerLink id={r.id} name={r.name} className="whitespace-nowrap" />
-                    <StatusDot status={r.status} news={r.news} />
+                    <PlayerFlag status={r.status} news={r.news} availability={r.availability} showPct />
                     <span className="text-[11px] font-medium text-slate-500">{r.team}</span>
                   </div>
                 </td>

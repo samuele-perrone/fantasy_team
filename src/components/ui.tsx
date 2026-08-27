@@ -104,15 +104,57 @@ export function FixtureRun({ fixtures, max = 5 }: { fixtures: FixtureChip[]; max
   );
 }
 
-export function StatusDot({ status, news }: { status: string; news: string }) {
-  if (status === "a") return null;
-  const color =
-    status === "d" ? "bg-amber-400" : status === "s" ? "bg-rose-500" : "bg-rose-500";
+/**
+ * The availability flag FPL puts beside a player's name.
+ *
+ * Colour follows the *chance of playing*, not the status code, because that is what the game
+ * itself grades: 75% is a yellow flag, 50% and 25% deepen through amber to orange, and anything
+ * at 0 — injured, suspended, or simply unavailable — is red. A player with no chance published
+ * but a non-available status is treated as red rather than silently unflagged.
+ */
+export function PlayerFlag({
+  status,
+  news,
+  availability,
+  className,
+  showPct = false,
+}: {
+  status: string;
+  news: string;
+  availability: number | null;
+  className?: string;
+  /** print the percentage next to the flag, where there is room for it */
+  showPct?: boolean;
+}) {
+  if (status === "a" && (availability === null || availability >= 100)) return null;
+
+  const pct = availability;
+  const tone =
+    pct === null || pct <= 0
+      ? "text-rose-500"
+      : pct <= 25
+        ? "text-orange-500"
+        : pct <= 50
+          ? "text-amber-500"
+          : "text-yellow-400";
+
+  const label =
+    news ||
+    (pct === null || pct <= 0
+      ? "Unavailable"
+      : `${pct}% chance of playing`);
+
   return (
-    <span
-      title={news || "Unavailable"}
-      className={cn("inline-block h-[7px] w-[7px] shrink-0 rounded-full", color)}
-    />
+    <span className={cn("inline-flex shrink-0 items-center gap-0.5", tone, className)} title={label}>
+      <svg width="9" height="11" viewBox="0 0 12 14" aria-hidden className="shrink-0">
+        <path d="M2 0.5v13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M3.2 1.2h7.6L8.9 4l1.9 2.8H3.2z" fill="currentColor" />
+      </svg>
+      {showPct && pct !== null && pct > 0 && (
+        <span className="num text-[9.5px] font-bold leading-none">{pct}</span>
+      )}
+      <span className="sr-only">{label}</span>
+    </span>
   );
 }
 

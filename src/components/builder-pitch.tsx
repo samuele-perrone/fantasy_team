@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { cn, money, shirtUrl } from "@/lib/utils";
+import { PlayerFlag } from "./ui";
 
 const POS_LABEL: Record<number, string> = {
   1: "Goalkeepers",
@@ -362,17 +363,12 @@ function PitchSlot({
         />
         {isCaptain && <Armband label="C" />}
         {!isCaptain && isVice && <Armband label="V" muted />}
-        {unavailable && (
-          <span
-            title={p.news}
-            className={cn(
-              "absolute -right-1 top-0 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] font-black text-white",
-              p.status === "d" ? "bg-amber-500" : "bg-rose-500",
-            )}
-          >
-            !
-          </span>
-        )}
+        <PlayerFlag
+          status={p.status}
+          news={p.news}
+          availability={p.availability}
+          className="absolute -right-1.5 top-0 rounded-full bg-pitch-950/85 px-1 py-0.5 ring-1 ring-black/30"
+        />
       </div>
 
       <div className="mt-1 overflow-hidden rounded-[3px] shadow-[0_1px_2px_rgba(0,0,0,.3)]">

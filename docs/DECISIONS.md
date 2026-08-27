@@ -359,3 +359,20 @@ layouts share no ordering logic.
 The `Ask about your squad` conversation moved to a drawer in the same pass. A chat panel that
 lives in the document pushes everything below it down the moment it opens, which on this page
 meant pushing the squad off screen — the thing the manager is asking about.
+
+### Availability flags grade by chance of playing, not status code
+
+The old `StatusDot` was a 7px dot coloured from `status` alone: amber for `d`, red for
+everything else. That collapses FPL's own grading — a 75% knock and a 25% muscle injury are
+both `d` — and a dot beside a name does not read as a flag at a glance.
+
+`PlayerFlag` colours from `chance_of_playing_next_round`: 75% yellow, 50% amber, 25% orange,
+0% or unknown-but-unavailable red. Live data has 100 players at 0%, 16 at 75%, 2 at 50% and 1
+at 25%, so all four bands are real rather than theoretical.
+
+It replaced every ad-hoc indicator at once — the dot in the player table, the `!` badges on
+both pitches, and the amber-for-everything percentage on the home page — because the same
+player was previously flagged three different ways depending on where you saw them.
+
+Note that the players table paginates at 40 rows, so a lightly-owned doubt will not appear on
+first load. That is the pagination working, not a missing flag.

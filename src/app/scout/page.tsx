@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getGameData, getPlayerRows } from "@/lib/fpl/data";
-import { FixtureRun, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
+import { FixtureRun, PageHeader, PlayerFlag, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { badgeUrl, cn, money } from "@/lib/utils";
 
 export const revalidate = 300;
@@ -101,6 +101,7 @@ export default async function ScoutPage() {
                       <div className="flex items-center gap-2">
                         <PositionBadge pos={r.pos} />
                         <PlayerLink id={r.id} name={r.name} />
+                        <PlayerFlag status={r.status} news={r.news} availability={r.availability} />
                         <span className="text-[11px] text-slate-500">{r.team}</span>
                       </div>
                     </td>

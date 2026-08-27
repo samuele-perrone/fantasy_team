@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { PlayerRow } from "@/lib/fpl/row";
 import type { XI } from "@/lib/fpl/optimiser";
 import { cn, money, shirtUrl } from "@/lib/utils";
-import { FixtureRun } from "./ui";
+import { FixtureRun, PlayerFlag } from "./ui";
 
 export interface PitchProps {
   xi: XI;
@@ -140,16 +140,13 @@ function Shirt({
             {benchOrder}
           </span>
         )}
-        {unavailable && (
-          <span
-            className={cn(
-              "absolute -right-1 top-0 grid h-4 w-4 place-items-center rounded-full text-[9px] font-black text-white ring-2 ring-black/20",
-              player.status === "d" ? "bg-amber-500" : "bg-rose-500",
-            )}
-          >
-            !
-          </span>
-        )}
+        {/* Graded by chance of playing, so a 75% doubt reads differently from a player who is out. */}
+        <PlayerFlag
+          status={player.status}
+          news={player.news}
+          availability={player.availability}
+          className="absolute -right-1.5 top-0 rounded-full bg-pitch-950/85 px-1 py-0.5 ring-1 ring-black/30"
+        />
       </div>
 
       {/* FPL's two-tone card: purple name plate over a mint stat plate. */}
@@ -255,6 +252,12 @@ export function SquadList({
                   <Link href={`/players/${p.id}`} className="font-semibold text-white hover:text-brand-400">
                     {p.name}
                   </Link>
+                  <PlayerFlag
+                    status={p.status}
+                    news={p.news}
+                    availability={p.availability}
+                    showPct
+                  />
                   <span className="text-[11px] text-slate-500">
                     {p.pos} · {p.team}
                   </span>

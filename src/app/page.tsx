@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getGameData, getPlayerRows } from "@/lib/fpl/data";
 import { NAV } from "@/components/nav";
-import { PlayerLink, PositionBadge } from "@/components/ui";
+import { PlayerFlag, PlayerLink, PositionBadge } from "@/components/ui";
 import { money, relativeDeadline } from "@/lib/utils";
 
 export const revalidate = 300;
@@ -66,7 +66,8 @@ export default async function HomePage() {
               <li key={p.id} className="flex items-center gap-2.5 py-2 text-[12.5px]">
                 <PositionBadge pos={p.pos} />
                 <PlayerLink id={p.id} name={p.name} />
-                <span className="ml-auto text-right text-[11.5px] text-amber-300">
+                <PlayerFlag status={p.status} news={p.news} availability={p.availability} />
+                <span className="ml-auto text-right text-[11.5px] text-slate-400">
                   {p.availability !== null ? `${p.availability}%` : "Out"}
                 </span>
               </li>

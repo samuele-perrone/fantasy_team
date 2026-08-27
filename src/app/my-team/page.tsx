@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EntryForm } from "@/components/entry-form";
 import { Pitch, SquadList } from "@/components/pitch";
-import { InfoTip, PageHeader, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
+import { InfoTip, PageHeader, PlayerFlag, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
 import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
 import { bestXI } from "@/lib/fpl/optimiser";
@@ -464,6 +464,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
                 <li key={p.id} className="flex items-center gap-2.5 text-[12.5px]">
                   <PositionBadge pos={p.pos} />
                   <PlayerLink id={p.id} name={p.name} />
+                  <PlayerFlag status={p.status} news={p.news} availability={p.availability} />
                   <span className="text-[11px] text-slate-500">{p.team}</span>
                   <div className="ml-auto flex items-center gap-2">
                     <div className="h-1.5 w-24 overflow-hidden rounded-full bg-pitch-700">
