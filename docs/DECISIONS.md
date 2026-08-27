@@ -340,3 +340,22 @@ brief reads the projection directly rather than the row.
 One trap worth recording: the squad on file belongs to `team.event`, while the projections
 describe the week *after* it. Filtering fixtures on `team.event` silently produced an empty
 section. The brief now states both explicitly, so the model cannot advise on a locked week.
+
+### /my-team is one grid, placed explicitly
+
+The page used to stack: header, then a full-width row of five stat cards, then a two-column
+split of pitch against verdict. On a laptop that put the pitch past halfway down the screen,
+and the manager had to scroll to see their own team.
+
+All three blocks now live in a single grid. Source order is the mobile order — stats, pitch,
+verdict — and on `lg` each block is placed by hand: the pitch takes column one across both
+rows, the stat cards column two row one, the verdict and ratings column two row two. The pitch
+therefore starts level with the stat cards rather than below them.
+
+Placing by explicit `col-start`/`row-start` rather than reordering the source is what keeps the
+small-screen stack sensible. Any change here should be checked at both widths, because the two
+layouts share no ordering logic.
+
+The `Ask about your squad` conversation moved to a drawer in the same pass. A chat panel that
+lives in the document pushes everything below it down the moment it opens, which on this page
+meant pushing the squad off screen — the thing the manager is asking about.

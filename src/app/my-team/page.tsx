@@ -287,7 +287,8 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
         )}
       </PageHeader>
 
-      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid items-start gap-4 lg:grid-cols-[1.05fr_1fr]">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:col-start-2 lg:row-start-1 lg:grid-cols-3">
         {anyMinutes ? (
           <StatCard
             label={`Gameweek ${team.event} so far`}
@@ -347,10 +348,9 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           sub={`Best XI ${team.xi.formation} incl. captain`}
           tone="brand"
         />
-      </div>
+        </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.05fr_1fr]">
-        <section>
+        <section className="lg:col-start-1 lg:row-start-1 lg:row-span-2">
           <h2 className="mb-2.5 text-[14px] font-bold text-white">
             Your XI as picked{" "}
             <span className="font-normal text-slate-500">({team.actual.formation})</span>
@@ -363,7 +363,7 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           />
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-4 lg:col-start-2 lg:row-start-2">
           <div className="panel px-5 py-4">
             <h2 className="mb-2 text-[14px] font-bold text-white">Verdict</h2>
             <ul className="space-y-2.5 text-[13px] leading-relaxed">
