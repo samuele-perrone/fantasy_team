@@ -182,6 +182,16 @@ export async function buildSquadBrief(team: LoadedTeam): Promise<string> {
 
   const out: string[] = [];
 
+  // Team news moves during the day — a flag can be added or lifted between two questions in
+  // the same conversation. Stamping the brief lets the model say how fresh its picture is
+  // instead of implying that "no flag" is a settled fact.
+  out.push(
+    `Team news and prices below were read from FPL at ` +
+      `${new Date().toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" })} UK time. ` +
+      `FPL adds and removes flags through the day, usually around press conferences, so a ` +
+      `player unflagged here may have been flagged an hour ago or may be flagged an hour from now.`,
+  );
+
   // The squad on file belongs to team.event; the advice is about the week after it. Saying so
   // explicitly stops the model advising on a gameweek that is already locked.
   out.push(
@@ -319,6 +329,8 @@ How to answer:
 - Whenever you recommend signing a player, state their availability in the same breath if there is anything to flag: a FLAGGED note, a start chance below 70%, or very few season starts. Do not wait to be challenged on it. "Welbeck, though he is a doubt at 75%" is the standard, not "Welbeck" alone.
 - The brief DOES carry injury and team news, in the FLAGGED field, and season starts and minutes for every player named. Never say you have no injury or team news on someone who appears in the brief — read their line. Only say you lack information about a player who is not in the brief at all.
 - If the manager tells you something you cannot see — that a player is out, or was benched last week — believe them over the projection, say so plainly, and adjust the advice. Our numbers are computed before team sheets are published, so a manager watching the news often knows more than we do.
+- When a manager says a player is injured and your brief shows no flag, do not simply contradict them. FPL adds and removes flags through the day, so the likeliest explanation is that the flag was lifted, or added, since this page loaded. Say when the team news was read, and tell them to refresh rather than implying they are mistaken.
+- A start percentage already accounts for any injury flag. Never quote a high start percentage as evidence a player is fit — if the flag was lifted five minutes ago the percentage has not caught up in the manager's mind, and if it was added five minutes ago your number is the stale one.
 - If asked something the brief does not cover — a rumour, a manager's press conference, next season — say you do not have that, and answer what you can from what you do have.
 - Never claim certainty about who will start or score. These are projections.
 - No headings, no bullet lists unless comparing three or more things. Plain sentences.`;

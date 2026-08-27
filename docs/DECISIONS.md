@@ -376,3 +376,21 @@ player was previously flagged three different ways depending on where you saw th
 
 Note that the players table paginates at 40 rows, so a lightly-owned doubt will not appear on
 first load. That is the pagination working, not a missing flag.
+
+### "It says he's fit but he's injured" is usually a clock problem
+
+A manager reported the assistant insisting a player was not flagged when they could see a
+yellow flag. Investigating: FPL had carried `status='d', chance=75, news='Knock - 75% chance
+of playing'` earlier that day and `status='a', chance=100, news=''` a few hours later. The
+flag had been lifted. Both the manager and the assistant were right, hours apart.
+
+Nothing in the pipeline was wrong — the bootstrap cache is 300s, and a still-flagged team-mate
+in the same squad showed the reduction working (`avail=75` → start 47%, from a ~63% baseline).
+
+The brief now carries the time its team news was read, and the prompt tells the model to reach
+for "the flag may have changed since this page loaded, refresh and check" before contradicting
+a manager who says a player is injured. A manager watching Sky is a better source than a
+five-minute-old cache, and the assistant should behave accordingly.
+
+Worth remembering when the next "the data is wrong" report arrives: check whether FPL's own
+answer changed before looking for a bug.
