@@ -198,6 +198,15 @@ export async function buildSquadBrief(team: LoadedTeam): Promise<string> {
     `The squad below is as it stood in GW${team.event}. Advice should be about the NEXT ` +
       `gameweek, whose fixtures are listed further down — not about GW${team.event}, which is done.`,
   );
+  if (team.source === "fpl") {
+    out.push(
+      `IMPORTANT: FPL does not publish a manager's picks for the upcoming gameweek until its ` +
+        `deadline passes, so any transfers they have already made are invisible to us. If they ` +
+        `mention owning a player not listed below, or having sold one that is, believe them — ` +
+        `they are describing their real squad and this is the previous one. Do not tell them ` +
+        `they do not own a player.`,
+    );
+  }
   out.push(
     `Manager: ${team.managerName ?? "unknown"}. Team: ${team.name}. ` +
       `Squad value ${money(team.squadValue)}, ${money(team.bank)} in the bank, ` +

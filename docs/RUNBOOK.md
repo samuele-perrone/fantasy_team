@@ -244,3 +244,24 @@ The model never does the maths. `src/lib/ai/squad-brief.ts` renders the squad, t
 projections, the ranked transfer plans and the chip state as text, all computed by the same
 code that renders the pages, and the prompt tells the model to use those figures rather than
 derive its own. That is what keeps the chat from contradicting the page it sits on.
+
+## "My squad is not showing my latest transfers"
+
+Expected, and not fixable from here. FPL keeps a manager's picks private until the gameweek
+deadline passes:
+
+- `GET /entry/{id}/event/{n}/picks/` returns **404** for the upcoming gameweek
+- `GET /entry/{id}/transfers/` does **not** list pending transfers either
+
+Only `GET /api/my-team/{id}/` exposes the pending squad, and it requires the manager's own FPL
+login session. The app has no way to obtain that, so `/my-team` shows the most recent published
+side — the previous gameweek's.
+
+`/my-team` now says so explicitly, with the deadline after which the new squad appears, and
+links to `/squad` where the manager can enter or screenshot-import the side they have actually
+picked and have it rated straight away. The AI brief carries the same warning, so the assistant
+believes a manager who says they own a player it cannot see.
+
+Before investigating a report like this, check `entry.current_event` against
+`bootstrap.events` — if `current_event` matches the last finished gameweek, the app is correct
+and the manager is describing an unpublished team.

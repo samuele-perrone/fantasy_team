@@ -4,7 +4,7 @@ import { EntryForm } from "@/components/entry-form";
 import { Pitch, SquadList } from "@/components/pitch";
 import { InfoTip, PageHeader, PlayerFlag, PlayerLink, PositionBadge, StatCard } from "@/components/ui";
 import { EntryNotFound, InvalidSquad, resolveTeam, teamQueryString } from "@/lib/fpl/entry";
-import { cn, money, playerRatingBand, squadRatingBand } from "@/lib/utils";
+import { cn, money, playerRatingBand, relativeDeadline, squadRatingBand } from "@/lib/utils";
 import { bestXI } from "@/lib/fpl/optimiser";
 import { AskPanel } from "@/components/ask-panel";
 import { projectForEvent } from "@/lib/fpl/projection";
@@ -257,6 +257,17 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
   const totalActual = scored.reduce((a, w) => a + (w.actual ?? 0), 0);
   const totalEstimate = scored.reduce((a, w) => a + w.projected, 0);
 
+  /**
+   * FPL keeps a manager's picks private until the deadline passes: `/entry/{id}/event/{n}/picks/`
+   * 404s for the upcoming gameweek, and the public transfers endpoint does not list pending
+   * moves either. So a manager who has already made transfers sees their *previous* side here
+   * and reasonably concludes the app is out of date. Say so rather than letting them guess.
+   */
+  const pendingEvent =
+    team.source === "fpl" && game.nextEvent && game.nextEvent.id > team.event
+      ? game.nextEvent
+      : null;
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -286,6 +297,26 @@ export default async function MyTeamPage({ searchParams }: PageProps<"/my-team">
           </Link>
         )}
       </PageHeader>
+
+      {pendingEvent && (
+        <div className="panel border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-[12.5px] leading-relaxed text-amber-200/90">
+          <strong className="font-bold text-amber-200">
+            This is your gameweek {team.event} team.
+          </strong>{" "}
+          FPL keeps next week&apos;s picks private until the deadline, so any transfers you have
+          already made for gameweek {pendingEvent.id} will not appear here until it passes —{" "}
+          {relativeDeadline(pendingEvent.deadline_time)} from now.{" "}
+          <Link
+            href={`/squad?squad=${team.squad.map((p) => p.id).join(",")}${
+              team.captainId ? `&c=${team.captainId}` : ""
+            }`}
+            className="font-semibold text-amber-100 underline decoration-amber-400/50 underline-offset-2 hover:decoration-amber-200"
+          >
+            Edit your squad by hand
+          </Link>{" "}
+          or import a screenshot to rate the side you have actually picked.
+        </div>
+      )}
 
       <div className="grid items-start gap-4 lg:grid-cols-[1.05fr_1fr]">
         <div className="grid gap-2.5 sm:grid-cols-2 lg:col-start-2 lg:row-start-1 lg:grid-cols-3">
