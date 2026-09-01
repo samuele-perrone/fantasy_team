@@ -251,6 +251,22 @@ The term now applies only while a player is *outperforming* their seed. Newness 
 climb, not the fall. Effect on live data: that forward moved 67% → 60% and 17.3 → 15.4 points
 over five gameweeks, and players whose observed rate already beat their seed were untouched.
 
-**This is not yet backtested.** `backtest.mjs gw1` predicts gameweek one from pre-season data,
-where no games have been played, so the branch never executes and the scores are identical
-either way. The first real measurement is the GW2 score.
+**Backtest status.** `backtest.mjs gw1` cannot measure this: it predicts gameweek one from
+pre-season data where no games have been played, so the branch never executes and the scores
+are byte-identical either way.
+
+GW2 is the first gameweek predicted by the changed code — its snapshot was taken 2026-08-27
+03:01 UTC, after the change landed at 26 Aug 16:17 UTC — and it scored:
+
+```
+GW2   n=614   MAE=1.25   bias=-0.19   RMSE=2.21   r=0.54
+GW1   n=610   MAE=1.51   bias=-0.18   RMSE=2.58   r=0.38
+```
+
+The error did not get worse, which is the bar this repo sets for a projection change.
+
+**It is not a controlled comparison, and should not be read as one.** Snapshots store frozen
+predictions (`{id, name, pos, cost, projected}`), not the inputs, so there is no way to rescore
+GW2 with the change reverted. GW1 is also a harder task by construction — no games had been
+played at all — so some of that gap belongs to having one gameweek of evidence rather than to
+this change. Treat GW2 as "no harm done", not as proof the change helped.
