@@ -265,3 +265,27 @@ believes a manager who says they own a player it cannot see.
 Before investigating a report like this, check `entry.current_event` against
 `bootstrap.events` — if `current_event` matches the last finished gameweek, the app is correct
 and the manager is describing an unpublished team.
+
+## ALLOWED_EMAILS
+
+Comma separated, and now also tolerant of newlines, semicolons and spaces — the dashboard's
+multi-line field invites one address per line, which arrives either as a real newline or as the
+literal characters `\` and `n`. Splitting on commas alone turned two addresses into a single
+entry with two `@` signs that matched nobody, locking out everyone including addresses that had
+worked before.
+
+Set it in **all three environments** (Production, Preview, Development) and **redeploy** —
+Vercel injects environment variables at deploy time, so an edit alone changes nothing on the
+live site.
+
+```bash
+vercel env ls | grep ALLOWED_EMAILS     # check the age; an old timestamp means the edit did not save
+vercel env rm ALLOWED_EMAILS production
+vercel env add ALLOWED_EMAILS production
+vercel redeploy <latest-production-url>
+```
+
+Bare domains work too: `@example.com` admits everyone at that domain. Gmail dots and `+tags`
+are normalised, so `a.b+fpl@gmail.com` and `ab@gmail.com` are the same account.
+
+The list fails closed: unset or empty denies everyone rather than opening the site.

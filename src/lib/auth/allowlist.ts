@@ -28,9 +28,19 @@ function normalise(email: string): string {
   return `${local}@${domain}`;
 }
 
+/**
+ * Split on any separator someone might reasonably reach for.
+ *
+ * Comma is what the docs say, but a multi-line textarea in the Vercel dashboard invites one
+ * address per line, and that arrives either as a real newline or as the two characters `\` and
+ * `n`. Splitting on commas alone turned `a@x.com\nb@x.com` into a single entry containing two
+ * `@` signs, which matched nobody — locking out every address including the ones that had
+ * previously worked. The separator a person chose is never worth a lockout.
+ */
 export function allowedEmails(): string[] {
   return (process.env.ALLOWED_EMAILS ?? "")
-    .split(",")
+    .replace(/\\n|\\r/g, "\n")
+    .split(/[\s,;]+/)
     .map((e) => e.trim())
     .filter(Boolean);
 }
