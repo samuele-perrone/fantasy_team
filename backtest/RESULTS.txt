@@ -5,8 +5,14 @@ GW2 (snapshot taken 0.3h before the deadline)
   DEF                    n= 206  MAE=1.34  bias=-0.19  RMSE=2.24  r=0.39  (pred 1.19 vs actual 1.38)
   MID                    n= 273  MAE=1.18  bias=-0.32  RMSE=2.25  r=0.65  (pred 1.29 vs actual 1.61)
   FWD                    n=  73  MAE=1.31  bias=-0.18  RMSE=2.14  r=0.59  (pred 1.31 vs actual 1.49)
-  GW3: not finished yet, skipping
+
+GW3 (snapshot taken 2.6h before the deadline)
+  all players            n= 652  MAE=1.15  bias=-0.25  RMSE=2.09  r=0.50  (pred 1.15 vs actual 1.40)
+  GKP                    n=  71  MAE=0.93  bias=-0.05  RMSE=1.73  r=0.58  (pred 0.97 vs actual 1.01)
+  DEF                    n= 214  MAE=1.46  bias=-0.59  RMSE=2.52  r=0.43  (pred 1.14 vs actual 1.74)
+  MID                    n= 289  MAE=1.10  bias=-0.11  RMSE=1.96  r=0.50  (pred 1.21 vs actual 1.33)
+  FWD                    n=  78  MAE=0.72  bias=+0.04  RMSE=1.51  r=0.70  (pred 1.13 vs actual 1.09)
   GW4: not finished yet, skipping
 
 Across all scored gameweeks
-  all players            n= 620  MAE=1.23  bias=-0.20  RMSE=2.18  r=0.56  (pred 1.24 vs actual 1.43)
+  all players            n=1272  MAE=1.19  bias=-0.22  RMSE=2.14  r=0.53  (pred 1.19 vs actual 1.42)
