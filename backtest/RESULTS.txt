@@ -27,6 +27,7 @@ GW5 (snapshot taken 2.6h before the deadline)
   MID                    n= 295  MAE=1.09  bias=-0.30  RMSE=2.11  r=0.54  (pred 1.16 vs actual 1.46)
   FWD                    n=  78  MAE=0.91  bias=-0.16  RMSE=2.26  r=0.51  (pred 1.08 vs actual 1.24)
   GW6: not finished yet, skipping
+  GW7: not finished yet, skipping
 
 Across all scored gameweeks
   all players            n=2587  MAE=1.20  bias=-0.27  RMSE=2.22  r=0.52  (pred 1.16 vs actual 1.43)
