@@ -19,6 +19,8 @@ npm run dev              # http://localhost:3000
 
 ## Documentation
 
+- **[docs/PLAN.md](docs/PLAN.md)** — the rebuild into a Premier League app: scope, phases
+  and what carries over from this site
 - **[docs/RUNBOOK.md](docs/RUNBOOK.md)** — deploys, environment variables, Supabase, the
   domain switch, and what to do when something breaks
 - **[docs/DECISIONS.md](docs/DECISIONS.md)** — why the model, optimiser and auth work the way

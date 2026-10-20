@@ -394,3 +394,19 @@ five-minute-old cache, and the assistant should behave accordingly.
 
 Worth remembering when the next "the data is wrong" report arrives: check whether FPL's own
 answer changed before looking for a bug.
+
+## Product
+
+### The site is being rebuilt as a Premier League app
+
+The six-page site is archived at the `v1-final` tag. Cutting eighteen pages to six made it
+smaller, but not easier to follow: it still asked the manager to know which page answered
+which question. The rebuild starts from the squad instead — live Premier League scores,
+your players highlighted in them, and one verdict per player. See [PLAN.md](PLAN.md).
+
+The model, the FPL client, auth and the AI panel carry over, because they work. The pages do
+not. Web comes first, behind JSON API routes, so the iOS app can follow without rewriting
+any logic.
+
+Paid match data (line-ups, events, ratings) waits until the free version is in daily use.
+Paying first would mean choosing a plan before knowing which data actually gets looked at.
