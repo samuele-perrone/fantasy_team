@@ -181,6 +181,11 @@ handful of people on the allow-list.
 **Sign-in redirects in a loop.** The app URL is missing from Supabase's redirect allow-list,
 or `ALLOWED_EMAILS` is unset — it fails closed, and the login page says so explicitly.
 
+**Sign-in lands on `http://localhost:3000/?code=…`.** Supabase did not recognise the app's
+callback URL and fell back to the Site URL, which a new project sets to localhost. Set the
+Site URL and the Redirect URLs in Authentication → URL Configuration; each section saves
+separately. This happened when the project was recreated in October 2026.
+
 **Everyone is denied.** Check `ALLOWED_EMAILS` exists in the right environment.
 
 **A deploy fails on `FPL request failed (403)`.** FPL rate-limited the build. Requests retry
