@@ -10,16 +10,16 @@ something breaks.
 | Repository | `github.com/samuele-perrone/fantasy_team` |
 | Hosting | Vercel project `fantasy_team` (team `samueleperrone-9210s-projects`) |
 | Current URL | `fantasyteamhub.com`, plus `www` and `fantasyteam.vercel.app` |
-| Database + auth | Supabase project `ebfhufyataxktvfgkjkh` |
+| Database + auth | Supabase project `xplgtysifprqfxmvkwjy` ("Fantasy Team Hub", eu-west-1, org `samuele-perrone`) |
 
-There is a second Supabase project, `yciikyzmesqcnvacurqv`, created by a marketplace install.
-**It is not used.** It was disconnected from the Vercel project so it cannot re-sync its
-environment variables over the real ones. Deleting it is safe but has not been done.
+The project was created fresh on 2026-10-21. Both earlier projects, `ebfhufyataxktvfgkjkh`
+and `yciikyzmesqcnvacurqv`, had been deleted, which had silently broken sign-in; no data was
+carried over. The Claude Code Supabase connector has access to this project, so migrations
+can be applied through it as well as through the SQL editor.
 
-`.env.local` may still carry `POSTGRES_*` variables for that dead project from an old
-`vercel env pull`. They fail with `tenant/user … not found`; ignore or delete them. The
-Supabase connector in Claude Code also lacks permission on the real project, so schema
-changes go through the SQL editor by hand.
+The app reads only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The
+`SUPABASE_*`, `*_ANON_KEY` and `POSTGRES_*` variables a marketplace install once added were
+removed from Vercel and `.env.local` at the same time.
 
 ## Deploys
 
@@ -67,24 +67,24 @@ It is read at runtime, not baked into the build, so no redeploy is needed. A bar
 ## Database
 
 Schema lives in `supabase/migrations/` and is applied by pasting into the Supabase SQL
-editor at `https://supabase.com/dashboard/project/ebfhufyataxktvfgkjkh/sql/new`.
-Migrations are written to be idempotent, so re-running is safe.
+editor at `https://supabase.com/dashboard/project/xplgtysifprqfxmvkwjy/sql/new`, or through
+the Supabase connector. Migrations are written to be idempotent, so re-running is safe. All
+of `0001`–`0005` are applied.
 
 `scripts/db-push.mjs` can apply them over a direct Postgres connection instead, but it needs
-`POSTGRES_URL_NON_POOLING` in `.env.local`. Those credentials went away when the unused
-marketplace resource was disconnected, so the SQL editor is the working path today.
+`POSTGRES_URL_NON_POOLING` in `.env.local`, which is not set.
 
 Tables, all with row-level security:
 
 - `profiles` — one row per auth user, holding their FPL team id
 - `watchlist` — one row per user and FPL player id (`0003_watchlist.sql`). FPL reassigns
   player ids every season, so **empty this table at the season rollover**
-- `squads` — the old builder's saved squads. Nothing reads it any more;
-  `0004_drop_squads.sql` removes it. Export it from the table editor first if the rows matter
+- `squads` — the old builder's saved squads, created by `0001` and dropped by `0004`, so a
+  fresh project replaying the migrations in order ends up without it
 
 Every policy pairs `to authenticated` with an ownership predicate, and update policies carry
-both `USING` and `WITH CHECK`. This was verified against the live database with two throwaway
-users: reading, updating, deleting and forging another user's rows are all blocked, and
+both `USING` and `WITH CHECK`. This was verified against the previous database, built from
+the same migrations, with two throwaway users: reading, updating, deleting and forging another user's rows are all blocked, and
 reassigning ownership is rejected.
 
 ## Authentication
@@ -92,7 +92,7 @@ reassigning ownership is rejected.
 Google OAuth through Supabase. Two things matter and are easy to confuse:
 
 - **Google Cloud Console** holds the OAuth client, and its authorised redirect URI is the
-  **Supabase** callback: `https://ebfhufyataxktvfgkjkh.supabase.co/auth/v1/callback`.
+  **Supabase** callback: `https://xplgtysifprqfxmvkwjy.supabase.co/auth/v1/callback`.
   This does **not** change when the app's own domain changes.
 - **Supabase → Authentication → URL Configuration** holds the allow-list of app URLs it will
   redirect back to. This **does** need the new domain adding.
