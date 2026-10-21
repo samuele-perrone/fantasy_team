@@ -17,6 +17,7 @@ see anything.
 npm install
 vercel env pull          # Supabase keys + ALLOWED_EMAILS
 npm run dev              # http://localhost:3000
+npm test                 # unit tests
 ```
 
 ## Documentation

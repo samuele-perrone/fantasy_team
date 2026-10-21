@@ -348,7 +348,7 @@ export function teamQueryString(params: TeamQuery): string {
  * no rollover — counting it handed everyone two free transfers for gameweek two instead of
  * the one they actually have.
  */
-function estimateFreeTransfers(
+export function estimateFreeTransfers(
   current: { event: number; event_transfers: number }[],
 ): number {
   if (!current.length) return 1;

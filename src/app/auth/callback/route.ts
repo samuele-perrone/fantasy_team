@@ -10,8 +10,10 @@ export async function GET(request: NextRequest) {
   const raw = searchParams.get("next") ?? "/squad";
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/squad";
 
+  // Errors go to /login, the only page that shows `auth_error`. Sent anywhere else, the gate
+  // redirects the signed-out visitor to /login and the message is lost on the way.
   if (error) {
-    return NextResponse.redirect(`${origin}/squad?auth_error=${encodeURIComponent(error)}`);
+    return NextResponse.redirect(`${origin}/login?auth_error=${encodeURIComponent(error)}`);
   }
 
   if (code) {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     if (exchangeError) {
       return NextResponse.redirect(
-        `${origin}/squad?auth_error=${encodeURIComponent(exchangeError.message)}`,
+        `${origin}/login?auth_error=${encodeURIComponent(exchangeError.message)}`,
       );
     }
   }

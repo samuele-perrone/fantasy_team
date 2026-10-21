@@ -12,17 +12,26 @@ npm run build                    # production build — also runs TypeScript
 npx eslint src --max-warnings=0  # lint, exactly as CI runs it
 npx tsc --noEmit                 # typecheck
 npx next typegen                 # generate PageProps/LayoutProps route types
+npm test                         # unit tests (Vitest), exactly as CI runs them
 ```
 
 Model accuracy is measured by `scripts/backtest.mjs` — snapshots before a deadline, scored
 after. **Run `npx tsx scripts/backtest.mjs score` after changing anything in `projection.ts`,
 `ratings.ts` or `news.ts`** and check the error did not get worse.
 
-There is no unit test suite. Model and optimiser changes are otherwise verified by writing a throwaway
-`.mts` script at the repo root and running it with `npx tsx`, against a real
-`bootstrap-static` snapshot rather than fixtures. Delete the script afterwards. Examples of
-what to check: squad legality (2/5/5/3, three-per-club, budget), projection sanity for known
-players, and constraint behaviour at tight budgets.
+Unit tests live beside the code as `*.test.ts` and run under Vitest (`vitest.config.mts`).
+Build test data with `src/test/factories.ts` — `row()`, `squad()`, `element()`,
+`bootstrap()` — stating only the fields the behaviour depends on. Use `copy(p, …)` rather
+than `row({ ...p, … })`, which carries `p`'s fixtures over and silently ignores `perGame`.
+`server-only` is aliased to a stub, and modules that touch Supabase, Next or the network are
+mocked with `vi.mock`. **Add or update tests in the same change as the code.** A test is only
+worth keeping if it fails when the rule it names is broken — break the code on purpose once
+to check.
+
+Unit tests use synthetic data, so they cannot say whether projections are *sensible*. For
+that, still write a throwaway `.mts` script at the repo root and run it with `npx tsx`
+against a real `bootstrap-static` snapshot, then delete it: squad legality across many real
+squads, projection sanity for known players, constraint behaviour at tight budgets.
 
 **`npx tsc --noEmit` passes locally but fails in CI on a clean checkout** unless
 `npx next typegen` has run — `PageProps` and `LayoutProps` are globals Next emits into

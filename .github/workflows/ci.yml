@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint, types and build
+    name: Lint, types, tests and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,9 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
 
       - name: Build
         run: npm run build

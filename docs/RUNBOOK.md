@@ -28,10 +28,11 @@ Vercel is connected to the repository, so:
 - **merge or push to `main`** → production deploy, automatically
 - **open a pull request** → its own preview URL
 
-GitHub Actions runs lint, route typegen, typecheck and build on every push and PR. CI and the
+GitHub Actions runs lint, route typegen, typecheck, unit tests and build on every push and
+PR. CI and the
 Vercel build run in parallel, so **a red CI run does not currently block a deploy**. To make
-it gate production, enable branch protection on `main` requiring the `Lint, types and build`
-check, and work through pull requests.
+it gate production, enable branch protection on `main` requiring the `Lint, types, tests and
+build` check, and work through pull requests.
 
 Manual deploy if ever needed: `vercel deploy --prod --yes`.
 

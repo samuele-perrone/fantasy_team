@@ -175,11 +175,9 @@ function rankReplacements(
   bank: number,
   rules: SquadRules,
   score: (p: PlayerRow) => number,
-  taken: Set<number> = new Set(),
 ): Replacement[] {
   const own = score(out);
   return affordable(out, squad, pool, bank, rules)
-    .filter((c) => !taken.has(c.id))
     .map((c) => ({ player: c, gain: score(c) - own }))
     // Under a point over five gameweeks is noise, and "about 0 more points" is no reason to buy.
     .filter((r) => r.gain >= 1)
@@ -268,11 +266,10 @@ export function computeVerdicts(input: VerdictInput): PlayerVerdict[] {
   const free = Math.max(input.freeTransfers, 0);
   let working = squad.slice();
   let funds = bank;
-  const taken = new Set<number>();
   let made = 0;
 
   for (const v of sells) {
-    const options = rankReplacements(v.player, working, pool, funds, rules, score, taken);
+    const options = rankReplacements(v.player, working, pool, funds, rules, score);
     const top = options[0];
     const gain = top?.gain ?? 0;
     const allowed =
@@ -294,7 +291,8 @@ export function computeVerdicts(input: VerdictInput): PlayerVerdict[] {
     v.needsHit = made >= free;
     made++;
     if (top) {
-      taken.add(top.player.id);
+      // Bringing the replacement into the working squad is what stops it being offered to
+      // a later Sell: `affordable` never suggests a player already owned.
       working = working.map((p) => (p.id === v.player.id ? top.player : p));
       // Money freed by one sale is never spent on the next. Every option shown has to be
       // affordable whether the manager makes that move alone or all of them, so the bank can
