@@ -61,12 +61,20 @@ measured.
 The part of the app nobody else offers, and the part the old site made hardest to use.
 
 - Enter an FPL team ID once and load the squad from the public entry endpoint. No FPL login.
-- Fetch European and cup fixtures daily from API-Football and map clubs to FPL team IDs.
+- Fetch fixtures daily from API-Football for every Premier League club in the Champions
+  League, Europa League, Conference League, FA Cup and EFL Cup, and map clubs to FPL team IDs.
+  The point is fixture load: a player who starts every match in a congested run is the one
+  who gets rested, and that is what the minutes model needs to see.
 - Feed midweek fixtures into the minutes model as rotation risk. This fixes the "Rotation is
   invisible" limit in [MODEL.md](MODEL.md), and has to be backtested like any other model
   change.
 - A watchlist stored per user in Supabase.
-- One verdict per player, computed in code and never by the AI panel.
+- One verdict per player (keep, watch or sell), computed in code and never by the AI panel.
+  The row shows the verdict and one plain sentence giving the reason. An (i) icon opens the
+  numbers behind it: expected points, minutes, form, fixture load, and the latest news with
+  the time it was published.
+- News comes from FPL's own news field, which FPL updates after press conferences. Its time
+  matters as much as its text, because a two-day-old "75% chance" may already be stale.
 
 **Done when** the squad and watchlist work on a phone, the verdicts make sense against
 known players, and the backtest error has not got worse.
@@ -74,8 +82,9 @@ known players, and the backtest error has not got worse.
 ### Phase 2: Matches, on free data
 
 - Fixtures and results for every Premier League match, grouped by gameweek.
-- Live scores, scorers, assists, cards and bonus from the FPL live endpoint, polled during
-  matches.
+- Live scores, scorers, assists, cards and bonus from the FPL live endpoint. The server
+  fetches once a minute, only while a match is in play, and every user reads that cached
+  copy, so the request rate to FPL does not grow with the number of users.
 - Your squad and watchlist players highlighted in every match.
 
 **Done when** it is the screen you open during a matchday instead of another app.
@@ -124,8 +133,11 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 
 ## Open questions
 
-- **Which Premier League clubs' European fixtures need mapping each season,** and how to
-  handle promoted clubs whose names differ between the two APIs.
-- **How much of a verdict to explain.** One line, or the numbers behind it? Settle it with
-  real squads in phase 1.
-- **Live polling cost.** How often to poll during matches without hitting FPL rate limits.
+- **Club-level or player-level fixture load.** Club fixtures are a few requests a day.
+  Each player's minutes in European and cup matches costs one request per match, which may
+  not fit the free tier. Start with club fixtures plus Premier League minutes, and measure
+  whether player-level minutes improve the backtest before paying for them.
+- **Press conference news beyond FPL's field.** FPL's news is a short injury flag, not what
+  the manager said. A fuller source, such as club or BBC news feeds summarised into one
+  sentence, would add context to the (i) panel. Decide after phase 1 whether FPL's field is
+  enough.
