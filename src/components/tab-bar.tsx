@@ -6,6 +6,12 @@ import { TABS } from "./nav";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, React.ReactNode> = {
+  "/matches": (
+    <g fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5l3.3 2.4-1.3 3.9h-4l-1.3-3.9zM12 3.5v4M15.3 9.9l4.1-1.3M14 13.8l2.5 3.5M10 13.8l-2.5 3.5M8.7 9.9L4.6 8.6" />
+    </g>
+  ),
   "/squad": (
     <path d="M7 3l3 2h4l3-2 4 4-3 3v10H6V10L3 7z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
   ),

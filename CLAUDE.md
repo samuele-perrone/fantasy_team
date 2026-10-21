@@ -61,26 +61,17 @@ everything crossing into a client component is a `PlayerRow`.
 
 ### Pages
 
-Two tabs (`/squad`, `/watchlist`) and the player profile, built mobile first for the iOS app
+Three tabs (`/matches`, `/squad`, `/watchlist`) and the player profile, built mobile first for the iOS app
 that follows — see `docs/PLAN.md`. Before adding a page, check whether it is a section of one
 of the tabs: the previous site grew to eighteen pages because every idea got its own.
+
+Matches (`src/lib/fpl/matches.ts`) reads FPL's fixtures and live endpoints through a 60-second
+shared cache, and the page refreshes itself only while a match is live. Never poll FPL from the
+browser or add a background poller: the cache is what keeps FPL's load flat as users grow.
 
 Pages and the `/api/v1` routes share the server functions in `src/lib/app/`. Logic goes there,
 not in a page, so the iOS app can read the same thing. `/api/v1` is exempt from the proxy's
 login redirect and every route must call `getRequestAuth` itself.
-
-### The AI panel
-
-`/api/ask` streams Claude through the Anthropic API (`ANTHROPIC_API_KEY`). Three rules:
-
-- **the model explains, it never calculates.** `src/lib/ai/squad-brief.ts` hands it conclusions
-  already computed by `optimiser.ts` and `projection.ts`, so the chat cannot contradict the
-  page. Adding a number the model derives itself breaks that guarantee.
-- **the route re-checks `getUserId()`** — the proxy matcher does not cover API routes, and
-  every call costs money
-- **the model is pinned** in `src/lib/ai/model.ts`, overridable by `FTH_AI_MODEL`. The Vercel
-  AI Gateway was tried first and dropped: it needs no key, but serves models by Vercel plan,
-  and a free plan gives `claude-3-haiku` at roughly one request every few minutes.
 
 ### Auth and gating
 

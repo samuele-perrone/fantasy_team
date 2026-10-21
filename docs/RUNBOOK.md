@@ -45,12 +45,9 @@ Set on Vercel across production, preview and development. Pull them locally with
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser client key — public by design, RLS protects the data |
-| `SUPABASE_*` | Server-side equivalents |
 | `ALLOWED_EMAILS` | Comma-separated sign-in allow-list. **Fails closed** — unset means nobody can sign in |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Analytics only load when this is set. Changing it needs a redeploy, since `NEXT_PUBLIC_*` values are inlined at build time |
-| `ANTHROPIC_API_KEY` | The AI panel. Marked Sensitive on Vercel, so `vercel env pull` writes a placeholder, not the value — paste it into `.env.local` by hand to use the panel locally |
-| `FTH_AI_MODEL` | Optional override for the pinned model |
 | `FPL_API_BASE` | Local only — point the FPL client at a fixture server |
 
 To add someone to the allow-list:
@@ -201,6 +198,14 @@ season. See [DECISIONS.md](DECISIONS.md).
 the database in use. The star posts to a server action that writes `watchlist`; without the
 table the write fails and the page simply re-renders unstarred.
 
+**Matches look a minute or two behind.** Expected. FPL itself lags the match, and the
+60-second cache adds up to a minute on top. A score that is still wrong after five minutes
+means FPL's own data is behind, which happens on busy Saturday afternoons.
+
+**Bonus on a finished match changes.** Until FPL confirms bonus, about an hour after full
+time, it is worked out from BPS, and late BPS corrections can reorder it. The label says
+"if it ended now" while that applies.
+
 **The iOS app (or curl) gets 401 from `/api/v1`.** Those routes skip the proxy's login
 redirect and authenticate themselves: send a cookie session, or `Authorization: Bearer
 <Supabase access token>` for an account on `ALLOWED_EMAILS`.
@@ -214,53 +219,15 @@ every path. `/squad?id=<any public FPL team id>` then renders without signing in
 **Restore the file from the backup afterwards** and confirm `grep -n '\["",' src/proxy.ts`
 finds nothing before committing.
 
-## Ask about your squad (the AI panel)
+## Matches and live data
 
-`/squad` has an **Ask about your squad** panel backed by Claude, talking to the **Anthropic
-API directly**.
+The Matches tab reads `/fixtures/?event=N` and `/event/N/live/` through Next's shared data
+cache with a 60-second lifetime (`LIVE_REVALIDATE` in `client.ts`). While any match is live,
+the page re-renders itself every minute; the first render after the cache expires refetches,
+and everyone else reads the cached copy. Nothing polls FPL in the background, so the request
+rate to FPL is at most two per minute per gameweek being viewed, however many people watch.
 
-### Setup
-
-```bash
-vercel env add ANTHROPIC_API_KEY        # paste the key, select all three environments
-vercel env pull .env.local              # for local development
-```
-
-Get the key from <https://console.anthropic.com> → API keys. Without it `/api/ask` returns
-503 with a message saying so, rather than failing somewhere less obvious.
-
-The model is pinned in `src/lib/ai/model.ts` (`claude-sonnet-5`). Override without a code
-change:
-
-```bash
-vercel env add FTH_AI_MODEL             # e.g. claude-opus-5
-```
-
-### Why not the Vercel AI Gateway
-
-The gateway needs no key at all — it authenticates with the deployment's `VERCEL_OIDC_TOKEN`.
-It was the first implementation and it worked, but it serves models according to the **Vercel
-plan**: on a free plan only `anthropic/claude-3-haiku` is available, rate-limited to roughly
-one request every few minutes, which is enough to prove the wiring and nothing more. An
-Anthropic key is billed by Anthropic and has no such gate, so that is what the panel uses.
-
-To go back to the gateway, swap `chatModel()` in `src/lib/ai/model.ts` for a plain
-`"anthropic/claude-sonnet-5"` string — the `ai` package resolves bare strings through the
-gateway by default.
-
-### Cost control
-
-`/api/ask` calls `getUserId()` before spending anything, so it is gated by the same allow-list
-as the rest of the site — **the proxy matcher does not cover API routes**. Threads are capped
-at 24 messages and 2000 characters per message.
-
-### Where the numbers come from
-
-The model never does the maths. `src/lib/ai/squad-brief.ts` renders the squad, the
-projections, the keep/watch/sell verdicts shown on the page, the ranked transfer plans and
-the chip state as text, all computed by the same
-code that renders the pages, and the prompt tells the model to use those figures rather than
-derive its own. That is what keeps the chat from contradicting the page it sits on.
+The live endpoint is only fetched once a match in the gameweek has kicked off.
 
 ## "My squad is not showing my latest transfers"
 

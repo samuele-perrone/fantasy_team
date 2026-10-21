@@ -471,3 +471,34 @@ any logic.
 
 Paid match data (line-ups, events, ratings) waits until the free version is in daily use.
 Paying first would mean choosing a plan before knowing which data actually gets looked at.
+
+### The AI panel was removed
+
+"Ask about your squad" was taken out after phase 2 at Sam's request, along with `/api/ask`,
+`src/lib/ai/` and the AI SDK packages. Only the button was asked about, but leaving the route
+would have kept a paid endpoint live with nothing calling it. The code is in git history if it
+comes back; the "explains, never calculates" rule in the earlier entries still applies if it
+does. `ANTHROPIC_API_KEY` can be deleted from Vercel.
+
+### Matches: bonus from BPS until FPL confirms it
+
+FPL's fixture `bonus` stat stays empty until about an hour after full time, so during and
+just after a match the tab applies FPL's own rule to the BPS list: 3, 2, 1 for the top three,
+tied players sharing the higher rank. Checked against gameweek 7, it matched the confirmed
+bonus in all ten matches. Per-player points take bonus from the match rather than from the
+live endpoint's `explain`, which only gains a `bonus` line once confirmed — otherwise a
+player's points would jump by up to 3 an hour after the match, or count twice.
+
+### Matches refreshes by re-rendering, not by polling FPL
+
+A live match re-renders the page every minute (`router.refresh()`), and the server reads FPL
+through a 60-second shared cache. Polling FPL from browsers would multiply requests by the
+number of viewers, and a background poller would run when nobody is looking. The refresher is
+mounted only while a match is live, and pauses in a hidden tab.
+
+### Matches opens on the next gameweek once the current one is over
+
+FPL's `is_current` stays on a finished gameweek until the next deadline, often for most of a
+week. Opening on it would show last weekend's results when a manager is planning around the
+coming fixtures, so the tab moves on as soon as `finished` is set; the results are one tap back.
+

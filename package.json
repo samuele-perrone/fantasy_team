@@ -11,12 +11,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.42",
-    "@ai-sdk/react": "^4.0.80",
     "@next/third-parties": "16.3.2",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",
-    "ai": "^7.0.77",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",

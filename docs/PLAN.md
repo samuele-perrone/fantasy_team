@@ -40,8 +40,8 @@ Three tabs, plus a player page reachable from all of them.
 
 | Tab | What it shows |
 | --- | --- |
-| **Matches** | Fixtures and live scores for every Premier League match. A match opens to the scorers, assists, cards and bonus, with your players highlighted. |
-| **My Squad** | Your FPL team, loaded from your team ID. Each player shows one verdict (keep, watch or sell) and a sentence giving the reason. Form, expected points, minutes, upcoming matches across all competitions and the latest news sit behind an (i) icon. An **Ask about your squad** button opens the AI panel. |
+| **Matches** | Fixtures and live scores for every Premier League match. A match opens to the scorers, assists, cards and bonus, with your players highlighted. Built in phase 2. |
+| **My Squad** | Your FPL team, loaded from your team ID. Each player shows one verdict (keep, watch or sell) and a sentence giving the reason. Form, expected points, minutes, upcoming matches across all competitions and the latest news sit behind an (i) icon. |
 | **Watchlist** | A "Suggested this week" section of players worth buying, then the players you have marked, each shown next to the squad player they would replace. |
 | **Player page** | Form, recent matches, next fixtures including Europe and cups, expected points per fixture. |
 
@@ -72,7 +72,7 @@ horizon the transfer planner already uses.
   transfers when the manager has one.
 - **The sentence names the factor that decided the verdict:** "Three games in seven days",
   "Out until November", "Two easy home games".
-- Verdicts are computed in code and never by the AI panel.
+- Verdicts are computed in code.
 
 ## Data sources
 
@@ -93,7 +93,7 @@ on it.
 
 ### Phase 1a: My Squad and Watchlist, on the current model
 
-**Status: built, on branch `rebuild/phase-1a`.** Not yet built: the Watch rule for three games
+**Status: built and live.** Not yet built: the Watch rule for three games
 in seven days, which needs the phase 1b fixtures. The old squad builder's manual entry, which
 let a manager rate transfers FPL has not published yet, was removed with it.
 
@@ -118,7 +118,6 @@ on the model as it stands, so it is usable within days.
     before the price moves. A star moves a suggestion into the watched list.
   - Each suggestion gets the same one-sentence reason and (i) panel as a squad player. The
     points cost of extra transfers goes in the (i) panel, not the row.
-- The AI panel, behind a button on My Squad.
 
 **Done when** the squad and watchlist work on a phone, and the verdicts and suggestions make
 sense against known players.
@@ -137,6 +136,9 @@ sense against known players.
 clubs in Europe.
 
 ### Phase 2: Matches, on free data
+
+**Status: built and live**, at `/matches` and `/api/v1/matches`. Bonus is worked out from
+BPS until FPL confirms it.
 
 - Fixtures and results for every Premier League match, grouped by gameweek.
 - Live scores, scorers, assists, cards and bonus from the FPL live endpoint. Live data is
@@ -168,8 +170,8 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 
 - **All logic behind JSON API routes** under `/api/v1/`, with pages calling the same functions
   on the server. The iOS app then needs nothing new from the backend.
-- API routes check `getUserId()` themselves, as `/api/ask` does, because the proxy matcher does
-  not cover them. The iOS app will need token auth instead of cookies; design for that in
+- API routes check auth themselves through `getRequestAuth`, because the proxy lets
+  `/api/v1` through. The iOS app will need token auth instead of cookies; design for that in
   phase 1a rather than retrofitting it.
 - **Sign-in must work for the App Store.** If the iOS app offers Google sign-in, Apple will very
   likely require Sign in with Apple alongside it. Supabase supports both; plan for both.
@@ -185,8 +187,6 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 - `scripts/backtest.mjs` and the backtest workflow, which keep scoring the model throughout the
   rebuild
 - Supabase auth, `proxy.ts` and the email allow-list (as the invite gate)
-- The AI panel: `/api/ask`, `src/lib/ai/`, and the rule that the model explains but never
-  calculates
 - Vercel deploys, CI, `docs/RUNBOOK.md`, `docs/DECISIONS.md` and `docs/MODEL.md`
 
 **Dropped, in phase 1a:**
@@ -208,5 +208,6 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 - **Background work for notifications.** Goal and line-up alerts need something watching
   matches when nobody has the app open. Vercel's free plan runs scheduled jobs only once a
   day, so this needs a paid plan or another service. Decide before phase 4.
-- **AI panel cost per user.** Every question is a paid API call. Once the app is open to
-  everyone, it needs a per-user limit.
+
+**Removed after phase 2:** the AI panel ("Ask about your squad"), `/api/ask` and `src/lib/ai/`.
+The code is in git history before the commit that removed it.

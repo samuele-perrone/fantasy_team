@@ -209,8 +209,19 @@ export const getEntryHistory = (id: number) =>
     chips: { name: string; event: number }[];
   }>(`/entry/${id}/history/`, 60);
 
+/**
+ * Matchday data is cached for 60 seconds in the shared data cache: the first request after
+ * that refetches and every other viewer reads the cached copy, so the load on FPL does not
+ * grow with the number of people watching. The live payload is ~0.5MB, well under the 2MB
+ * cache-entry limit that forced bootstrap to be trimmed.
+ */
+export const LIVE_REVALIDATE = 60;
+
+export const getEventFixtures = (event: number) =>
+  fplFetch<FplFixture[]>(`/fixtures/?event=${event}`, LIVE_REVALIDATE);
+
 export const getLive = (event: number) =>
-  fplFetch<{ elements: LiveElement[] }>(`/event/${event}/live/`, 30);
+  fplFetch<{ elements: LiveElement[] }>(`/event/${event}/live/`, LIVE_REVALIDATE);
 
 export const getLeagueStandings = (id: number, page = 1) =>
   fplFetch<LeagueStandings>(

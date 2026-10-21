@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AskPanel } from "@/components/ask-panel";
 import { EntryForm } from "@/components/entry-form";
 import { VerdictRow } from "@/components/squad-ui";
 import { getSquadView } from "@/lib/app/squad";
@@ -88,9 +87,6 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
             change team
           </Link>
         </p>
-        <div className="mt-3 flex items-center gap-2">
-          <AskPanel teamQuery={`id=${team.entryId}`} />
-        </div>
       </div>
 
       <p className="mb-3 text-[13px] text-slate-300">

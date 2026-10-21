@@ -32,16 +32,18 @@ npm test                 # unit tests
 
 ## Pages
 
-Two tabs and the player profile. The previous six-page site is archived at the `v1-final`
+Three tabs and the player profile. The previous six-page site is archived at the `v1-final`
 tag; its routes now return 404.
 
 | Route | What it does |
 | --- | --- |
 | `/` | Redirects to `/squad` |
-| `/squad` | **My Squad.** Loads your FPL team from its ID. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. **Ask about your squad** opens the AI panel |
+| `/matches` | **Matches.** Every Premier League match in a gameweek, grouped by day, with arrows between gameweeks. A match opens to goals, assists, cards and bonus (worked out from BPS until FPL confirms it), and your squad and watchlist players are highlighted with their points. Refreshes every minute while a match is live |
+| `/squad` | **My Squad.** Loads your FPL team from its ID. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. |
 | `/watchlist` | **Watchlist.** Suggested buys for this week, the players you have starred, each compared with the squad player they would replace, and a name search to add more |
 | `/players/[id]` | Player profile: points per fixture, underlying stats, gameweek history, and a star to watch them |
 | `/api/v1/squad` | My Squad as JSON, for the iOS app. Accepts a cookie session or `Authorization: Bearer` |
+| `/api/v1/matches` | Matches as JSON. `?gw=` picks the gameweek |
 | `/api/v1/watchlist` | Watchlist as JSON. `GET`, `POST {playerId}`, `DELETE ?playerId=` |
 
 ## Architecture
@@ -57,7 +59,8 @@ src/lib/fpl/
   row.ts          Flat PlayerRow DTO shared between server and client components
   data.ts         Request-deduped game data and player row assembly
   verdict.ts      Keep / watch / sell, replacements and transfer suggestions
-  optimiser.ts    Best-XI solver and transfer planner, used by the AI brief
+  matches.ts      Match reports, provisional bonus and per-match points from the live endpoint
+  optimiser.ts    Best-XI solver and transfer planner
   entry.ts        Loads an FPL entry into one shape
   chips.ts        Chip names and their effect on scoring
 
@@ -68,8 +71,8 @@ src/proxy.ts         Session refresh and the auth gate (Next 16 renamed middlewa
 supabase/migrations/ Schema, applied through the Supabase SQL editor
 ```
 
-Pages are React Server Components. Only the header, tab bar and AI panel are client
-components; rows expand with `<details>`, so they need no JavaScript. Nothing is statically prerendered — see
+Pages are React Server Components. Only the header, tab bar and the Matches tab's live
+refresher are client components; rows expand with `<details>`, so they need no JavaScript. Nothing is statically prerendered — see
 [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Testing against a fixture server
