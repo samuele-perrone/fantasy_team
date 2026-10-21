@@ -19,63 +19,12 @@ export const POSITION_STYLES: Record<string, string> = {
 
 export const money = (v: number) => `£${v.toFixed(1)}m`;
 
-export interface RatingBand {
-  label: string;
-  /** value text colour */
-  text: string;
-  /** progress-bar fill colour */
-  bar: string;
-}
-
-const BANDS: RatingBand[] = [
-  { label: "Elite", text: "text-brand-400", bar: "bg-brand-400" },
-  { label: "Strong", text: "text-brand-300", bar: "bg-brand-500/70" },
-  { label: "Fair", text: "text-amber-400", bar: "bg-amber-500" },
-  { label: "Weak", text: "text-rose-400", bar: "bg-rose-500" },
-];
-
-/**
- * Squad ratings are an average across all 15, so cheap enablers drag them down and the
- * practical ceiling is far below 10 — the optimiser's own £100m squad scores about 6.5.
- * Thresholds are set against that rather than against the raw 0–10 range.
- */
-export function squadRatingBand(value: number): RatingBand {
-  if (value >= 6) return BANDS[0];
-  if (value >= 5) return BANDS[1];
-  if (value >= 4) return BANDS[2];
-  return BANDS[3];
-}
-
-/** Individual ratings spread much wider — the median regular starter sits around 3.3. */
-export function playerRatingBand(value: number): RatingBand {
-  if (value >= 7) return BANDS[0];
-  if (value >= 5) return BANDS[1];
-  if (value >= 3) return BANDS[2];
-  return BANDS[3];
-}
-
-export function shirtUrl(teamCode: number, isKeeper = false) {
-  return `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamCode}${
-    isKeeper ? "_1" : ""
-  }-66.webp`;
-}
-
 export function badgeUrl(teamCode: number) {
   return `https://resources.premierleague.com/premierleague/badges/50/t${teamCode}.png`;
 }
 
 export function photoUrl(playerCode: number) {
   return `https://resources.premierleague.com/premierleague/photos/players/110x140/p${playerCode}.png`;
-}
-
-export function relativeDeadline(iso: string): string {
-  const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "Deadline passed";
-  const mins = Math.floor(ms / 60000);
-  const days = Math.floor(mins / 1440);
-  const hours = Math.floor((mins % 1440) / 60);
-  if (days > 0) return `${days}d ${hours}h`;
-  return `${hours}h ${mins % 60}m`;
 }
 
 export function formatKickoff(iso: string | null): string {
@@ -90,11 +39,15 @@ export function formatKickoff(iso: string | null): string {
   });
 }
 
-/** Blue → white → green scale used for heat-mapped metric cells. */
-export function heatStyle(value: number, min: number, max: number): React.CSSProperties {
-  if (max <= min) return {};
-  const t = Math.min(1, Math.max(0, (value - min) / (max - min)));
-  return {
-    backgroundColor: `color-mix(in oklab, #05c988 ${(t * 42).toFixed(1)}%, transparent)`,
-  };
+/** "2 hours ago", for showing how fresh team news is. */
+export function timeAgo(iso: string | null, now = Date.now()): string | null {
+  if (!iso) return null;
+  const mins = Math.round((now - new Date(iso).getTime()) / 60000);
+  if (!Number.isFinite(mins)) return null;
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 }

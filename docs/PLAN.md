@@ -93,6 +93,10 @@ on it.
 
 ### Phase 1a: My Squad and Watchlist, on the current model
 
+**Status: built, on branch `rebuild/phase-1a`.** Not yet built: the Watch rule for three games
+in seven days, which needs the phase 1b fixtures. The old squad builder's manual entry, which
+let a manager rate transfers FPL has not published yet, was removed with it.
+
 The part of the app nobody else offers, and the part the old site made hardest to use. Built
 on the model as it stands, so it is usable within days.
 

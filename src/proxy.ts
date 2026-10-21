@@ -2,8 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAllowed } from "@/lib/auth/allowlist";
 
-/** Paths reachable without a session. Everything else redirects to /login. */
-const PUBLIC_PREFIXES = ["/login", "/auth", "/icon", "/apple-icon", "/manifest"];
+/**
+ * Paths reachable without a session. Everything else redirects to /login.
+ *
+ * `/api/v1` is listed because those routes authenticate themselves and answer 401 — a native
+ * app sends a bearer token rather than a cookie, and a redirect to an HTML login page is no
+ * use to it. Each route calls getRequestAuth before doing anything.
+ */
+const PUBLIC_PREFIXES = ["/login", "/auth", "/icon", "/apple-icon", "/manifest", "/api/v1"];
 
 /**
  * Refreshes the Supabase session and gates the whole site behind it.

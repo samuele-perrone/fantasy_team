@@ -62,6 +62,22 @@ suspension costs one match. Previously a single multiplier was applied across th
 horizon, so a knock cost a quarter of a player's minutes in every gameweek and "back on 23
 Aug" was treated identically to "back on 28 Nov".
 
+### A player with no prior is shrunk toward his position's average
+
+`blendRate` shrinks this season's per-90 rates toward last season's, but a player missing from
+`priors.json` had nothing to shrink toward, so the raw rate was used however small the
+sample. Carvalho had played **3 minutes** with 0.43 xG in them — about 13 goals per 90 — and
+projected 35 points over five gameweeks, more than Saka, on 9 expected minutes. The verdicts
+surfaced it at once: he was the top replacement for every midfielder in every squad.
+
+Such players now shrink toward the minutes-weighted average of their position, with the
+same six-match weight as a real prior. 148 projections changed, all small samples (Carvalho
+35.4 → 2.4).
+
+It applies only to players with **some** minutes this season. Extending it to players with
+none raised every unknown's projection on the gameweek-one backtest, and most unknowns do not
+play, so MAE rose from 1.46 to 1.49. Restricted, gameweek one is unchanged.
+
 ### Recent signings are discounted
 
 A summer signing carries a full season of starts from a different club. `team_join_date` is
@@ -99,6 +115,51 @@ limit and a £110m budget all produce legal squads matching those rules.
 `ruleDrift()` compares live rules against what the app was built for, and the squad page
 notes any difference. Since the solver follows the live rules, that notice is informational
 rather than a warning that output is wrong.
+
+## Verdicts
+
+### Sells are settled as one plan
+
+Computed independently, every verdict pointed at the same best replacement — four Sells in one
+squad, all for one player. Sells are now made in turn on a working copy of the squad: a
+replacement already used is not offered again, and the club limit counts players already
+brought in. Free transfers go to the players ruled out longest, then to the biggest gains;
+after that, at most one more Sell, and only if it clears the existing hit rule (gain of 8 or
+more). The rest become Watch with "Other transfers come first".
+
+Money freed by one sale is **not** spent on the next. Every replacement shown must be
+affordable whether the manager makes that move alone or all of them, because they may well
+make only one. The bank can only go down through the plan.
+
+### Funds use today's price, not the selling price
+
+FPL's public endpoints do not expose a player's selling price, which is lower than the
+current price after a rise (half the profit is kept). The verdicts and suggestions use the
+current price, so for a player who has risen since being bought the budget can be overstated
+by £0.1–0.2m. Only `/api/my-team/{id}/`, which needs the manager's own FPL login, has the real
+figure.
+
+### Rotation from fixture congestion waits for phase 1b
+
+The plan's Watch rule includes "the club plays three games in seven days". The FPL API only
+lists Premier League fixtures, so the rule cannot fire until European and cup fixtures arrive
+from API-Football in phase 1b. It is not approximated from Premier League fixtures alone,
+which would only ever catch double gameweeks.
+
+### `/api/v1` is exempt from the proxy's login redirect
+
+The routes exist for the iOS app, which sends a Supabase access token as `Authorization:
+Bearer` rather than a cookie. The proxy only knows cookies, so it would redirect those
+requests to an HTML login page. Instead `/api/v1` is a public prefix and every route calls
+`getRequestAuth`, which verifies the token (or the cookie session) and applies the allow-list
+itself, answering 401. A new route under `/api/v1` that forgets to call it is open to anyone.
+
+### The bootstrap cache key is versioned
+
+`slimElement` builds the cached player objects field by field. Adding `news_added` without
+changing the `unstable_cache` key would have served objects without it for up to five minutes
+after a deploy, rendering every news timestamp blank. The key is bumped whenever the trimmed
+shape changes.
 
 ## Optimiser
 

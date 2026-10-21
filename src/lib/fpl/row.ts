@@ -10,6 +10,8 @@ export interface FixtureChip {
   isHome: boolean;
   difficulty: number;
   xPts: number;
+  /** expected minutes in this fixture, after availability — 0 means ruled out */
+  xMins: number;
 }
 
 /** Flat, client-serialisable player record used by every table in the app. */
@@ -31,6 +33,8 @@ export interface PlayerRow {
   daysAtClub: number | null;
   /** link to the press conference or club statement behind the news, when FPL cites one */
   newsSource: string;
+  /** when FPL last changed the news, ISO timestamp, or null */
+  newsAdded: string | null;
 
   totalPoints: number;
   eventPoints: number;
@@ -100,6 +104,7 @@ export function toRow(
     isHome: f.isHome,
     difficulty: f.difficulty,
     xPts: Math.round(f.points * 100) / 100,
+    xMins: Math.round(f.minutes),
   }));
 
   const fdr = fixtures.length
@@ -124,6 +129,7 @@ export function toRow(
       ? Math.max(0, Math.round((Date.now() - Date.parse(p.team_join_date)) / 86_400_000))
       : null,
     newsSource: p.scout_news_link ?? "",
+    newsAdded: p.news_added ?? null,
 
     totalPoints: p.total_points,
     eventPoints: p.event_points,

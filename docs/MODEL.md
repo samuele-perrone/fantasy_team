@@ -77,6 +77,26 @@ Goals score 10/6/5/4 by position; assists 3.
 Squad rating is the mean rating across all 15. Because it includes the bench, the practical
 ceiling is about **6.5** — that is what a fully optimised £100m squad scores, not 10.
 
+## Verdicts
+
+`src/lib/fpl/verdict.ts` turns projections into keep, watch or sell. It is a layer over the
+model, not part of it, so it changes no projection and the backtest does not measure it.
+
+- **Score** — expected points over the next five gameweeks, weighted 1, 0.9, 0.8, 0.7, 0.6
+  so the nearer weeks count more
+- **Gap** — the best affordable same-position replacement's score minus the player's.
+  Affordable means today's price within the player's price plus the bank, without a fourth
+  player from one club
+- **Sell** — gap of 5 or more, or ruled out of the next two gameweeks (every fixture in them at
+  under one expected minute; a blank gameweek is skipped, not counted)
+- **Watch** — gap of 2–5, out for one gameweek, or any published chance of playing below 100
+- **Keep** — everything else
+
+Sells are capped at the free transfers plus one hit, and settled as a single plan — see
+[DECISIONS.md](DECISIONS.md#sells-are-settled-as-one-plan). The thresholds are starting
+values, not fitted ones: 5 points is roughly where a gap over five gameweeks clearly exceeds
+the model's per-player error.
+
 ## Limits worth knowing
 
 **The coefficients are hand-tuned, not fitted.** The rating weights, the 0.085 bonus slope,
@@ -91,7 +111,10 @@ season in progress. Accuracy is therefore accumulated forward instead; see
 
 **Early season leans on priors.** Until roughly six matches have been played, most of a
 player's projection is last season's rate. Promoted-club players and newcomers with no prior
-fall back to the price prior alone.
+fall back to the price prior alone for minutes. For rates, once they have played any minutes
+this season, they shrink toward their position's average instead of a personal prior — without
+that, a three-minute cameo with one chance in it read as a goal every 23 minutes. With no
+minutes at all their rates stay at zero.
 
 **Form is not modelled separately.** xG and xA are season-long rates shrunk toward last
 season, so a player in a hot streak is not distinguished from their baseline.

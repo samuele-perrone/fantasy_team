@@ -52,9 +52,13 @@ everything crossing into a client component is a `PlayerRow`.
 
 ### Pages
 
-There are six pages plus the player profile; ten earlier routes are permanent redirects in
-`next.config.ts`. Before adding a page, check whether it is a column, a sort or a section on
-one of the six — the last cut existed because the site had a page per idea.
+Two tabs (`/squad`, `/watchlist`) and the player profile, built mobile first for the iOS app
+that follows — see `docs/PLAN.md`. Before adding a page, check whether it is a section of one
+of the tabs: the previous site grew to eighteen pages because every idea got its own.
+
+Pages and the `/api/v1` routes share the server functions in `src/lib/app/`. Logic goes there,
+not in a page, so the iOS app can read the same thing. `/api/v1` is exempt from the proxy's
+login redirect and every route must call `getRequestAuth` itself.
 
 ### The AI panel
 
@@ -97,6 +101,9 @@ most likely to be broken by a well-meaning change:
   `finished` flips long after the whistle
 
 ### Optimiser
+
+Verdicts (`verdict.ts`) are the user-facing layer: keep/watch/sell against the best affordable
+replacement over five gameweeks, settled as one plan.
 
 `optimiseSquad` maximises `XI xPts + benchWeight × bench xPts` subject to quota, budget and
 club limits. Filters relax one at a time rather than returning nothing, and the result reports

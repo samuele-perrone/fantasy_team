@@ -22,6 +22,8 @@ export interface FplElement {
   team_join_date: string | null;
   /** FPL's source for the news, usually the club's press conference write-up */
   scout_news_link: string;
+  /** when FPL last changed `news`, ISO timestamp; null when there is none */
+  news_added: string | null;
   total_points: number;
   event_points: number;
   points_per_game: string;

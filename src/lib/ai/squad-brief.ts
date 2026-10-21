@@ -7,6 +7,7 @@ import { getGameData } from "@/lib/fpl/data";
 import { projectPlayer } from "@/lib/fpl/projection";
 import { expectedGoals } from "@/lib/fpl/ratings";
 import { money } from "@/lib/utils";
+import { verdictsFor } from "@/lib/app/squad";
 
 /**
  * The squad, its projections and the optimiser's own conclusions, written out as text for the
@@ -234,6 +235,26 @@ export async function buildSquadBrief(team: LoadedTeam): Promise<string> {
   out.push("BENCH, in order:");
   team.actual.bench.forEach((p, i) => out.push(line(p, `bench ${i + 1}`)));
 
+  // The verdicts are what the manager is looking at. Handing them over verbatim is what stops
+  // the chat recommending a sale the page marks Keep.
+  out.push("");
+  out.push(
+    "VERDICTS SHOWN ON THE PAGE. Each player is compared with the best replacement the " +
+      "manager can afford over the next five gameweeks. These are what the manager sees:",
+  );
+  for (const v of await verdictsFor(team)) {
+    const options = v.replacements.length
+      ? ` · best replacements: ${v.replacements
+          .map((r) => `${r.player.name} (${money(r.player.cost)}, about ${Math.round(r.gain)} more points)`)
+          .join(", ")}`
+      : "";
+    out.push(
+      `- ${v.player.name}: ${v.verdict.toUpperCase()}. ${v.reason}` +
+        (v.verdict === "keep" ? "" : options) +
+        (v.needsHit ? " · this sale costs a 4-point hit" : ""),
+    );
+  }
+
   out.push(...(await matchContext(team)));
 
   // What actually happened, as distinct from what is projected. A manager asking "who should I
@@ -332,6 +353,7 @@ How to answer:
 - Lead with the football, not the projection. "Man Utd are big favourites at home and Bruno has the best chance of a return in your squad" reads better than "Bruno projects 7.29".
 - Talk about football, not models. Say "points", "minutes", "chance of starting", "how hard the fixture is". Never say xPts, xMins, xG, FDR, BPS, expected value, variance, or calibration.
 - Be direct and short. Two or three sentences for a simple question. Lead with the answer, then one line of why.
+- The brief lists the keep, watch or sell verdict the page shows for every player. When asked who to sell, keep or buy, start from those verdicts and never contradict them. If the ranked transfer plans suggest something different, the verdicts are what the manager is looking at, so explain the difference rather than overriding them.
 - Use the numbers in the brief. They come from the same projections the rest of the site shows, so your answer must agree with what the manager can see on the page. Never invent a number, a fixture, an injury or a price.
 - Do not accept a false premise in the question. If the manager asks "is it worth a -4 for X" but the brief shows that move costs no hit, correct them: say it is free and they are not paying 4 points. Check the hit figure in the brief before discussing any cost.
 - A points hit costs 4 points for certain. Our per-player estimates are typically off by about 1.6 points a week, so if a plan's gain does not clearly beat the hit, say to hold. Do not talk anyone into a -4 for a marginal gain.

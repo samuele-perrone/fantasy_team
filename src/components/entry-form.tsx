@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { saveEntryId } from "@/lib/supabase/squads";
+import { saveEntryId } from "@/lib/supabase/profile";
 
 /**
  * Small server-action form used by every tool that needs an FPL entry ID. Keeping it a

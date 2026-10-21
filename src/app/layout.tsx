@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { TabBar } from "@/components/tab-bar";
 import { getGameData } from "@/lib/fpl/data";
 import { createClient } from "@/lib/supabase/server";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -32,11 +32,18 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fantasyteamhub.com"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "FantasyTeamHub — FPL tools, stats and points predictions",
+    default: "FantasyTeamHub",
     template: "%s · FantasyTeamHub",
   },
-  description:
-    "Points predictions, player stats, fixture analysis, transfer suggestions and squad building for Fantasy Premier League.",
+  description: "Your FPL squad, what to keep, what to sell, and who to buy next.",
+  // Private while invite-only.
+  robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#06070f",
+  // Lets the safe-area insets work on phones with a notch and a home indicator.
+  viewportFit: "cover",
 };
 
 async function HeaderWithDeadline() {
@@ -74,8 +81,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<SiteHeader deadline={null} gwLabel="" email={null} />}>
           <HeaderWithDeadline />
         </Suspense>
-        <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-4 sm:py-5">{children}</main>
-        <SiteFooter />
+        {/* Bottom padding clears the fixed tab bar. One phone-width column at every size, so
+            the web app is judged on the layout the iOS app will copy. */}
+        <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-28 pt-4">{children}</main>
+        <TabBar />
         {/* Loaded only when a measurement ID is configured, so local and preview runs stay
             untracked. next/third-parties defers the script so it does not block paint. */}
         {process.env.NEXT_PUBLIC_GA_ID && (

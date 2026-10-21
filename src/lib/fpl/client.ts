@@ -103,6 +103,7 @@ function slimElement(raw: FplElement): FplElement {
     chance_of_playing_next_round: raw.chance_of_playing_next_round,
     team_join_date: raw.team_join_date,
     scout_news_link: raw.scout_news_link,
+    news_added: raw.news_added ?? null,
     total_points: raw.total_points,
     event_points: raw.event_points,
     points_per_game: raw.points_per_game,
@@ -174,7 +175,9 @@ export const getBootstrap = unstable_cache(
       elements: raw.elements.map(slimElement),
     };
   },
-  ["fpl-bootstrap"],
+  // Bump the key whenever slimElement gains a field, or the cache keeps serving objects
+  // without it for up to five minutes after a deploy.
+  ["fpl-bootstrap-v2"],
   { revalidate: 300, tags: ["fpl"] },
 );
 

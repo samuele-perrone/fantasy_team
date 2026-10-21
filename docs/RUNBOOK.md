@@ -16,6 +16,11 @@ There is a second Supabase project, `yciikyzmesqcnvacurqv`, created by a marketp
 **It is not used.** It was disconnected from the Vercel project so it cannot re-sync its
 environment variables over the real ones. Deleting it is safe but has not been done.
 
+`.env.local` may still carry `POSTGRES_*` variables for that dead project from an old
+`vercel env pull`. They fail with `tenant/user … not found`; ignore or delete them. The
+Supabase connector in Claude Code also lacks permission on the real project, so schema
+changes go through the SQL editor by hand.
+
 ## Deploys
 
 Vercel is connected to the repository, so:
@@ -43,6 +48,8 @@ Set on Vercel across production, preview and development. Pull them locally with
 | `ALLOWED_EMAILS` | Comma-separated sign-in allow-list. **Fails closed** — unset means nobody can sign in |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Analytics only load when this is set. Changing it needs a redeploy, since `NEXT_PUBLIC_*` values are inlined at build time |
+| `ANTHROPIC_API_KEY` | The AI panel. Marked Sensitive on Vercel, so `vercel env pull` writes a placeholder, not the value — paste it into `.env.local` by hand to use the panel locally |
+| `FTH_AI_MODEL` | Optional override for the pinned model |
 | `FPL_API_BASE` | Local only — point the FPL client at a fixture server |
 
 To add someone to the allow-list:
@@ -66,11 +73,13 @@ Migrations are written to be idempotent, so re-running is safe.
 `POSTGRES_URL_NON_POOLING` in `.env.local`. Those credentials went away when the unused
 marketplace resource was disconnected, so the SQL editor is the working path today.
 
-Two tables, both with row-level security:
+Tables, all with row-level security:
 
-- `profiles` — one row per auth user, holding their FPL entry id
-- `squads` — named squads plus one reserved `__working_draft__` row per user, which is the
-  builder's autosave and is hidden from the saved list
+- `profiles` — one row per auth user, holding their FPL team id
+- `watchlist` — one row per user and FPL player id (`0003_watchlist.sql`). FPL reassigns
+  player ids every season, so **empty this table at the season rollover**
+- `squads` — the old builder's saved squads. Nothing reads it any more;
+  `0004_drop_squads.sql` removes it. Export it from the table editor first if the rows matter
 
 Every policy pairs `to authenticated` with an ownership predicate, and update policies carry
 both `USING` and `WITH CHECK`. This was verified against the live database with two throwaway
@@ -143,8 +152,7 @@ Google Cloud Console needed **no change**, per the note above.
 
 Everything driving squad logic — injury news, availability, prices, set-piece order and the
 squad rules themselves — comes from `bootstrap-static` and is therefore at most five minutes
-stale. The squad page shows what it is currently enforcing, and warns if FPL's published
-rules ever diverge from what the app was built against.
+stale.
 
 ## Backtesting
 
@@ -183,24 +191,26 @@ Something has broken the minutes model or the per-90 rates. This happened at the
 rollover: FPL wipes season stats, and the model was reading a one-match sample as a full
 season. See [DECISIONS.md](DECISIONS.md).
 
-**Autosave shows "Could not autosave".** Migration `0002` has not been applied to the
-database in use.
+**Starring a player does nothing.** Migration `0003_watchlist.sql` has not been applied to
+the database in use. The star posts to a server action that writes `watchlist`; without the
+table the write fails and the page simply re-renders unstarred.
+
+**The iOS app (or curl) gets 401 from `/api/v1`.** Those routes skip the proxy's login
+redirect and authenticate themselves: send a cookie session, or `Authorization: Bearer
+<Supabase access token>` for an account on `ALLOWED_EMAILS`.
 
 ## Verifying changes locally
 
 The whole site is behind the auth gate, so `curl` gets a 307 on every page. To check rendering
-locally, temporarily neuter the redirect in `src/proxy.ts`:
+locally, back up `src/proxy.ts` and add `""` to `PUBLIC_PREFIXES` — an empty prefix matches
+every path. `/squad?id=<any public FPL team id>` then renders without signing in.
 
-```ts
-if (false && !signedIn && !isPublic) return redirectTo("/login", pathname + search);
-```
-
-**Restore it from git afterwards** (`git checkout src/proxy.ts`) and confirm
-`grep -c 'if (false &&' src/proxy.ts` returns 0 before committing.
+**Restore the file from the backup afterwards** and confirm `grep -n '\["",' src/proxy.ts`
+finds nothing before committing.
 
 ## Ask about your squad (the AI panel)
 
-`/my-team` has an **Ask about your squad** panel backed by Claude, talking to the **Anthropic
+`/squad` has an **Ask about your squad** panel backed by Claude, talking to the **Anthropic
 API directly**.
 
 ### Setup
@@ -241,7 +251,8 @@ at 24 messages and 2000 characters per message.
 ### Where the numbers come from
 
 The model never does the maths. `src/lib/ai/squad-brief.ts` renders the squad, the
-projections, the ranked transfer plans and the chip state as text, all computed by the same
+projections, the keep/watch/sell verdicts shown on the page, the ranked transfer plans and
+the chip state as text, all computed by the same
 code that renders the pages, and the prompt tells the model to use those figures rather than
 derive its own. That is what keeps the chat from contradicting the page it sits on.
 
@@ -254,13 +265,13 @@ deadline passes:
 - `GET /entry/{id}/transfers/` does **not** list pending transfers either
 
 Only `GET /api/my-team/{id}/` exposes the pending squad, and it requires the manager's own FPL
-login session. The app has no way to obtain that, so `/my-team` shows the most recent published
-side — the previous gameweek's.
+login session. The app has no way to obtain that, so `/squad` shows the most recent published
+side — the previous gameweek's — and says so under the list. The AI brief carries the same
+warning, so the assistant believes a manager who says they own a player it cannot see.
 
-`/my-team` now says so explicitly, with the deadline after which the new squad appears, and
-links to `/squad` where the manager can enter or screenshot-import the side they have actually
-picked and have it rated straight away. The AI brief carries the same warning, so the assistant
-believes a manager who says they own a player it cannot see.
+The old site let a manager type in or screenshot-import their pending squad as a workaround.
+That went with the squad builder in the rebuild; if it is missed, it belongs on My Squad as an
+"edit my squad" option rather than as its own page.
 
 Before investigating a report like this, check `entry.current_event` against
 `bootstrap.events` — if `current_event` matches the last finished gameweek, the app is correct

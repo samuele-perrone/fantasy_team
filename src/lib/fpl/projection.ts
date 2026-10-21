@@ -167,8 +167,7 @@ function minutesModel(p: FplElement, teamGames: number): MinutesModel {
 }
 
 /** Expected bonus points per appearance, fitted against last season's bps-to-bonus curve. */
-function expectedBonus(p: FplElement, minutesShare: number): number {
-  const prior = priors[String(p.code)] ?? null;
+function expectedBonus(p: FplElement, minutesShare: number, prior: Rates | null): number {
   const bps90 = blendRate(
     p.minutes > 0 ? (p.bps / p.minutes) * 90 : 0,
     p.minutes,
@@ -183,8 +182,16 @@ function per90(value: string | number, minutes: number): number {
   return (v / minutes) * 90;
 }
 
+type Rates = Pick<Prior, "xg" | "xa" | "bps" | "dc" | "sv">;
+
 export interface ProjectionContext {
   ratings: Map<number, TeamRating>;
+  /**
+   * Minutes-weighted average per-90 rates by position, from last season's priors. Stands in
+   * as the prior for a player with no history, so a three-minute cameo with a chance in it
+   * is shrunk like everyone else's small sample rather than read as a goal every 23 minutes.
+   */
+  baselines: Map<number, Rates>;
   fixturesByTeam: Map<number, FplFixture[]>;
   teamGames: Map<number, number>;
   currentEvent: number;
@@ -218,11 +225,51 @@ export function buildContext(bootstrap: Bootstrap, fixtures: FplFixture[]): Proj
   const next = bootstrap.events.find((e) => e.is_next);
   return {
     ratings,
+    baselines: positionBaselines(bootstrap),
     fixturesByTeam,
     teamGames,
     currentEvent: current?.id ?? (next ? next.id - 1 : 1),
     nextEvent: next?.id ?? current?.id ?? 1,
   };
+}
+
+function positionBaselines(bootstrap: Bootstrap): Map<number, Rates> {
+  const keys = ["xg", "xa", "bps", "dc", "sv"] as const;
+  const sums = new Map<number, Rates & { m: number }>();
+  for (const p of bootstrap.elements) {
+    const prior = priors[String(p.code)];
+    if (!prior || prior.m <= 0) continue;
+    const acc = sums.get(p.element_type) ?? { m: 0, xg: 0, xa: 0, bps: 0, dc: 0, sv: 0 };
+    acc.m += prior.m;
+    for (const k of keys) acc[k] += prior[k] * prior.m;
+    sums.set(p.element_type, acc);
+  }
+  const out = new Map<number, Rates>();
+  for (const [pos, acc] of sums) {
+    out.set(pos, {
+      xg: acc.xg / acc.m,
+      xa: acc.xa / acc.m,
+      bps: acc.bps / acc.m,
+      dc: acc.dc / acc.m,
+      sv: acc.sv / acc.m,
+    });
+  }
+  return out;
+}
+
+/**
+ * Last season's rates, or the positional average when the player has none but has played a
+ * few minutes this season.
+ *
+ * The average is deliberately not used for players with no minutes at all: on the gameweek
+ * one backtest it raised every unknown's projection, and most unknowns do not play, so the
+ * error got worse (MAE 1.46 → 1.49). It is only needed where a tiny sample has produced a
+ * rate, which is where the raw number is wildly wrong.
+ */
+function priorFor(p: FplElement, ctx: ProjectionContext): Rates | null {
+  const own = priors[String(p.code)];
+  if (own) return own;
+  return p.minutes > 0 ? (ctx.baselines.get(p.element_type) ?? null) : null;
 }
 
 /** Project a single player against a single fixture. */
@@ -257,7 +304,7 @@ function projectFixture(
   const csProb = cleanSheetProbability(team, opponent, isHome);
   const conceded = expectedGoals(opponent, team, !isHome);
 
-  const prior = priors[String(p.code)] ?? null;
+  const prior = priorFor(p, ctx);
   const xg = blendRate(per90(p.expected_goals, p.minutes), p.minutes, prior?.xg ?? null);
   const xa = blendRate(per90(p.expected_assists, p.minutes), p.minutes, prior?.xa ?? null);
 
@@ -293,7 +340,7 @@ function projectFixture(
     points += poissonAtLeast(dc90 * share, threshold) * 2 * mins.playProb;
   }
 
-  points += expectedBonus(p, share);
+  points += expectedBonus(p, share, prior);
   const cards90 = per90(p.yellow_cards, p.minutes) + per90(p.red_cards, p.minutes) * 3;
   points -= cards90 * share;
 

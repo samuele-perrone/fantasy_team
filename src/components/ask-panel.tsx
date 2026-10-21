@@ -78,11 +78,11 @@ function Conversation({
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-[2px]"
         onClick={onClose}
         aria-hidden
       />
-      <section className="panel fixed inset-x-3 bottom-3 z-50 flex max-h-[80vh] flex-col overflow-hidden shadow-2xl shadow-black/60 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[420px]">
+      <section className="panel fixed inset-x-3 bottom-3 z-[60] flex max-h-[80vh] flex-col overflow-hidden shadow-2xl shadow-black/60 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[420px]">
       <div className="flex items-center gap-2 border-b border-pitch-800 px-4 py-3">
         <Sparkle />
         <h2 className="text-[14px] font-bold text-white">Ask about your squad</h2>

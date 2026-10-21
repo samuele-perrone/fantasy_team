@@ -7,6 +7,10 @@ import { getGameData, POSITIONS, toRow } from "@/lib/fpl/data";
 import { projectPlayer } from "@/lib/fpl/projection";
 import { DifficultyPill, PageHeader, PositionBadge } from "@/components/ui";
 import { badgeUrl, cn, formatKickoff, money, photoUrl } from "@/lib/utils";
+import { WatchButton } from "@/components/squad-ui";
+import { createClient, getUserId } from "@/lib/supabase/server";
+import { listWatchlist } from "@/lib/supabase/watchlist";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const revalidate = 600;
 
@@ -41,6 +45,11 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
   } catch {
     summary = null;
   }
+
+  const signedIn = Boolean(await getUserId());
+  const watched = signedIn
+    ? (await listWatchlist((await createClient()) as unknown as SupabaseClient)).includes(playerId)
+    : false;
 
   const history = summary?.history ?? [];
   const maxGwPoints = Math.max(6, ...history.map((h) => h.total_points));
@@ -97,7 +106,11 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
               )}
             </div>
           </div>
-
+          {signedIn && (
+            <div className="ml-auto">
+              <WatchButton playerId={playerId} watched={watched} />
+            </div>
+          )}
         </div>
 
         {player.news && (

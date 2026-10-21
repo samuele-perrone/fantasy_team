@@ -4,9 +4,11 @@
 
 **Live: [fantasyteamhub.com](https://fantasyteamhub.com)**
 
-A private Fantasy Premier League analytics site: points projections, player stats, fixture
-analysis, transfer suggestions and squad building, built on the official FPL API — plus a
-Claude-backed panel that answers questions about your own squad.
+A Fantasy Premier League companion built around your own squad: every player gets a
+keep, watch or sell verdict with the reason in one line, plus the transfers worth making and
+a watchlist for the players you are tracking. Built on the official FPL API, with a
+Claude-backed panel that answers questions about your squad. Web first; an iOS app follows
+(see [docs/PLAN.md](docs/PLAN.md)).
 
 The site sits behind Google sign-in and an email allow-list, so only permitted accounts can
 see anything.
@@ -29,23 +31,17 @@ npm run dev              # http://localhost:3000
 
 ## Pages
 
-Six pages, plus the player profile. The site was deliberately cut down from eighteen — see
-[docs/DECISIONS.md](docs/DECISIONS.md) for what was folded in where.
+Two tabs and the player profile. The previous six-page site is archived at the `v1-final`
+tag; its routes now return 404.
 
 | Route | What it does |
 | --- | --- |
-| `/` | Deadline countdown, best captain picks, best value, injury doubts |
-| `/my-team` | Your squad — ratings, best XI, captaincy verdict, live score, chips, week-by-week history, and an **Ask about your squad** panel backed by Claude |
-| `/transfers` | Ranked 1–3 transfer plans scored net of hits, plus a season-wide wildcard view |
-| `/players` | Every player ranked, across five column groups (projection, season, attack, defence, market) |
-| `/players/[id]` | Player profile — projections per fixture, underlying stats, gameweek history, past seasons |
-| `/squad` | Build a squad by hand, import one from a screenshot, or auto-pick the best |
-| `/fixtures` | Fixture difficulty ticker for all 20 clubs, with attacking and clean sheet views |
-| `/scout` | Injuries, doubts and bans, captain shortlist, differentials and budget enablers |
-
-Removed routes (`/predictions`, `/team-builder`, `/live`, `/planner`, `/compare`,
-`/set-pieces`, `/guides`, `/match-centre`, `/prices`, `/leagues`) are kept as permanent
-redirects in `next.config.ts` so old links and bookmarks still land somewhere useful.
+| `/` | Redirects to `/squad` |
+| `/squad` | **My Squad.** Loads your FPL team from its ID. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. **Ask about your squad** opens the AI panel |
+| `/watchlist` | **Watchlist.** Suggested buys for this week, the players you have starred, each compared with the squad player they would replace, and a name search to add more |
+| `/players/[id]` | Player profile: points per fixture, underlying stats, gameweek history, and a star to watch them |
+| `/api/v1/squad` | My Squad as JSON, for the iOS app. Accepts a cookie session or `Authorization: Bearer` |
+| `/api/v1/watchlist` | Watchlist as JSON. `GET`, `POST {playerId}`, `DELETE ?playerId=` |
 
 ## Architecture
 
@@ -59,19 +55,20 @@ src/lib/fpl/
   priors.json     Last season's per-90 rates, used while this season's sample is small
   row.ts          Flat PlayerRow DTO shared between server and client components
   data.ts         Request-deduped game data and player row assembly
-  team-runs.ts    Team-level fixture runs for the fixture analyser
-  optimiser.ts    Best-XI solver, squad optimiser and transfer planner
-  entry.ts        Loads an FPL entry or a hand-built squad into one shape
+  verdict.ts      Keep / watch / sell, replacements and transfer suggestions
+  optimiser.ts    Best-XI solver and transfer planner, used by the AI brief
+  entry.ts        Loads an FPL entry into one shape
   chips.ts        Chip names and their effect on scoring
 
-src/lib/supabase/    Browser and server clients, plus squad/profile persistence
+src/lib/app/         Server functions every page and /api/v1 route shares
+src/lib/supabase/    Clients, request auth (cookie or bearer), profile and watchlist
 src/lib/auth/        Email allow-list
 src/proxy.ts         Session refresh and the auth gate (Next 16 renamed middleware to proxy)
 supabase/migrations/ Schema, applied through the Supabase SQL editor
 ```
 
-Pages are React Server Components. Only the interactive tables, filters, builder and header
-are client components. Nothing is statically prerendered — see
+Pages are React Server Components. Only the header, tab bar and AI panel are client
+components; rows expand with `<details>`, so they need no JavaScript. Nothing is statically prerendered — see
 [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Testing against a fixture server
