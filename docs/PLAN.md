@@ -34,7 +34,7 @@ Three tabs, plus a player page reachable from all of them.
 | Tab | What it shows |
 | --- | --- |
 | **Matches** | Fixtures and live scores for every Premier League match. A match opens to the scorers, assists, cards and bonus, with your players highlighted. |
-| **My Squad** | Your FPL team, loaded from your team ID. Each player shows their next matches across all competitions, form, expected points and one verdict: keep, watch or sell. |
+| **My Squad** | Your FPL team, loaded from your team ID. Each player shows one verdict (keep, watch or sell) and a sentence giving the reason. Form, expected points, minutes, upcoming matches across all competitions and the latest news sit behind an (i) icon. |
 | **Watchlist** | A "Suggested this week" section of players worth buying, then the players you have marked, each shown next to the squad player they would replace. |
 | **Player page** | Form, recent matches, next fixtures including Europe and cups, expected points per fixture. |
 
