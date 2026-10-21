@@ -35,7 +35,7 @@ Three tabs, plus a player page reachable from all of them.
 | --- | --- |
 | **Matches** | Fixtures and live scores for every Premier League match. A match opens to the scorers, assists, cards and bonus, with your players highlighted. |
 | **My Squad** | Your FPL team, loaded from your team ID. Each player shows their next matches across all competitions, form, expected points and one verdict: keep, watch or sell. |
-| **Watchlist** | Players you have marked, each shown next to the squad player they would replace. |
+| **Watchlist** | A "Suggested this week" section of players worth buying, then the players you have marked, each shown next to the squad player they would replace. |
 | **Player page** | Form, recent matches, next fixtures including Europe and cups, expected points per fixture. |
 
 Before adding a fourth tab, check whether it fits as a section of one of these three.
@@ -69,6 +69,16 @@ The part of the app nobody else offers, and the part the old site made hardest t
   invisible" limit in [MODEL.md](MODEL.md), and has to be backtested like any other model
   change.
 - A watchlist stored per user in Supabase.
+- Transfer suggestions, in two places, both from the same calculation:
+  - **From a Sell verdict.** Tapping a player marked Sell lists the best three replacements
+    in that position.
+  - **Suggested this week,** at the top of the Watchlist: the best buys across all
+    positions, even when nobody in the squad is marked Sell, so a rising player is caught
+    before the price moves. A star moves a suggestion into the watched list.
+- Suggestions only include players the manager can afford (the selling price plus money in
+  the bank) without breaking the three-per-club limit. Each gets the same one-sentence reason
+  and (i) panel as a squad player. The points cost of extra transfers goes in the (i) panel,
+  not the row.
 - One verdict per player (keep, watch or sell), computed in code and never by the AI panel.
   The row shows the verdict and one plain sentence giving the reason. An (i) icon opens the
   numbers behind it: expected points, minutes, form, fixture load, and the latest news with
@@ -76,8 +86,8 @@ The part of the app nobody else offers, and the part the old site made hardest t
 - News comes from FPL's own news field, which FPL updates after press conferences. Its time
   matters as much as its text, because a two-day-old "75% chance" may already be stale.
 
-**Done when** the squad and watchlist work on a phone, the verdicts make sense against
-known players, and the backtest error has not got worse.
+**Done when** the squad and watchlist work on a phone, the verdicts and suggestions make
+sense against known players, and the backtest error has not got worse.
 
 ### Phase 2: Matches, on free data
 
@@ -118,6 +128,7 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 **Kept:**
 - `src/lib/fpl/`: the client, `projection.ts`, `ratings.ts`, `news.ts`, `priors.json`, `row.ts`,
   `entry.ts`, `rules.ts`
+- `optimiser.ts`, whose transfer planner already does the calculation behind suggestions
 - `scripts/backtest.mjs` and the backtest workflow, which keep scoring the model throughout the
   rebuild
 - Supabase auth, `proxy.ts` and the email allow-list
@@ -127,8 +138,7 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 
 **Dropped:**
 - All six current pages and their components
-- The optimiser's squad builder and transfer planner UI. `optimiser.ts` stays only if the
-  verdicts need it.
+- The squad builder and transfer planner pages. Their calculations stay in `optimiser.ts`.
 - The ten legacy redirects in `next.config.ts`
 
 ## Open questions
