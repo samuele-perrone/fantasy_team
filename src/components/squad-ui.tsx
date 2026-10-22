@@ -3,7 +3,7 @@ import { setWatched } from "@/lib/app/actions";
 import type { PlayerRow } from "@/lib/fpl/row";
 import type { PlayerVerdict, Verdict } from "@/lib/fpl/verdict";
 import { cn, money, timeAgo } from "@/lib/utils";
-import { FixtureRun, PlayerFlag } from "./ui";
+import { FixtureRun, OtherGames, PlayerFlag } from "./ui";
 
 const VERDICT_STYLE: Record<Verdict, string> = {
   sell: "bg-rose-500/15 text-rose-300 ring-rose-500/40",
@@ -82,6 +82,7 @@ export function PlayerNumbers({ p }: { p: PlayerRow }) {
     ["Price", money(p.cost)],
   ];
   const updated = timeAgo(p.newsAdded);
+  const busy = p.fixtures.find((f) => f.congested);
 
   return (
     <div className="space-y-3">
@@ -100,7 +101,21 @@ export function PlayerNumbers({ p }: { p: PlayerRow }) {
           Next games
         </div>
         <FixtureRun fixtures={p.fixtures} />
+        {busy && (
+          <p className="mt-1.5 text-[12px] leading-snug text-amber-200">
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400" />
+            Three games in seven days around gameweek {busy.event}, counting the cups and Europe.
+          </p>
+        )}
       </div>
+      {p.otherGames.length > 0 && (
+        <div>
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Also playing
+          </div>
+          <OtherGames games={p.otherGames} />
+        </div>
+      )}
       <div>
         <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           News

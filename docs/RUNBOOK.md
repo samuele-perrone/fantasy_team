@@ -219,6 +219,22 @@ every path. `/squad?id=<any public FPL team id>` then renders without signing in
 **Restore the file from the backup afterwards** and confirm `grep -n '\["",' src/proxy.ts`
 finds nothing before committing.
 
+## European and cup fixtures (ESPN)
+
+`src/lib/football/client.ts` reads the Champions League, Europa League, Conference League,
+FA Cup and EFL Cup from ESPN's public site API: one request for ESPN's Premier League club
+list, then `scoreboard?dates=<year>&limit=1000` for both calendar years of the season in each
+competition. Eleven requests, cached for six hours under the `espn` tag. No key.
+
+If ESPN is down or changes its format, the list comes back empty, the error is logged as
+`[espn]`, and the app works as it did without it. To check by hand:
+
+```bash
+curl -s --compressed "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard?dates=2026&limit=1000" | head -c 300
+```
+
+FA Cup ties appear once ESPN lists them, after each draw.
+
 ## Matches and live data
 
 The Matches tab reads `/fixtures/?event=N` and `/event/N/live/` through Next's shared data

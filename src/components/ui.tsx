@@ -1,5 +1,6 @@
 import { cn, DIFFICULTY_STYLES, POSITION_STYLES } from "@/lib/utils";
 import type { FixtureChip } from "@/lib/fpl/data";
+import type { OtherGame } from "@/lib/fpl/row";
 
 export function PageHeader({
   eyebrow,
@@ -83,6 +84,29 @@ export function DifficultyPill({
   );
 }
 
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "Europe/London",
+  });
+
+/** Matches outside the Premier League, one line each: "Tue 4 Nov · Champions League v Inter (A)". */
+export function OtherGames({ games }: { games: OtherGame[] }) {
+  return (
+    <ul className="space-y-0.5">
+      {games.map((g) => (
+        <li key={`${g.kickoff}-${g.opponent}`} className="text-[12.5px] leading-snug text-slate-300">
+          <span className="text-slate-500">{shortDate(g.kickoff)} · </span>
+          {g.competition} v {g.opponent}
+          <span className="text-slate-500"> ({g.isHome ? "H" : "A"})</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function FixtureRun({ fixtures, max = 5 }: { fixtures: FixtureChip[]; max?: number }) {
   if (!fixtures.length) {
     return <span className="text-[11px] text-slate-600">Blank</span>;
@@ -93,10 +117,17 @@ export function FixtureRun({ fixtures, max = 5 }: { fixtures: FixtureChip[]; max
         <DifficultyPill
           key={`${f.event}-${f.opponentId}-${i}`}
           difficulty={f.difficulty}
-          title={`GW${f.event} · ${f.isHome ? "vs" : "at"} ${f.opponent} · difficulty ${f.difficulty}/5 · ${f.xPts.toFixed(1)} pts`}
+          title={`GW${f.event} · ${f.isHome ? "vs" : "at"} ${f.opponent} · difficulty ${f.difficulty}/5 · ${f.xPts.toFixed(1)} pts${f.congested ? " · three games in seven days" : ""}`}
+          className={f.congested ? "relative" : undefined}
         >
           {f.opponent}
           {f.isHome ? "" : " (a)"}
+          {f.congested && (
+            <span
+              aria-label="Three games in seven days"
+              className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-pitch-950"
+            />
+          )}
         </DifficultyPill>
       ))}
     </div>

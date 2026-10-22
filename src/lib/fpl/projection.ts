@@ -44,6 +44,7 @@ const DC_THRESHOLD: Record<number, number> = { 1: 99, 2: 10, 3: 12, 4: 12 };
 export interface FixtureProjection {
   event: number;
   fixtureId: number;
+  kickoff: string | null;
   opponent: number;
   isHome: boolean;
   difficulty: number;
@@ -350,6 +351,7 @@ function projectFixture(
   return {
     event: fixture.event ?? 0,
     fixtureId: fixture.id,
+    kickoff: fixture.kickoff_time,
     opponent: opponentId,
     isHome,
     difficulty,

@@ -120,7 +120,10 @@ minutes at all their rates stay at zero.
 season, so a player in a hot streak is not distinguished from their baseline.
 
 **Rotation is invisible.** The model knows minutes history and news, not a manager's intent.
-Nothing in the API says "he will be rested for the cup".
+Nothing in the API says "he will be rested for the cup". European and cup fixtures are known
+(from ESPN) and shown, but deliberately not used: across 169 regular starters at clubs with
+other matches this season, the Premier League start rate was 90.4% in three-in-seven-days
+weeks and 88.6% otherwise. Managers rest players in the cups and Europe, not the league.
 
 **Price change predictions** used a community heuristic — net transfers over an
 ownership-scaled threshold — since FPL has never published the real formula. The `/prices`

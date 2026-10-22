@@ -139,12 +139,42 @@ current price, so for a player who has risen since being bought the budget can b
 by £0.1–0.2m. Only `/api/my-team/{id}/`, which needs the manager's own FPL login, has the real
 figure.
 
-### Rotation from fixture congestion waits for phase 1b
+### Fixture congestion is shown, not scored
 
-The plan's Watch rule includes "the club plays three games in seven days". The FPL API only
-lists Premier League fixtures, so the rule cannot fire until European and cup fixtures arrive
-from API-Football in phase 1b. It is not approximated from Premier League fixtures alone,
-which would only ever catch double gameweeks.
+The plan's Watch rule included "the club plays three games in seven days", and phase 1b was
+meant to feed congestion into the minutes model. Both were measured on 22 October 2026, with
+European and cup fixtures from ESPN, before either was built:
+
+- **It does not predict Premier League minutes.** 169 regular starters at clubs with other
+  matches, about 1,200 player-matches: start rate 90.4% in congested weeks, 88.6% otherwise.
+  Managers rotate in the cups and Europe and keep their league side.
+- **The Watch rule would be noise.** It flagged 11 of 15 players in a real squad for gameweek
+  8, and 18 of 20 clubs in gameweek 12, when an EFL Cup round meets a midweek league round.
+
+So the fixtures and a three-in-seven marker are shown in the (i) panel and on the player page,
+worded as fact ("counting the cups and Europe") rather than as a rotation warning, and nothing
+in the verdicts or projections reads them. Re-measure after the turn of the year, when the
+sample is larger and the knockout rounds bring higher stakes.
+
+League-only runs count as congested too: the Christmas schedule and a double gameweek beside a
+normal one are as busy as a European week.
+
+### European and cup fixtures come from ESPN's unofficial API
+
+No free official source covers this season. API-Football's free plan stops at 2024,
+football-data.org's free tier has the Champions League only, and TheSportsDB's free key returns
+one upcoming game per club. ESPN's public site API needs no key and has all five competitions.
+
+It is undocumented and its terms do not grant a right to the data, which the plan's rule
+against scraping Sofascore was about. The difference is in how little is taken: fixture dates
+and opponents, which are public facts, eleven requests every six hours, nothing displayed as
+ESPN's. Everything sits behind `src/lib/football/`, so a paid API replaces it there alone, and
+any failure leaves an empty list rather than a broken page. **Revisit before the iOS app goes
+to the App Store**, where an unlicensed data source is a review risk.
+
+Clubs are matched through ESPN's own Premier League team list rather than by name across
+every competition, because foreign clubs share abbreviations with English ones: Brest and
+Brentford are both BRE.
 
 ### `/api/v1` is exempt from the proxy's login redirect
 

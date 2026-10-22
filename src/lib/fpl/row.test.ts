@@ -13,8 +13,8 @@ const projection: PlayerProjection = {
   value: 3.3,
   rating: 6.66,
   fixtures: [
-    { event: 10, fixtureId: 1, opponent: 2, isHome: true, difficulty: 2, points: 4.444, minutes: 78.6, cleanSheetProb: 0, goalProb: 0, assistProb: 0, returnProb: 0 },
-    { event: 11, fixtureId: 2, opponent: 2, isHome: false, difficulty: 4, points: 3.333, minutes: 0.4, cleanSheetProb: 0, goalProb: 0, assistProb: 0, returnProb: 0 },
+    { event: 10, fixtureId: 1, kickoff: "2030-01-05T15:00:00Z", opponent: 2, isHome: true, difficulty: 2, points: 4.444, minutes: 78.6, cleanSheetProb: 0, goalProb: 0, assistProb: 0, returnProb: 0 },
+    { event: 11, fixtureId: 2, kickoff: "2030-01-12T15:00:00Z", opponent: 2, isHome: false, difficulty: 4, points: 3.333, minutes: 0.4, cleanSheetProb: 0, goalProb: 0, assistProb: 0, returnProb: 0 },
   ],
 };
 
@@ -58,5 +58,24 @@ describe("toRow", () => {
 
   it("averages fixture difficulty", () => {
     expect(r.fdr).toBe(3);
+  });
+
+  it("marks congested fixtures and lists other games only as far as the last league fixture", () => {
+    const other = (kickoff: string, opponent: string) => ({
+      id: 1, teamId: 1, kickoff, competition: "Champions League", opponent, home: true,
+    });
+    const withSchedule = toRow(element({ id: 1, team: 1 }), projection, teams, {
+      congested: new Set([2]),
+      others: [other("2030-01-08T20:00:00Z", "Inter"), other("2030-01-20T20:00:00Z", "Ajax")],
+    });
+    expect(withSchedule.fixtures.map((f) => f.congested)).toEqual([false, true]);
+    expect(withSchedule.otherGames).toEqual([
+      { kickoff: "2030-01-08T20:00:00Z", competition: "Champions League", opponent: "Inter", isHome: true },
+    ]);
+  });
+
+  it("has no other games and nothing congested without a schedule", () => {
+    expect(r.otherGames).toEqual([]);
+    expect(r.fixtures.every((f) => !f.congested)).toBe(true);
   });
 });

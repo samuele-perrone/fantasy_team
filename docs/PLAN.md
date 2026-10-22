@@ -60,7 +60,7 @@ horizon the transfer planner already uses.
 | Verdict | When |
 | --- | --- |
 | **Sell** | The replacement is expected to score 5+ points more over the five gameweeks (about one a week), or the player is ruled out of the next two gameweeks or longer |
-| **Watch** | The gap is 2–5 points, or there is a fitness doubt (50–75% chance of playing), or the club plays three games in seven days |
+| **Watch** | The gap is 2–5 points, or there is a fitness doubt (50–75% chance of playing) |
 | **Keep** | Otherwise |
 
 - **5 points is a starting value, not a fitted one.** The model's error is about 1.6 points
@@ -70,8 +70,7 @@ horizon the transfer planner already uses.
   existing hit rule (a −4 transfer must clear the hit by another 4 points, see
   [DECISIONS.md](DECISIONS.md)), or it is shown as Watch. The screen never asks for five
   transfers when the manager has one.
-- **The sentence names the factor that decided the verdict:** "Three games in seven days",
-  "Out until November", "Two easy home games".
+- **The sentence names the factor that decided the verdict:** "Out until November", "Two easy home games".
 - Verdicts are computed in code.
 
 ## Data sources
@@ -79,7 +78,7 @@ horizon the transfer planner already uses.
 | Source | Covers | Cost |
 | --- | --- | --- |
 | FPL API | Squads, prices, form, news, Premier League fixtures, live goals/assists/bonus/minutes | Free |
-| API-Football, free tier | European and cup fixtures for Premier League clubs, fetched once a day | Free |
+| ESPN public site API (unofficial) | European and cup fixtures for Premier League clubs, refreshed every six hours | Free |
 | API-Football, paid plan | Line-ups, minute-by-minute events, player match ratings | Paid, from phase 3 only |
 
 Sofascore has no public API and scraping it would breach its terms, so it is not a source.
@@ -91,16 +90,16 @@ on it.
 
 **Checked on 2026-10-22: it does not.** A free key answers "Free plans do not have access to
 this season, try from 2022 to 2024." football-data.org's free tier covers this season but only
-the Champions League. Phase 1b is parked until one of those is paid for or the Champions
-League alone is judged enough; a built but unverified Champions League version is on the
-local branch `wip/phase-1b-champions-league`.
+the Champions League, and TheSportsDB's free key returns one upcoming game per club. Phase 1b
+uses **ESPN's public site API** instead: unofficial and keyless, but complete for all five
+competitions. See [DECISIONS.md](DECISIONS.md).
 
 ## Phases
 
 ### Phase 1a: My Squad and Watchlist, on the current model
 
-**Status: built and live.** Not yet built: the Watch rule for three games
-in seven days, which needs the phase 1b fixtures. The old squad builder's manual entry, which
+**Status: built and live.** The Watch rule for three games in seven days was measured in
+phase 1b and dropped. The old squad builder's manual entry, which
 let a manager rate transfers FPL has not published yet, was removed with it.
 
 The part of the app nobody else offers, and the part the old site made hardest to use. Built
@@ -129,6 +128,12 @@ on the model as it stands, so it is usable within days.
 sense against known players.
 
 ### Phase 1b: European and cup fixtures in the model
+
+**Status: built, from ESPN.** The fixtures show in the (i) panel and on the player page, with
+league games in a three-in-seven-days run marked. Measured on this season's data, congestion
+does not cut Premier League starts (90% in congested weeks, 89% otherwise), and the Watch
+rule would have flagged 11 of 15 players in a real squad, so **neither the minutes model nor
+the verdicts use it**. Revisit if a later sample shows an effect.
 
 - Fetch fixtures daily from API-Football for every Premier League club in the Champions
   League, Europa League, Conference League, FA Cup and EFL Cup, and map clubs to FPL team IDs.

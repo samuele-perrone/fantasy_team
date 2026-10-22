@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { getElementSummary } from "@/lib/fpl/client";
 import { getGameData, POSITIONS, toRow } from "@/lib/fpl/data";
 import { projectPlayer } from "@/lib/fpl/projection";
-import { DifficultyPill, PageHeader, PositionBadge } from "@/components/ui";
+import { DifficultyPill, OtherGames, PageHeader, PositionBadge } from "@/components/ui";
 import { badgeUrl, cn, formatKickoff, money, photoUrl } from "@/lib/utils";
 import { WatchButton } from "@/components/squad-ui";
 import { createClient, getUserId } from "@/lib/supabase/server";
@@ -36,7 +36,7 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
   if (!player) notFound();
 
   const projection = projectPlayer(player, data.ctx, 8);
-  const row = toRow(player, projection, data.teams);
+  const row = toRow(player, projection, data.teams, data.schedules.get(player.team));
   const team = data.teams.get(player.team);
 
   let summary: Awaited<ReturnType<typeof getElementSummary>> | null = null;
@@ -160,6 +160,14 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
                     <span className="ml-1 text-[11px] text-slate-500">
                       {f.isHome ? "(H)" : "(A)"}
                     </span>
+                    {row.fixtures[i]?.congested && (
+                      <span
+                        title="Three games in seven days, counting the cups and Europe"
+                        className="ml-1.5 rounded bg-amber-400/15 px-1 text-[10px] font-bold text-amber-300"
+                      >
+                        3 in 7
+                      </span>
+                    )}
                   </td>
                   <td className="py-1.5 text-right">
                     <DifficultyPill difficulty={f.difficulty} className="min-w-[24px]">
@@ -186,6 +194,14 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
               )}
             </tbody>
           </table>
+          {row.otherGames.length > 0 && (
+            <div className="mt-4">
+              <h3 className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-slate-500">
+                Also playing
+              </h3>
+              <OtherGames games={row.otherGames} />
+            </div>
+          )}
         </section>
 
         <section className="panel px-5 py-4">

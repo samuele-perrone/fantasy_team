@@ -17,6 +17,8 @@ export function fixtureChip(event: number, partial: Partial<FixtureChip> = {}): 
     difficulty: 3,
     xPts: 4,
     xMins: 80,
+    kickoff: null,
+    congested: false,
     ...partial,
   };
 }
@@ -92,6 +94,7 @@ export function row(
     value: 0,
     rating: 5,
     fdr: 3,
+    otherGames: [],
     ...rest,
     fixtures,
   };

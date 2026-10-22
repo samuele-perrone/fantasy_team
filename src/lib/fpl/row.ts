@@ -1,5 +1,6 @@
 import type { FplElement, FplTeam } from "./types";
 import type { PlayerProjection } from "./projection";
+import type { TeamSchedule } from "./schedule";
 
 export const POSITIONS = ["", "GKP", "DEF", "MID", "FWD"] as const;
 
@@ -12,6 +13,17 @@ export interface FixtureChip {
   xPts: number;
   /** expected minutes in this fixture, after availability — 0 means ruled out */
   xMins: number;
+  kickoff: string | null;
+  /** part of a run of three games in seven days, counting every competition */
+  congested: boolean;
+}
+
+/** A match outside the Premier League, as the (i) panel and player page list it. */
+export interface OtherGame {
+  kickoff: string;
+  competition: string;
+  opponent: string;
+  isHome: boolean;
 }
 
 /** Flat, client-serialisable player record used by every table in the app. */
@@ -84,6 +96,8 @@ export interface PlayerRow {
   rating: number;
   fdr: number;
   fixtures: FixtureChip[];
+  /** European ties up to the last fixture in `fixtures`, soonest first */
+  otherGames: OtherGame[];
 }
 
 const num = (v: string | number | null | undefined) => {
@@ -95,6 +109,7 @@ export function toRow(
   p: FplElement,
   proj: PlayerProjection,
   teams: Map<number, FplTeam>,
+  schedule?: TeamSchedule,
 ): PlayerRow {
   const team = teams.get(p.team);
   const fixtures: FixtureChip[] = proj.fixtures.map((f) => ({
@@ -105,7 +120,23 @@ export function toRow(
     difficulty: f.difficulty,
     xPts: Math.round(f.points * 100) / 100,
     xMins: Math.round(f.minutes),
+    kickoff: f.kickoff,
+    congested: schedule?.congested.has(f.fixtureId) ?? false,
   }));
+
+  // Other games are listed only as far ahead as the league fixtures shown beside them.
+  const last = proj.fixtures.reduce(
+    (max, f) => Math.max(max, f.kickoff ? Date.parse(f.kickoff) : 0),
+    0,
+  );
+  const otherGames: OtherGame[] = (schedule?.others ?? [])
+    .filter((o) => Date.parse(o.kickoff) <= last)
+    .map((o) => ({
+      kickoff: o.kickoff,
+      competition: o.competition,
+      opponent: o.opponent,
+      isHome: o.home,
+    }));
 
   const fdr = fixtures.length
     ? fixtures.reduce((a, f) => a + f.difficulty, 0) / fixtures.length
@@ -179,6 +210,7 @@ export function toRow(
     rating: Math.round(proj.rating * 10) / 10,
     fdr: Math.round(fdr * 100) / 100,
     fixtures,
+    otherGames,
   };
 }
 

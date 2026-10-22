@@ -60,11 +60,13 @@ src/lib/fpl/
   data.ts         Request-deduped game data and player row assembly
   verdict.ts      Keep / watch / sell, replacements and transfer suggestions
   matches.ts      Match reports, provisional bonus and per-match points from the live endpoint
+  schedule.ts     European and cup fixtures per club, and three-games-in-seven-days runs
   optimiser.ts    Best-XI solver and transfer planner
   entry.ts        Loads an FPL entry into one shape
   chips.ts        Chip names and their effect on scoring
 
 src/lib/app/         Server functions every page and /api/v1 route shares
+src/lib/football/    European and cup fixtures from ESPN's public API, matched to FPL clubs
 src/lib/supabase/    Clients, request auth (cookie or bearer), profile and watchlist
 src/lib/auth/        Email allow-list
 src/proxy.ts         Session refresh and the auth gate (Next 16 renamed middleware to proxy)
