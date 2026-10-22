@@ -1,0 +1,72 @@
+# XcodeGen spec. The .xcodeproj is generated from this and not committed:
+#   cd ios && xcodegen generate
+name: FantasyTeamHub
+options:
+  bundleIdPrefix: com.fantasyteamhub
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 7RYYQ8M5X5
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.55.0
+targets:
+  FantasyTeamHub:
+    type: application
+    platform: iOS
+    sources:
+      - path: FantasyTeamHub
+    dependencies:
+      # Auth only: the app talks to its own /api/v1, never to the database directly.
+      - package: Supabase
+        product: Auth
+    entitlements:
+      path: FantasyTeamHub/FantasyTeamHub.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
+    info:
+      path: FantasyTeamHub/Info.plist
+      properties:
+        CFBundleDisplayName: TeamHub
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        # Google sign-in returns here, through Supabase.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.fantasyteamhub.app.auth
+            CFBundleURLSchemes: [fantasyteamhub]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fantasyteamhub.app
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_PREVIEWS: YES
+        CODE_SIGN_STYLE: Automatic
+  FantasyTeamHubTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: FantasyTeamHubTests
+    dependencies:
+      - target: FantasyTeamHub
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.fantasyteamhub.app.tests
+schemes:
+  FantasyTeamHub:
+    build:
+      targets:
+        FantasyTeamHub: all
+        FantasyTeamHubTests: [test]
+    test:
+      targets: [FantasyTeamHubTests]

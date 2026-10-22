@@ -76,6 +76,11 @@ Matches (`src/lib/fpl/matches.ts`) reads FPL's fixtures and live endpoints throu
 shared cache, and the page refreshes itself only while a match is live. Never poll FPL from the
 browser or add a background poller: the cache is what keeps FPL's load flat as users grow.
 
+**The iOS app (`ios/`) reads `/api/v1` in production.** Keep response changes additive — add
+fields, never rename or remove them — because installed copies cannot update themselves. After
+changing a response, run `npx tsx scripts/ios-fixtures.mts` and the iOS tests (`ios/README.md`):
+the fixtures are the contract the Swift models are tested against.
+
 Pages and the `/api/v1` routes share the server functions in `src/lib/app/`. Logic goes there,
 not in a page, so the iOS app can read the same thing. `/api/v1` is exempt from the proxy's
 login redirect and every route must call `getRequestAuth` itself.

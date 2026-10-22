@@ -225,6 +225,22 @@ iPhone, 768, 1024, 1280), and from its console compare each frame's `document.do
 its `clientWidth`: any difference is something pushing the page sideways. Delete the page
 afterwards. Last audited on 2026-10-22: no page overflows at 390, 768, 1024 or 1280 px.
 
+## The iOS app
+
+Source in `ios/`; how to build, sign and ship it is in [ios/README.md](../ios/README.md). What
+it needs from this side:
+
+- `fantasyteamhub://auth-callback` on Supabase's redirect URL list, or Google sign-in in the
+  app ends on the website
+- the Apple provider enabled in Supabase with `com.fantasyteamhub.app` as a client ID
+- every `/api/v1` route keeps accepting `Authorization: Bearer <token>` (`getRequestAuth`)
+- after changing an `/api/v1` response, `npx tsx scripts/ios-fixtures.mts` and the iOS tests,
+  so the app's models are checked against the new shape
+
+The app talks to production. An `/api/v1` change that breaks it breaks every installed copy
+until a new build is approved, so keep response changes additive: add fields, do not rename
+or remove them.
+
 ## Player photos
 
 Headshots load from `resources.premierleague.com` through Vercel's image optimiser, allowed by

@@ -172,8 +172,13 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 
 ### Phase 4: iOS
 
-- Choose between SwiftUI (more native feel) and Expo (reuses the TypeScript). Decide at the
-  start of this phase, not before.
+**Status: first version built** in `ios/`, SwiftUI, with the four tabs, Google and Apple
+sign-in and the verdict-bars icon. Runs in the simulator; not yet on TestFlight, which needs
+the one-time Supabase and App Store Connect steps in `ios/README.md`. Push notifications
+are not built.
+
+- **SwiftUI, chosen over Expo** at the start of this phase: the most native feel, and the
+  route to home-screen widgets and live scores on the lock screen.
 - The app consumes the same JSON API as the web version, so no logic is rewritten.
 - Push notifications for goals, line-ups and price changes involving your players. See the
   open question on background work.

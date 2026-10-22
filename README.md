@@ -47,6 +47,9 @@ tag; its routes now return 404.
 | `/api/v1/players` | Players as JSON, with the page's filters as query parameters |
 | `/api/v1/matches` | Matches as JSON. `?gw=` picks the gameweek |
 | `/api/v1/watchlist` | Watchlist as JSON. `GET`, `POST {playerId}`, `DELETE ?playerId=` |
+| `/api/v1/profile` | The saved FPL team ID. `GET`, `PUT {entryId}`, checked with FPL before saving |
+
+The iOS app lives in [`ios/`](ios/README.md): SwiftUI, reading the same `/api/v1`.
 
 ## Architecture
 
