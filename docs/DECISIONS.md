@@ -549,8 +549,11 @@ or `prefers-color-scheme`. A bundled script would run after paint and flash the 
 
 FPL's headshots are ~110 KB PNGs. My Squad shows fifteen, so unoptimised they cost ~1.6 MB
 per load on a phone. Served through `next/image` at the drawn size they are a few KB each,
-cached for a month, since a player's photo changes at most once a season. Some new signings
-have no photo; the initials underneath show through instead of a broken image.
+cached for a month, since a player's photo changes at most once a season.
+
+Some players have no photo. The headshot is a CSS background over a placeholder avatar rather
+than an `<img>`: Safari draws a broken-image icon for a failed `<img>` even with `alt=""`,
+which the first version did, while a background that fails to load just draws nothing.
 
 ### The logo is the verdict bars
 

@@ -138,7 +138,7 @@ export default async function WatchlistPage({ searchParams }: PageProps<"/watchl
           )}
           {results.map((p) => (
             <li key={p.id} className="flex items-center gap-2.5 py-1.5 pl-3 pr-1">
-              <PlayerPhoto code={p.code} name={p.name} size={32} />
+              <PlayerPhoto code={p.code} size={32} />
               <Link href={`/players/${p.id}`} className="min-w-0 flex-1 hover:underline">
                 <PlayerLine p={p} />
               </Link>

@@ -72,7 +72,7 @@ function PlayerChip({ p }: { p: MatchPlayer }) {
         playerTone(p),
       )}
     >
-      <PlayerPhoto code={p.code} name={p.name} size={20} className="text-[8px]" />
+      <PlayerPhoto code={p.code} size={20} />
       {!p.mine && <span aria-label="Watching">★</span>}
       {p.name}
       {p.points !== null && <span className="num font-black">{p.points}</span>}
@@ -192,7 +192,7 @@ function MatchReport({ m }: { m: Match }) {
           <ul className="divide-y divide-pitch-800 rounded-lg bg-pitch-900/60">
             {m.players.map((p) => (
               <li key={p.id} className="flex items-center gap-2.5 px-3 py-1.5">
-                <PlayerPhoto code={p.code} name={p.name} size={32} />
+                <PlayerPhoto code={p.code} size={32} />
                 <Link
                   href={`/players/${p.id}`}
                   className={cn(

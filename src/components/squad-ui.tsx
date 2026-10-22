@@ -161,7 +161,7 @@ export function ExpandableRow({
     <details className="group panel overflow-hidden">
       <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         {leading}
-        {photo && <PlayerPhoto code={photo.code} name={photo.name} />}
+        {photo && <PlayerPhoto code={photo.code} />}
         <div className="min-w-0 flex-1">
           {title}
           <p className="mt-0.5 text-[12.5px] leading-snug text-slate-300">{reason}</p>
@@ -200,7 +200,7 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
           <ul className="divide-y divide-pitch-800 rounded-lg bg-pitch-900/60">
             {v.replacements.map((r) => (
               <li key={r.player.id} className="flex items-center gap-2.5 py-1.5 pl-3 pr-1">
-                <PlayerPhoto code={r.player.code} name={r.player.name} size={32} />
+                <PlayerPhoto code={r.player.code} size={32} />
                 <div className="min-w-0 flex-1">
                   <Link href={`/players/${r.player.id}`} className="hover:underline">
                     <PlayerLine p={r.player} />

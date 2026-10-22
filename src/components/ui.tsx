@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import { cn, DIFFICULTY_STYLES, photoUrl, POSITION_STYLES } from "@/lib/utils";
 import type { FixtureChip } from "@/lib/fpl/data";
 import type { OtherGame } from "@/lib/fpl/row";
@@ -86,44 +86,44 @@ export function DifficultyPill({
 }
 
 /**
- * A player's headshot in a circle. FPL has no photo for some new signings, so the initials sit
- * underneath: a missing image (alt="") draws nothing and they show through.
+ * A player's headshot in a circle, over a neutral placeholder avatar.
+ *
+ * The photo is a CSS background rather than an <img>: FPL has no photo for some players, and
+ * Safari draws a broken-image icon for a failed <img> even with alt="". A background that
+ * fails to load simply draws nothing, so the placeholder shows through. It is still served
+ * through the image optimiser, at twice the drawn size for sharp retina screens.
  */
 export function PlayerPhoto({
   code,
-  name,
   size = 40,
   className,
 }: {
   code: number;
-  name: string;
   size?: number;
   className?: string;
 }) {
-  const initials = name
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const { props } = getImageProps({
+    src: photoUrl(code),
+    alt: "",
+    width: size * 2,
+    height: size * 2,
+  });
   return (
     <span
       className={cn(
-        "relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-pitch-800 text-[11px] font-bold text-slate-400 ring-1 ring-pitch-700",
+        "relative shrink-0 overflow-hidden rounded-full bg-pitch-800 text-slate-600 ring-1 ring-pitch-700",
         className,
       )}
       style={{ width: size, height: size }}
       aria-hidden
     >
-      {initials}
-      <Image
-        src={photoUrl(code)}
-        alt=""
-        width={size}
-        height={size}
-        sizes={`${size}px`}
-        className="absolute inset-0 h-full w-full object-cover object-top"
+      <svg viewBox="0 0 40 40" className="absolute inset-0 h-full w-full" fill="currentColor">
+        <circle cx="20" cy="15.5" r="7" />
+        <path d="M6 40c0-8.3 6.3-14 14-14s14 5.7 14 14z" />
+      </svg>
+      <span
+        className="absolute inset-0 bg-cover bg-top bg-no-repeat"
+        style={{ backgroundImage: `url("${props.src}")` }}
       />
     </span>
   );

@@ -129,8 +129,9 @@ what was given up. `bestXI` takes an optional fixed formation.
   button is `text-ink`, a fixed colour is an arbitrary value (`bg-[#ffffff]`). A new
   Tailwind colour used as text needs a light override added there, checked at 4.5:1 on white.
   The choice is System (default), Light or Dark, set before paint by `THEME_SCRIPT`
-- Player headshots go through `PlayerPhoto` (`components/ui.tsx`), which serves them through
-  the image optimiser at the drawn size and shows initials when FPL has no photo
+- Player headshots go through `PlayerPhoto` (`components/ui.tsx`): a CSS background served
+  through the image optimiser, over a placeholder avatar. Not an `<img>`, which Safari draws
+  as a broken-image icon when FPL has no photo
 - Comments explain *why*, especially where code guards against a specific FPL API behaviour
 - Schema changes go in `supabase/migrations/`, written idempotently, and are applied through
   the Supabase SQL editor
