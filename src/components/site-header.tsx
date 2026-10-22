@@ -21,10 +21,10 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-pitch-700/80 bg-pitch-950/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-14 max-w-xl items-center gap-2 px-4 sm:gap-3">
         <Link href="/squad" className="flex shrink-0 items-center gap-2">
           <LogoMark size={32} />
-          <span className="text-[15px] font-bold tracking-tight">
+          <span className="text-[15px] font-bold tracking-tight whitespace-nowrap">
             Fantasy<span className="text-brand-400">Team</span>Hub
           </span>
         </Link>
@@ -35,9 +35,9 @@ export function SiteHeader({
           </div>
         )}
         {!bare && (
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {deadline && (
-              <div className="text-right">
+              <div className="text-right whitespace-nowrap">
                 <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                   {gwLabel} deadline
                 </div>

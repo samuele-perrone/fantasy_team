@@ -55,9 +55,21 @@ export function AuthButton({
           type="button"
           onClick={signOut}
           disabled={busy}
-          className="rounded-lg border border-pitch-600 px-3 py-1.5 text-[12.5px] font-semibold text-slate-300 transition hover:border-brand-500 hover:text-white disabled:opacity-50"
+          aria-label="Sign out"
+          title="Sign out"
+          className={cn(
+            "inline-flex items-center justify-center rounded-lg border border-pitch-600 font-semibold whitespace-nowrap text-slate-300 transition hover:border-brand-500 hover:text-white disabled:opacity-50",
+            // In the header on a phone there is room for an icon, not the words.
+            compact ? "h-8 w-8 sm:h-auto sm:w-auto sm:px-3 sm:py-1.5" : "px-3 py-1.5",
+            "text-[12.5px]",
+          )}
         >
-          Sign out
+          {compact && (
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] sm:hidden" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10" />
+            </svg>
+          )}
+          <span className={compact ? "hidden sm:inline" : undefined}>Sign out</span>
         </button>
       </div>
     );
@@ -72,12 +84,18 @@ export function AuthButton({
         "inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition disabled:opacity-50",
         full
           ? "w-full border-pitch-700 bg-[#ffffff] px-4 py-3 text-[14px] text-ink hover:bg-[#eef1f7]"
-          : "border-pitch-600 bg-pitch-900 text-slate-200 hover:border-brand-500 hover:text-white",
-        !full && (compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]"),
+          : "border-pitch-600 bg-pitch-900 whitespace-nowrap text-slate-200 hover:border-brand-500 hover:text-white",
+        !full &&
+          (compact
+            ? "h-8 w-8 text-[12.5px] sm:h-auto sm:w-auto sm:px-3 sm:py-1.5"
+            : "px-4 py-2 text-[13.5px]"),
       )}
+      aria-label="Sign in with Google"
     >
       <GoogleMark />
-      {busy ? "Redirecting…" : "Sign in with Google"}
+      <span className={compact ? "hidden sm:inline" : undefined}>
+        {busy ? "Redirecting…" : "Sign in with Google"}
+      </span>
     </button>
   );
 }

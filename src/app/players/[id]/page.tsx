@@ -116,7 +116,9 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
         {player.news && (
           <div className="border-b border-pitch-800 bg-amber-500/10 px-5 py-2.5 text-[12.5px] text-amber-300">
             <strong className="font-bold">Team news:</strong> {player.news}
+            {/* FPL often writes the chance into the news itself; do not say it twice. */}
             {player.chance_of_playing_next_round !== null &&
+              !/% chance/i.test(player.news) &&
               ` · ${player.chance_of_playing_next_round}% chance of playing`}
           </div>
         )}
@@ -141,18 +143,19 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-pitch-800 text-[10.5px] uppercase tracking-wide text-slate-500">
-                <th className="py-1.5 text-left">GW</th>
+                <th className="py-1.5 pr-2 text-left">GW</th>
                 <th className="text-left">Opponent</th>
                 <th className="text-right">Difficulty</th>
-                <th className="text-right">Clean sheet</th>
-                <th className="text-right">Goal or assist</th>
+                {/* Two columns too many for a phone; the (i) panel's numbers cover them. */}
+                <th className="hidden text-right sm:table-cell">Clean sheet</th>
+                <th className="hidden text-right sm:table-cell">Goal or assist</th>
                 <th className="text-right">Points</th>
               </tr>
             </thead>
             <tbody>
               {projection.fixtures.map((f, i) => (
                 <tr key={`${f.fixtureId}-${i}`} className="border-b border-pitch-800/50">
-                  <td className="num py-1.5 text-slate-400">{f.event}</td>
+                  <td className="num py-1.5 pr-2 text-slate-400">{f.event}</td>
                   <td className="py-1.5">
                     <span className="font-semibold text-white">
                       {data.teams.get(f.opponent)?.short_name}
@@ -163,7 +166,7 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
                     {row.fixtures[i]?.congested && (
                       <span
                         title="Three games in seven days, counting the cups and Europe"
-                        className="ml-1.5 rounded bg-amber-400/15 px-1 text-[10px] font-bold text-amber-300"
+                        className="ml-1.5 rounded bg-amber-400/15 px-1 text-[10px] font-bold whitespace-nowrap text-amber-300"
                       >
                         3 in 7
                       </span>
@@ -174,10 +177,10 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
                       {f.difficulty}
                     </DifficultyPill>
                   </td>
-                  <td className="num py-1.5 text-right text-slate-400">
+                  <td className="num hidden py-1.5 text-right text-slate-400 sm:table-cell">
                     {Math.round(f.cleanSheetProb * 100)}%
                   </td>
-                  <td className="num py-1.5 text-right text-slate-400">
+                  <td className="num hidden py-1.5 text-right text-slate-400 sm:table-cell">
                     {Math.round(f.returnProb * 100)}%
                   </td>
                   <td className="num py-1.5 text-right font-bold text-brand-400">

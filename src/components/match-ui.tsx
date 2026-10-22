@@ -231,18 +231,18 @@ export function MatchRow({ m }: { m: Match }) {
   return (
     <details className="group panel overflow-hidden" open={m.status === "live" ? true : undefined}>
       <summary className="cursor-pointer list-none px-3 py-2.5 [&::-webkit-details-marker]:hidden">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <div className="flex min-w-0 items-center justify-end gap-2">
-            <span className="truncate text-[14px] font-bold text-white">{m.home.name}</span>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-center justify-end gap-1.5 sm:gap-2">
+            <span className="truncate text-[13px] font-bold text-white sm:text-[14px]">{m.home.name}</span>
             <Badge side={m.home} />
           </div>
-          <div className="flex min-w-[64px] flex-col items-center">
+          <div className="flex min-w-[56px] flex-col items-center sm:min-w-[64px]">
             <Centre m={m} />
             <Status m={m} />
           </div>
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
             <Badge side={m.away} />
-            <span className="truncate text-[14px] font-bold text-white">{m.away.name}</span>
+            <span className="truncate text-[13px] font-bold text-white sm:text-[14px]">{m.away.name}</span>
           </div>
         </div>
         {m.players.length > 0 && (

@@ -48,9 +48,10 @@ export function WatchButton({ playerId, watched }: { playerId: number; watched: 
 function PlayerLine({ p }: { p: PlayerRow }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
-      <span className="truncate text-[14px] font-bold text-white">{p.name}</span>
+      {/* The name keeps its width and the club, position and price give way first. */}
+      <span className="max-w-full shrink-0 truncate text-[14px] font-bold text-white">{p.name}</span>
       <PlayerFlag status={p.status} news={p.news} availability={p.availability} />
-      <span className="shrink-0 text-[11.5px] text-slate-500">
+      <span className="min-w-0 truncate text-[11.5px] text-slate-500">
         {p.team} · {p.pos} · {money(p.cost)}
       </span>
     </div>

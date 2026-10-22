@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AuthButton } from "@/components/auth-button";
+import { LogoMark } from "@/components/logo";
 import { getUserId } from "@/lib/supabase/server";
 import { allowlistUnconfigured } from "@/lib/auth/allowlist";
 
@@ -27,14 +28,20 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
-      <div className="panel px-7 py-8">
-        <h1 className="text-[24px] font-black leading-tight tracking-tight text-white">
+      <div className="mb-6 flex flex-col items-center gap-3 text-center">
+        <LogoMark size={64} />
+        <div className="text-[22px] font-bold tracking-tight">
+          Fantasy<span className="text-brand-400">Team</span>Hub
+        </div>
+        <p className="max-w-xs text-[13px] leading-snug text-slate-400">
+          Keep, watch or sell for every player in your FPL squad, and live Premier League scores
+          with your players picked out.
+        </p>
+      </div>
+      <div className="panel px-5 py-6 sm:px-7 sm:py-8">
+        <h1 className="text-[20px] font-black leading-tight tracking-tight text-white">
           Sign in to continue
         </h1>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-slate-400">
-          Points projections, player stats, fixture analysis, squad building and saved
-          squads — all behind your account.
-        </p>
 
         {errorParam && (
           <p className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">
@@ -76,7 +83,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <ul className="mt-7 space-y-2 border-t border-pitch-800 pt-5 text-[12.5px] text-slate-500">
           <li className="flex gap-2">
             <span className="text-brand-400">•</span>
-            Your squads are saved to your account and sync across devices
+            Your watchlist is saved to your account and syncs across devices
           </li>
           <li className="flex gap-2">
             <span className="text-brand-400">•</span>
