@@ -28,6 +28,7 @@ describe("setWatched", () => {
     await setWatched(form({ playerId: "12", watch: "0" }));
     expect(store.removeFromWatchlist).toHaveBeenCalledWith("sb", 12);
     expect(cache.revalidatePath).toHaveBeenCalledWith("/watchlist");
+    expect(cache.revalidatePath).toHaveBeenCalledWith("/players");
     expect(cache.revalidatePath).toHaveBeenCalledWith("/players/12");
   });
 

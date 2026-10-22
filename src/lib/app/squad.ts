@@ -2,6 +2,7 @@ import "server-only";
 import { getGameData, getPlayerRows } from "@/lib/fpl/data";
 import { loadTeam, type LoadedTeam } from "@/lib/fpl/entry";
 import type { PlayerRow } from "@/lib/fpl/row";
+import { foldName } from "@/lib/utils";
 import {
   bestSwapFor,
   computeVerdicts,
@@ -115,15 +116,12 @@ export async function getWatchedPlayers(
 
 /** Players matching a name search, for adding to the watchlist. */
 export async function searchPlayers(query: string, limit = 12): Promise<PlayerRow[]> {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (q.length < 2) return [];
-  // Accents are stripped on both sides so "odegaard" finds Ødegaard and "guehi" finds Guéhi.
-  const fold = (s: string) =>
-    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o");
-  const needle = fold(q);
+  const needle = foldName(q);
   const rows = await getPlayerRows(VERDICT_RULES.horizon);
   return rows
-    .filter((r) => fold(r.name).includes(needle) || fold(r.fullName).includes(needle))
+    .filter((r) => foldName(r.name).includes(needle) || foldName(r.fullName).includes(needle))
     .sort((a, b) => b.xPts - a.xPts)
     .slice(0, limit);
 }

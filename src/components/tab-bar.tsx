@@ -15,6 +15,13 @@ const ICONS: Record<string, React.ReactNode> = {
   "/squad": (
     <path d="M7 3l3 2h4l3-2 4 4-3 3v10H6V10L3 7z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
   ),
+  "/players": (
+    <g fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" />
+      <path d="M15.5 4.8a3.5 3.5 0 0 1 0 6.4M18 13.9c2.1.9 3.5 3.1 3.5 6.1" />
+    </g>
+  ),
   "/watchlist": (
     <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
   ),

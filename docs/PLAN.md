@@ -36,16 +36,17 @@ not rewriting sign-in.
 
 ## The app
 
-Three tabs, plus a player page reachable from all of them.
+Four tabs, plus a player page reachable from all of them.
 
 | Tab | What it shows |
 | --- | --- |
 | **Matches** | Fixtures and live scores for every Premier League match. A match opens to the scorers, assists, cards and bonus, with your players highlighted. Built in phase 2. |
 | **My Squad** | Your FPL team, loaded from your team ID. Each player shows one verdict (keep, watch or sell) and a sentence giving the reason. Form, expected points, minutes, upcoming matches across all competitions and the latest news sit behind an (i) icon. |
+| **Players** | Every player, filtered by position, club, price and name, sorted by the numbers a manager compares. A star adds one to the watchlist. Added after phase 2 at Sam's request. |
 | **Watchlist** | A "Suggested this week" section of players worth buying, then the players you have marked, each shown next to the squad player they would replace. |
 | **Player page** | Form, recent matches, next fixtures including Europe and cups, expected points per fixture. |
 
-Before adding a fourth tab, check whether it fits as a section of one of these three.
+Before adding a fifth tab, check whether it fits as a section of one of these four.
 
 ## Verdicts
 

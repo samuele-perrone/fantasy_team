@@ -61,7 +61,7 @@ everything crossing into a client component is a `PlayerRow`.
 
 ### Pages
 
-Three tabs (`/matches`, `/squad`, `/watchlist`) and the player profile, built mobile first for the iOS app
+Four tabs (`/matches`, `/squad`, `/players`, `/watchlist`) and the player profile, built mobile first for the iOS app
 that follows — see `docs/PLAN.md`. Before adding a page, check whether it is a section of one
 of the tabs: the previous site grew to eighteen pages because every idea got its own.
 

@@ -19,6 +19,13 @@ export const POSITION_STYLES: Record<string, string> = {
 
 export const money = (v: number) => `£${v.toFixed(1)}m`;
 
+/**
+ * A name folded for searching: lower case, accents stripped, so "odegaard" finds Ødegaard and
+ * "guehi" finds Guéhi. Ø is not a combining accent in Unicode, so it is mapped by hand.
+ */
+export const foldName = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ø/g, "o");
+
 export function badgeUrl(teamCode: number) {
   return `https://resources.premierleague.com/premierleague/badges/50/t${teamCode}.png`;
 }

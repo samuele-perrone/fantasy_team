@@ -562,3 +562,18 @@ app does rather than "football", and the bars also read as an F. Chosen over a c
 mark, a shirt with a tick, an F monogram, and the same bars drawn as a ring or a ball. The
 light versions use deeper shades of the three colours to keep their contrast on white.
 
+### Players is a tab, not a section of the Watchlist
+
+The rebuild's rule is to check whether a new page is really a section of an existing tab. The
+Watchlist already has a name search, and browsing could have grown there. It did not, because
+browsing 560 players needs position, club, price and sort controls, and putting those above
+the watched list would push the list itself off a phone screen. Four tabs is still a normal
+iOS tab bar.
+
+The filters live in the URL, as plain links and a GET form, so the page works without
+JavaScript, a filtered view can be bookmarked or shared, and `/api/v1/players` takes exactly
+the same parameters. Selects submit on change through a three-line client component.
+
+Sort keys are checked with `Object.hasOwn`, not `in`: `?sort=toString` passed an `in` check,
+since every object has a `toString`, and would have crashed the page.
+

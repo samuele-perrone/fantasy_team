@@ -15,7 +15,10 @@ export async function setWatched(formData: FormData): Promise<void> {
   if (formData.get("watch") === "1") await addToWatchlist(supabase, userId, elementId);
   else await removeFromWatchlist(supabase, elementId);
 
+  // Every page that shows a star, so the one the form was posted from re-renders with it.
   revalidatePath("/squad");
   revalidatePath("/watchlist");
+  revalidatePath("/players");
+  revalidatePath("/matches");
   revalidatePath(`/players/${elementId}`);
 }
