@@ -89,6 +89,12 @@ the daily request limit, and whether the free tier serves the current season at 
 has at times been limited to past seasons. If it does not, revisit before building phase 1b
 on it.
 
+**Checked on 2026-10-22: it does not.** A free key answers "Free plans do not have access to
+this season, try from 2022 to 2024." football-data.org's free tier covers this season but only
+the Champions League. Phase 1b is parked until one of those is paid for or the Champions
+League alone is judged enough; a built but unverified Champions League version is on the
+local branch `wip/phase-1b-champions-league`.
+
 ## Phases
 
 ### Phase 1a: My Squad and Watchlist, on the current model
