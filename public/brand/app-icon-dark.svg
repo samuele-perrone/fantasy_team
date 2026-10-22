@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="FantasyTeamHub">
+  <!-- Master app icon, dark. Full bleed: iOS and Android apply their own corner mask. -->
+  <rect width="1024" height="1024" fill="#101426" />
+  <rect x="225" y="256" width="573" height="133" rx="66.5" fill="#05c988" />
+  <rect x="225" y="451" width="410" height="133" rx="66.5" fill="#f5b83d" />
+  <rect x="225" y="645" width="246" height="133" rx="66.5" fill="#f0566e" />
+</svg>

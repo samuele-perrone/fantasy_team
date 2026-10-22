@@ -3,7 +3,7 @@ import { setWatched } from "@/lib/app/actions";
 import type { PlayerRow } from "@/lib/fpl/row";
 import type { PlayerVerdict, Verdict } from "@/lib/fpl/verdict";
 import { cn, money, timeAgo } from "@/lib/utils";
-import { FixtureRun, OtherGames, PlayerFlag } from "./ui";
+import { FixtureRun, OtherGames, PlayerFlag, PlayerPhoto } from "./ui";
 
 const VERDICT_STYLE: Record<Verdict, string> = {
   sell: "bg-rose-500/15 text-rose-300 ring-rose-500/40",
@@ -142,12 +142,15 @@ export function PlayerNumbers({ p }: { p: PlayerRow }) {
 /** A row that opens to show the numbers behind it. Uses <details> so it needs no client JS. */
 export function ExpandableRow({
   leading,
+  photo,
   title,
   reason,
   trailing,
   children,
 }: {
   leading?: React.ReactNode;
+  /** the player the row is about, shown as a headshot after `leading` */
+  photo?: PlayerRow;
   title: React.ReactNode;
   reason: React.ReactNode;
   trailing?: React.ReactNode;
@@ -157,6 +160,7 @@ export function ExpandableRow({
     <details className="group panel overflow-hidden">
       <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         {leading}
+        {photo && <PlayerPhoto code={photo.code} name={photo.name} />}
         <div className="min-w-0 flex-1">
           {title}
           <p className="mt-0.5 text-[12.5px] leading-snug text-slate-300">{reason}</p>
@@ -176,6 +180,7 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
   return (
     <ExpandableRow
       leading={<VerdictPill verdict={v.verdict} />}
+      photo={v.player}
       title={<PlayerLine p={v.player} />}
       reason={v.reason}
     >
@@ -193,7 +198,8 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
           </div>
           <ul className="divide-y divide-pitch-800 rounded-lg bg-pitch-900/60">
             {v.replacements.map((r) => (
-              <li key={r.player.id} className="flex items-center gap-2 py-1.5 pl-3 pr-1">
+              <li key={r.player.id} className="flex items-center gap-2.5 py-1.5 pl-3 pr-1">
+                <PlayerPhoto code={r.player.code} name={r.player.name} size={32} />
                 <div className="min-w-0 flex-1">
                   <Link href={`/players/${r.player.id}`} className="hover:underline">
                     <PlayerLine p={r.player} />

@@ -219,6 +219,14 @@ every path. `/squad?id=<any public FPL team id>` then renders without signing in
 **Restore the file from the backup afterwards** and confirm `grep -n '\["",' src/proxy.ts`
 finds nothing before committing.
 
+## Player photos
+
+Headshots load from `resources.premierleague.com` through Vercel's image optimiser, allowed by
+`images.remotePatterns` in `next.config.ts` and cached for 30 days. About 700 players at two
+or three drawn sizes is well inside the Hobby plan's monthly transformation allowance. If
+photos stop appearing, check Vercel → Usage → Image Optimization before anything else, then
+that the Premier League has not moved the photo path (`photoUrl` in `src/lib/utils.ts`).
+
 ## European and cup fixtures (ESPN)
 
 `src/lib/football/client.ts` reads the Champions League, Europa League, Conference League,

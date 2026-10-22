@@ -120,7 +120,17 @@ what was given up. `bestXI` takes an optional fixed formation.
 - Simplifying language must not inflate confidence — the retrospective-estimate caveat and the
   ~1.6 points-per-player error margin are load-bearing and stay, in plainer words
 - Tailwind v4, theme tokens defined in `globals.css` (`pitch-*`, `brand-*`, `accent-*`,
-  `fdr-*`), plus `panel` and `num` utilities
+  `fdr-*`, `ink`), plus `panel` and `num` utilities
+- **Light and dark themes.** Components are written in the dark palette, and light mode
+  (`:root[data-theme="light"]` in `globals.css`) re-points the tokens: `text-white` is
+  *primary text* and becomes ink, `pitch-*` surfaces become white and pale grey, the pale
+  greens/ambers/roses used as text get deeper shades. So: never use `text-white` or
+  `text-pitch-950` for text that must stay light or dark in both themes — dark text on a green
+  button is `text-ink`, a fixed colour is an arbitrary value (`bg-[#ffffff]`). A new
+  Tailwind colour used as text needs a light override added there, checked at 4.5:1 on white.
+  The choice is System (default), Light or Dark, set before paint by `THEME_SCRIPT`
+- Player headshots go through `PlayerPhoto` (`components/ui.tsx`), which serves them through
+  the image optimiser at the drawn size and shows initials when FPL has no photo
 - Comments explain *why*, especially where code guards against a specific FPL API behaviour
 - Schema changes go in `supabase/migrations/`, written idempotently, and are applied through
   the Supabase SQL editor

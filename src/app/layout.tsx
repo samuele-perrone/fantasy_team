@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { TabBar } from "@/components/tab-bar";
+import { THEME_SCRIPT } from "@/components/theme-toggle";
 import { getGameData } from "@/lib/fpl/data";
 import { createClient } from "@/lib/supabase/server";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -41,7 +42,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#06070f",
+  // Follows the system setting; a manual choice in the header does not reach the browser chrome.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f5fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#06070f" },
+  ],
   // Lets the safe-area insets work on phones with a notch and a home indicator.
   viewportFit: "cover",
 };
@@ -76,7 +81,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      // THEME_SCRIPT sets data-theme before React hydrates, which React would otherwise flag.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <Suspense fallback={<SiteHeader deadline={null} gwLabel="" email={null} />}>
           <HeaderWithDeadline />

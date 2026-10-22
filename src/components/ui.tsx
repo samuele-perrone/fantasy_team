@@ -1,4 +1,5 @@
-import { cn, DIFFICULTY_STYLES, POSITION_STYLES } from "@/lib/utils";
+import Image from "next/image";
+import { cn, DIFFICULTY_STYLES, photoUrl, POSITION_STYLES } from "@/lib/utils";
 import type { FixtureChip } from "@/lib/fpl/data";
 import type { OtherGame } from "@/lib/fpl/row";
 
@@ -80,6 +81,50 @@ export function DifficultyPill({
       )}
     >
       {children}
+    </span>
+  );
+}
+
+/**
+ * A player's headshot in a circle. FPL has no photo for some new signings, so the initials sit
+ * underneath: a missing image (alt="") draws nothing and they show through.
+ */
+export function PlayerPhoto({
+  code,
+  name,
+  size = 40,
+  className,
+}: {
+  code: number;
+  name: string;
+  size?: number;
+  className?: string;
+}) {
+  const initials = name
+    .split(/[\s.]+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  return (
+    <span
+      className={cn(
+        "relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-pitch-800 text-[11px] font-bold text-slate-400 ring-1 ring-pitch-700",
+        className,
+      )}
+      style={{ width: size, height: size }}
+      aria-hidden
+    >
+      {initials}
+      <Image
+        src={photoUrl(code)}
+        alt=""
+        width={size}
+        height={size}
+        sizes={`${size}px`}
+        className="absolute inset-0 h-full w-full object-cover object-top"
+      />
     </span>
   );
 }

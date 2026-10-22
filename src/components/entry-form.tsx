@@ -48,7 +48,7 @@ export function EntryForm({
         </div>
         <button
           type="submit"
-          className="h-10 rounded-lg bg-brand-500 px-5 text-[13.5px] font-bold text-pitch-950 transition hover:bg-brand-400"
+          className="h-10 rounded-lg bg-brand-500 px-5 text-[13.5px] font-bold text-ink transition hover:bg-brand-600"
         >
           {cta}
         </button>

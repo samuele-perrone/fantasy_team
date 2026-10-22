@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Incident, Match, MatchPlayer, MatchSide } from "@/lib/fpl/matches";
 import { badgeUrl, cn } from "@/lib/utils";
+import { PlayerPhoto } from "./ui";
 
 const kickoffTime = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-GB", {
@@ -67,10 +68,11 @@ function PlayerChip({ p }: { p: MatchPlayer }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-2 text-[11.5px] font-semibold ring-1 ring-inset",
         playerTone(p),
       )}
     >
+      <PlayerPhoto code={p.code} name={p.name} size={20} className="text-[8px]" />
       {!p.mine && <span aria-label="Watching">★</span>}
       {p.name}
       {p.points !== null && <span className="num font-black">{p.points}</span>}
@@ -189,7 +191,8 @@ function MatchReport({ m }: { m: Match }) {
           </div>
           <ul className="divide-y divide-pitch-800 rounded-lg bg-pitch-900/60">
             {m.players.map((p) => (
-              <li key={p.id} className="flex items-center gap-2 px-3 py-1.5">
+              <li key={p.id} className="flex items-center gap-2.5 px-3 py-1.5">
+                <PlayerPhoto code={p.code} name={p.name} size={32} />
                 <Link
                   href={`/players/${p.id}`}
                   className={cn(

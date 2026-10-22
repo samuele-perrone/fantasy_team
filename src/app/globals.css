@@ -17,6 +17,9 @@
   --color-accent-400: #a78bfa;
   --color-accent-500: #8b5cf6;
 
+  /* Dark text that stays dark in both themes, for use on green buttons and badges. */
+  --color-ink: #06070f;
+
   --color-fdr-1: #00d97e;
   --color-fdr-2: #6ee7a8;
   --color-fdr-3: #cbd2e0;
@@ -29,14 +32,72 @@
 
 :root {
   color-scheme: dark;
+  --page-glow: #17223f;
+  --page-text: #e8ecf7;
+
+  /* The logo's verdict bars (components/logo.tsx). */
+  --logo-bg: #101426;
+  --logo-edge: #101426;
+  --logo-keep: #05c988;
+  --logo-watch: #f5b83d;
+  --logo-sell: #f0566e;
+}
+
+/*
+ * Light theme. The components are written in the dark palette — text-white for primary text,
+ * slate greys for secondary, pitch shades for surfaces — so light mode re-points those tokens
+ * rather than restyling every component: text-white becomes ink, pitch-900 becomes white,
+ * and the pale greens, ambers and roses used as text on navy get deeper shades that keep
+ * 4.5:1 on white. `data-theme` is set before first paint by the script in layout.tsx, from
+ * the saved choice or the system setting.
+ */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page-glow: #dfe7f7;
+  --page-text: #0b0d1a;
+
+  --logo-bg: #ffffff;
+  --logo-edge: #d5dae6;
+  --logo-keep: #04a672;
+  --logo-watch: #e09a12;
+  --logo-sell: #e03a55;
+
+  --color-white: #0b0d1a;
+  --color-slate-100: #161b30;
+  --color-slate-200: #1f2540;
+  --color-slate-300: #2c3454;
+  --color-slate-400: #46507a;
+  --color-slate-500: #59628a;
+  --color-slate-600: #737c9e;
+  --color-slate-700: #a7afc6;
+
+  --color-pitch-950: #f3f5fa;
+  --color-pitch-900: #ffffff;
+  --color-pitch-850: #ffffff;
+  --color-pitch-800: #e7eaf2;
+  --color-pitch-700: #d7dce8;
+  --color-pitch-600: #bcc3d6;
+  --color-pitch-500: #949db8;
+
+  --color-brand-200: #035c40;
+  --color-brand-300: #036b4b;
+  --color-brand-400: #037a55;
+
+  --color-amber-200: #7c4205;
+  --color-amber-300: #8f4d06;
+  --color-rose-300: #b3123a;
+  --color-rose-400: #d41c4a;
+  --color-sky-300: #075985;
+  --color-sky-400: #0369a1;
+  --color-accent-400: #6d28d9;
 }
 
 html,
 body {
   background:
-    radial-gradient(120rem 60rem at 50% -24rem, #17223f 0%, transparent 62%),
-    #06070f;
-  color: #e8ecf7;
+    radial-gradient(120rem 60rem at 50% -24rem, var(--page-glow) 0%, transparent 62%),
+    var(--color-pitch-950);
+  color: var(--page-text);
 }
 
 body {
@@ -45,20 +106,20 @@ body {
 
 ::selection {
   background: #05c988;
-  color: #04121a;
+  color: var(--color-ink);
 }
 
 /* Thin scrollbars for the dense data tables */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2c3454 transparent;
+  scrollbar-color: var(--color-pitch-600) transparent;
 }
 *::-webkit-scrollbar {
   width: 9px;
   height: 9px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #2c3454;
+  background: var(--color-pitch-600);
   border-radius: 999px;
 }
 *::-webkit-scrollbar-track {
@@ -66,8 +127,8 @@ body {
 }
 
 @utility panel {
-  background: color-mix(in oklab, #101426 88%, transparent);
-  border: 1px solid #1f2540;
+  background: color-mix(in oklab, var(--color-pitch-850) 88%, transparent);
+  border: 1px solid var(--color-pitch-700);
   border-radius: 1rem;
 }
 

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthButton } from "./auth-button";
+import { LogoMark } from "./logo";
+import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader({
   deadline,
@@ -21,14 +23,17 @@ export function SiteHeader({
     <header className="sticky top-0 z-50 border-b border-pitch-700/80 bg-pitch-950/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-xl items-center gap-3 px-4">
         <Link href="/squad" className="flex shrink-0 items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-[11px] font-black tracking-tight text-pitch-950">
-            FTH
-          </span>
+          <LogoMark size={32} />
           <span className="text-[15px] font-bold tracking-tight">
             Fantasy<span className="text-brand-400">Team</span>Hub
           </span>
         </Link>
 
+        {bare && (
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
+        )}
         {!bare && (
           <div className="ml-auto flex items-center gap-3">
             {deadline && (
@@ -39,6 +44,7 @@ export function SiteHeader({
                 <Countdown iso={deadline} />
               </div>
             )}
+            <ThemeToggle />
             <AuthButton email={email} compact />
           </div>
         )}

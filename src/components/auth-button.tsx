@@ -71,7 +71,7 @@ export function AuthButton({
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-lg border font-semibold transition disabled:opacity-50",
         full
-          ? "w-full border-transparent bg-white px-4 py-3 text-[14px] text-pitch-950 hover:bg-slate-100"
+          ? "w-full border-pitch-700 bg-[#ffffff] px-4 py-3 text-[14px] text-ink hover:bg-[#eef1f7]"
           : "border-pitch-600 bg-pitch-900 text-slate-200 hover:border-brand-500 hover:text-white",
         !full && (compact ? "px-3 py-1.5 text-[12.5px]" : "px-4 py-2 text-[13.5px]"),
       )}

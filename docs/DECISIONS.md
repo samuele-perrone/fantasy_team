@@ -532,3 +532,30 @@ FPL's `is_current` stays on a finished gameweek until the next deadline, often f
 week. Opening on it would show last weekend's results when a manager is planning around the
 coming fixtures, so the tab moves on as soon as `finished` is set; the results are one tap back.
 
+### The light theme re-points tokens instead of restyling components
+
+Every component was written for a dark page: `text-white` for primary text, `slate-*` greys
+for secondary, `pitch-*` for surfaces. Light mode redefines those Tailwind colour variables
+under `:root[data-theme="light"]` rather than adding `dark:` variants to some 300 class
+names. The cost is that a few names now mean something else: `text-white` is "primary text"
+and is near-black in light mode. Text that must stay dark on a green button uses the fixed
+`ink` token, and the Google button keeps its white with an arbitrary value, as Google's
+branding asks.
+
+The theme is applied by an inline script in `<head>` before first paint, from the saved choice
+or `prefers-color-scheme`. A bundled script would run after paint and flash the wrong theme.
+
+### Player photos go through the image optimiser
+
+FPL's headshots are ~110 KB PNGs. My Squad shows fifteen, so unoptimised they cost ~1.6 MB
+per load on a phone. Served through `next/image` at the drawn size they are a few KB each,
+cached for a month, since a player's photo changes at most once a season. Some new signings
+have no photo; the initials underneath show through instead of a broken image.
+
+### The logo is the verdict bars
+
+Keep, watch and sell as three bars of falling length, in the verdict colours. It says what the
+app does rather than "football", and the bars also read as an F. Chosen over a centre-circle
+mark, a shirt with a tick, an F monogram, and the same bars drawn as a ring or a ball. The
+light versions use deeper shades of the three colours to keep their contrast on white.
+

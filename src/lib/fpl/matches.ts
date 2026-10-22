@@ -25,6 +25,8 @@ export interface Incident {
 
 export interface MatchPlayer {
   id: number;
+  /** FPL's photo code */
+  code: number;
   name: string;
   side: "h" | "a";
   mine: boolean;
@@ -175,6 +177,7 @@ export function buildMatch(f: FplFixture, ctx: MatchContext): Match {
     const result = started ? pointsIn(ctx.live.get(id), f.id, bonusById.get(id) ?? 0) : null;
     players.push({
       id,
+      code: p.code,
       name: p.web_name,
       side: p.team === f.team_h ? "h" : "a",
       mine: ctx.squadIds.has(id),

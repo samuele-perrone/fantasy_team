@@ -73,6 +73,11 @@ src/proxy.ts         Session refresh and the auth gate (Next 16 renamed middlewa
 supabase/migrations/ Schema, applied through the Supabase SQL editor
 ```
 
+The logo is three bars in the verdict colours, keep, watch and sell, which also read as an F.
+Master app-icon artwork is in `public/brand/`; the favicon is `src/app/icon.svg`, the iOS
+home-screen icon `src/app/apple-icon.tsx`, the header mark `components/logo.tsx`. The site has
+light and dark themes, following the system setting until the header toggle overrides it.
+
 Pages are React Server Components. Only the header, tab bar and the Matches tab's live
 refresher are client components; rows expand with `<details>`, so they need no JavaScript. Nothing is statically prerendered — see
 [docs/DECISIONS.md](docs/DECISIONS.md).

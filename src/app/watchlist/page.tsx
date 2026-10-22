@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ExpandableRow, PlayerLine, PlayerNumbers, WatchButton } from "@/components/squad-ui";
+import { PlayerPhoto } from "@/components/ui";
 import { getSquadView, getWatchedPlayers, searchPlayers } from "@/lib/app/squad";
 import { getSavedEntryId } from "@/lib/supabase/profile";
 import { createClient, getUserId } from "@/lib/supabase/server";
@@ -64,6 +65,7 @@ export default async function WatchlistPage({ searchParams }: PageProps<"/watchl
             <ExpandableRow
               key={s.player.id}
               leading={<WatchButton playerId={s.player.id} watched={watched.has(s.player.id)} />}
+              photo={s.player}
               title={<PlayerLine p={s.player} />}
               reason={
                 <>
@@ -94,6 +96,7 @@ export default async function WatchlistPage({ searchParams }: PageProps<"/watchl
             <ExpandableRow
               key={player.id}
               leading={<WatchButton playerId={player.id} watched />}
+              photo={player}
               title={<PlayerLine p={player} />}
               reason={
                 !swap
@@ -123,7 +126,7 @@ export default async function WatchlistPage({ searchParams }: PageProps<"/watchl
         />
         <button
           type="submit"
-          className="h-10 rounded-lg bg-brand-500 px-4 text-[13.5px] font-bold text-pitch-950 transition hover:bg-brand-400"
+          className="h-10 rounded-lg bg-brand-500 px-4 text-[13.5px] font-bold text-ink transition hover:bg-brand-600"
         >
           Search
         </button>
@@ -134,7 +137,8 @@ export default async function WatchlistPage({ searchParams }: PageProps<"/watchl
             <li className="px-4 py-3 text-[13px] text-slate-400">No player matches “{query}”.</li>
           )}
           {results.map((p) => (
-            <li key={p.id} className="flex items-center gap-2 py-1.5 pl-4 pr-1">
+            <li key={p.id} className="flex items-center gap-2.5 py-1.5 pl-3 pr-1">
+              <PlayerPhoto code={p.code} name={p.name} size={32} />
               <Link href={`/players/${p.id}`} className="min-w-0 flex-1 hover:underline">
                 <PlayerLine p={p} />
               </Link>
