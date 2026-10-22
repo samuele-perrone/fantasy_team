@@ -6,6 +6,7 @@ struct SquadScreen: View {
     @State private var phase = Phase.loading
     @State private var shown: PlayerVerdict?
     @State private var enteringTeam = false
+    @State private var loadedAt: Date?
 
     enum Phase {
         case loading
@@ -21,7 +22,7 @@ struct SquadScreen: View {
                 .navigationTitle("My Squad")
                 .toolbar { accountMenu }
                 .refreshable { await load() }
-                .task { await load() }
+                .task { if isStale(loadedAt) { await load() } }
                 .sheet(item: $shown) { v in
                     PlayerDetailView(
                         player: v.player,
@@ -31,7 +32,7 @@ struct SquadScreen: View {
                     )
                 }
                 .sheet(isPresented: $enteringTeam) {
-                    TeamIDForm { enteringTeam = false; Task { await load() } }
+                    TeamIDForm { enteringTeam = false; loadedAt = nil; Task { await load() } }
                         .presentationDetents([.medium])
                 }
         }
@@ -98,16 +99,19 @@ struct SquadScreen: View {
 
     private func load() async {
         do {
-            let profile = try await auth.api.profile()
-            guard profile.entryId != nil else {
-                phase = .needsTeam
-                return
-            }
+            // The squad endpoint uses the saved team ID, and says so with a 400 when there is
+            // none, so one request does what a profile check and a squad load did.
             let view = try await auth.api.squad()
+            loadedAt = .now
             phase = .loaded(view)
             // Demo builds can open the first player's sheet (`-demo -detail`) for checking.
             if Config.isDemo, CommandLine.arguments.contains("-detail") { shown = view.verdicts.first }
+        } catch APIError.server(status: 400, _) {
+            phase = .needsTeam
+        } catch is CancellationError {
         } catch {
+            // A failed refresh keeps the squad already on screen.
+            if case .loaded = phase { return }
             phase = .failed(error.localizedDescription)
         }
     }

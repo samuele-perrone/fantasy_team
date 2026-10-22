@@ -7,6 +7,13 @@ struct MatchesView: View {
     @State private var gameweek: Int?
     @State private var error: String?
     @State private var expanded: Set<Int> = []
+    @State private var loading = false
+    @State private var loadedAt: Date?
+
+    /// FPL seasons have 38 gameweeks.
+    private static let gameweeks = 1...38
+    /// The gameweek being shown or being loaded, so repeated taps keep stepping.
+    private var current: Int? { gameweek ?? view?.event }
 
     var body: some View {
         NavigationStack {
@@ -21,22 +28,29 @@ struct MatchesView: View {
                 }
             }
             .background(Theme.background)
-            .navigationTitle(view.map { "Gameweek \($0.event)" } ?? "Matches")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { step(view?.prev) } label: { Image(systemName: "chevron.left") }
-                        .disabled(view?.prev == nil)
+                    Button { step(-1) } label: { Image(systemName: "chevron.left") }
+                        .disabled(current.map { $0 <= Self.gameweeks.lowerBound } ?? true)
                         .accessibilityLabel("Previous gameweek")
                 }
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        Text(current.map { "Gameweek \($0)" } ?? "Matches").font(.headline)
+                        if loading { ProgressView().controlSize(.small) }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { step(view?.next) } label: { Image(systemName: "chevron.right") }
-                        .disabled(view?.next == nil)
+                    Button { step(1) } label: { Image(systemName: "chevron.right") }
+                        .disabled(current.map { $0 >= Self.gameweeks.upperBound } ?? true)
                         .accessibilityLabel("Next gameweek")
                 }
             }
             .refreshable { await load() }
-            .task(id: gameweek) { await load() }
+            .task(id: gameweek) {
+                if gameweek != view?.event || isStale(loadedAt) { await load() }
+            }
             // While a match is live, refresh every minute; the server caches FPL for 60 seconds.
             .task(id: view?.live) {
                 guard view?.live == true else { return }
@@ -74,16 +88,25 @@ struct MatchesView: View {
         .scrollContentBackground(.hidden)
     }
 
-    private func step(_ to: Int?) {
-        guard let to else { return }
+    private func step(_ delta: Int) {
+        guard let current else { return }
+        let target = current + delta
+        guard Self.gameweeks.contains(target) else { return }
         expanded = []
-        gameweek = to
+        gameweek = target
     }
 
     private func load() async {
+        loading = true
+        defer { loading = false }
         do {
-            view = try await auth.api.matches(gameweek: gameweek)
+            let fresh = try await auth.api.matches(gameweek: gameweek)
+            // A slower, older request must not overwrite the gameweek asked for since.
+            guard gameweek == nil || fresh.event == gameweek else { return }
+            view = fresh
+            loadedAt = .now
             error = nil
+        } catch is CancellationError {
         } catch {
             if view == nil { self.error = error.localizedDescription }
         }

@@ -19,14 +19,28 @@ export interface OtherMatch {
 /** "Three games in seven days": three matches whose first and last fall within this span. */
 export const CONGESTION = { games: 3, days: 7 } as const;
 
+/**
+ * One formatter, reused. `toLocaleDateString` with a time zone builds a new formatter on every
+ * call, and checking ~380 fixtures against every kickoff of their clubs made that 550 ms of
+ * every request — almost all of a page's server time.
+ */
+const LONDON = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const dayCache = new Map<string, number>();
+
 /** Calendar day in London, as a day count, so a 20:00 kickoff and a 12:30 one compare by date. */
 function londonDay(iso: string): number {
-  const [y, m, d] = new Date(iso)
-    .toLocaleDateString("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" })
-    .split("/")
-    .reverse()
-    .map(Number);
-  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
+  let day = dayCache.get(iso);
+  if (day === undefined) {
+    const [d, m, y] = LONDON.format(new Date(iso)).split("/").map(Number);
+    day = Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
+    dayCache.set(iso, day);
+  }
+  return day;
 }
 
 /**

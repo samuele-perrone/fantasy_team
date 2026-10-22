@@ -57,6 +57,14 @@ extension Color {
     }
 }
 
+/// Whether data loaded at `date` is old enough to fetch again when a tab reappears. Switching
+/// tabs should not refetch every time: it is slow on a phone and FPL's data changes by the
+/// minute at most.
+func isStale(_ date: Date?, after seconds: TimeInterval = 60) -> Bool {
+    guard let date else { return true }
+    return Date().timeIntervalSince(date) > seconds
+}
+
 extension Double {
     /// "£9.6m"
     var money: String { String(format: "£%.1fm", self) }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LinkPending } from "@/components/link-pending";
 import { LiveRefresh } from "@/components/live-refresh";
 import { MatchRow } from "@/components/match-ui";
 import { getMatchday } from "@/lib/app/matches";
@@ -22,7 +23,7 @@ function GameweekLink({ gw, children }: { gw: number | null; children: React.Rea
       aria-label={`Gameweek ${gw}`}
       className={cn(cls, "text-slate-300 hover:border-brand-500 hover:text-white")}
     >
-      {children}
+      <LinkPending>{children}</LinkPending>
     </Link>
   ) : (
     <span aria-hidden className={cn(cls, "text-slate-700")}>

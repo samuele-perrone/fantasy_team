@@ -9,6 +9,8 @@ struct WatchlistScreen: View {
     @State private var watched: [WatchedPlayer] = []
     @State private var error: String?
     @State private var shown: Player?
+    @State private var loadedAt: Date?
+    @State private var loadedVersion = -1
 
     var body: some View {
         NavigationStack {
@@ -52,7 +54,9 @@ struct WatchlistScreen: View {
             .background(Theme.background)
             .navigationTitle("Watchlist")
             .refreshable { await load() }
-            .task(id: watch.version) { await load() }
+            .task(id: watch.version) {
+                if watch.version != loadedVersion || isStale(loadedAt) { await load() }
+            }
             .sheet(item: $shown) { PlayerDetailView(player: $0) }
         }
     }
@@ -86,9 +90,12 @@ struct WatchlistScreen: View {
         do {
             watched = try await list.players
             suggestions = await squad?.suggestions
+            loadedAt = .now
+            loadedVersion = watch.version
             error = nil
+        } catch is CancellationError {
         } catch {
-            self.error = error.localizedDescription
+            if loadedAt == nil { self.error = error.localizedDescription }
         }
     }
 }

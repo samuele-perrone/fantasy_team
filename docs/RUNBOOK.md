@@ -8,7 +8,7 @@ something breaks.
 | Thing | Where |
 | --- | --- |
 | Repository | `github.com/samuele-perrone/fantasy_team` |
-| Hosting | Vercel project `fantasy_team` (team `samueleperrone-9210s-projects`) |
+| Hosting | Vercel project `fantasy_team` (team `samueleperrone-9210s-projects`), functions in Dublin (`dub1`, set in `vercel.json`) |
 | Current URL | `fantasyteamhub.com`, plus `www` and `fantasyteam.vercel.app` |
 | Database + auth | Supabase project `xplgtysifprqfxmvkwjy` ("Fantasy Team Hub", eu-west-1, org `samuele-perrone`) |
 

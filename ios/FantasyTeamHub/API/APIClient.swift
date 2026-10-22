@@ -111,6 +111,11 @@ struct LiveAPI: FTHAPI {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: request)
+        } catch let error as URLError where error.code == .cancelled {
+            // Leaving a tab cancels its request. That is not a failure to show anyone.
+            throw CancellationError()
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw APIError.offline
         }

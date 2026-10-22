@@ -9,6 +9,7 @@ struct PlayersScreen: View {
     @State private var result: PlayersView?
     @State private var error: String?
     @State private var shown: Player?
+    @State private var loadedAt: Date?
 
     private static let prices: [Double] = [4.5, 5, 5.5, 6, 6.5, 7, 8, 9, 10, 12]
 
@@ -52,7 +53,9 @@ struct PlayersScreen: View {
             .onSubmit(of: .search) { query.q = search; query.limit = 30 }
             .onChange(of: search) { _, new in if new.isEmpty, !query.q.isEmpty { query.q = ""; query.limit = 30 } }
             .toolbar { filters }
-            .task(id: query) { await load() }
+            .task(id: query) {
+                if result?.query != query || isStale(loadedAt) { await load() }
+            }
             .sheet(item: $shown) { PlayerDetailView(player: $0) }
         }
     }
@@ -108,6 +111,7 @@ struct PlayersScreen: View {
     private func load() async {
         do {
             result = try await auth.api.players(query)
+            loadedAt = .now
             error = nil
         } catch is CancellationError {
         } catch {

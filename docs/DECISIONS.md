@@ -613,3 +613,25 @@ field was confirmed to fail the suite.
 The home-screen name is "TeamHub": iOS truncates names past about twelve characters, and
 "FantasyTeamHub" became "FantasyTeamH…".
 
+### Functions run in Dublin, and a date formatter cost 550 ms a request
+
+The first iOS build felt slow. Two causes, both on the server:
+
+- **`buildSchedules` took 530–560 ms of every request**, nearly all of a page's server time
+  (projecting all 700 players takes under 30 ms). It turned each kickoff into a London date
+  with `toLocaleDateString`, which builds a new `Intl` formatter per call, thousands of times
+  per request. One shared formatter and a cache per kickoff made it 3 ms, with identical
+  results for every club.
+- **Vercel ran functions in Washington (`iad1`)** while Supabase is in Ireland, so every
+  request crossed the Atlantic for the auth check and again for each database read.
+  `vercel.json` now pins them to Dublin (`dub1`).
+
+Pages went from ~0.7 s to ~0.03 s of server time locally.
+
+The app also refetched each tab every time it was shown, and switching tabs cancelled the
+request in flight, which it reported as "can't reach the server" until the next load
+succeeded. A cancelled request is now not an error, a failed refresh keeps what is on screen,
+and a tab only refetches when its data is over a minute old. Links that load another page on
+the website (gameweek arrows, Players filters) show a spinner while they wait, because a tap
+that looks like it did nothing gets tapped again.
+

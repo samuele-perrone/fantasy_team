@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AutoSubmitSelect } from "@/components/auto-submit-select";
+import { LinkPending } from "@/components/link-pending";
 import { ExpandableRow, PlayerLine, PlayerNumbers, WatchButton } from "@/components/squad-ui";
 import {
   browsePlayers,
@@ -174,7 +175,7 @@ export default async function PlayersPage({ searchParams }: PageProps<"/players"
                     : "border-pitch-700 text-slate-400 hover:text-white",
                 )}
               >
-                {p.label}
+                <LinkPending>{p.label}</LinkPending>
               </Link>
             );
           })}
@@ -289,7 +290,7 @@ export default async function PlayersPage({ searchParams }: PageProps<"/players"
           scroll={false}
           className="mt-3 flex h-11 items-center justify-center rounded-xl border border-pitch-700 text-[13.5px] font-semibold text-slate-300 transition hover:border-brand-500 hover:text-white"
         >
-          Show {Math.min(PAGE_SIZE, view.total - view.players.length)} more
+          <LinkPending>Show {Math.min(PAGE_SIZE, view.total - view.players.length)} more</LinkPending>
         </Link>
       )}
     </div>
