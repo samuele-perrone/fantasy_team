@@ -61,9 +61,16 @@ everything crossing into a client component is a `PlayerRow`.
 
 ### Pages
 
-Four tabs (`/matches`, `/squad`, `/players`, `/watchlist`) and the player profile, built mobile first for the iOS app
-that follows — see `docs/PLAN.md`. Before adding a page, check whether it is a section of one
-of the tabs: the previous site grew to eighteen pages because every idea got its own.
+Four tabs (`/matches`, `/squad`, `/players`, `/watchlist`) and the player profile — see
+`docs/PLAN.md`. Before adding a page, check whether it is a section of one of the tabs: the
+previous site grew to eighteen pages because every idea got its own.
+
+**Layout is full width on a computer and one column on a phone.** Phone classes are the
+unprefixed ones (the iOS app copies that layout); wider layouts are added with `md:` (768,
+tablet), `lg:` (1024: tabs move from the bottom bar into the header, Players becomes a table,
+lists go to two columns) and `xl:` (1280: the Players filters fit one row). Content is capped
+at `max-w-7xl`. Grids of expandable rows need `items-start`, or opening one stretches its
+neighbour. Check a layout change at 390, 768, 1024 and 1280 — the RUNBOOK has the method.
 
 Matches (`src/lib/fpl/matches.ts`) reads FPL's fixtures and live endpoints through a 60-second
 shared cache, and the page refreshes itself only while a match is live. Never poll FPL from the

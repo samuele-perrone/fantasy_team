@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center">
       <div className="mb-6 flex flex-col items-center gap-3 text-center">
         <LogoMark size={64} />
-        <div className="text-[22px] font-bold tracking-tight">
+        <div className="text-[22px] font-bold tracking-tight md:text-[28px]">
           Fantasy<span className="text-brand-400">Team</span>Hub
         </div>
         <p className="max-w-xs text-[13px] leading-snug text-slate-400">

@@ -91,9 +91,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<SiteHeader deadline={null} gwLabel="" email={null} />}>
           <HeaderWithDeadline />
         </Suspense>
-        {/* Bottom padding clears the fixed tab bar. One phone-width column at every size, so
-            the web app is judged on the layout the iOS app will copy. */}
-        <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-28 pt-4">{children}</main>
+        {/* Full width on a computer, one column on a phone; the bottom padding clears the
+            phone's fixed tab bar, which wider screens replace with the header's tabs. */}
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-4 md:px-6 md:pt-8 lg:px-8 lg:pb-16">
+          {children}
+        </main>
         <TabBar />
         {/* Loaded only when a measurement ID is configured, so local and preview runs stay
             untracked. next/third-parties defers the script so it does not block paint. */}

@@ -219,11 +219,11 @@ every path. `/squad?id=<any public FPL team id>` then renders without signing in
 **Restore the file from the backup afterwards** and confirm `grep -n '\["",' src/proxy.ts`
 finds nothing before committing.
 
-To check phone layouts, the browser window cannot always be narrowed far enough. Instead, put
-a throwaway page in `public/` that loads the pages into 390 px wide iframes (an iPhone's
-width), and from its console compare each frame's `document.documentElement.scrollWidth` with
+To check layouts at other widths, the browser window cannot always be resized. Instead, put
+a throwaway page in `public/` that loads the pages into iframes of a set width (390 for an
+iPhone, 768, 1024, 1280), and from its console compare each frame's `document.documentElement.scrollWidth` with
 its `clientWidth`: any difference is something pushing the page sideways. Delete the page
-afterwards. Last audited on 2026-10-22: no page overflows at 390 px.
+afterwards. Last audited on 2026-10-22: no page overflows at 390, 768, 1024 or 1280 px.
 
 ## Player photos
 

@@ -48,7 +48,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/matches"
   } catch {
     return (
       <div>
-        <h1 className="mb-3 text-[22px] font-bold tracking-tight text-white">Matches</h1>
+        <h1 className="mb-3 text-[22px] font-bold tracking-tight md:text-[28px] text-white">Matches</h1>
         <p className="panel px-4 py-3 text-[13.5px] text-amber-300">
           Could not load matches right now. FPL may be updating, so try again shortly.
         </p>
@@ -59,10 +59,11 @@ export default async function MatchesPage({ searchParams }: PageProps<"/matches"
   return (
     <div>
       {view.live && <LiveRefresh />}
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {/* Arrows stay beside the title on a wide screen rather than at its far edges. */}
+      <div className="mx-auto mb-4 flex max-w-md items-center justify-between gap-3 md:mb-6">
         <GameweekLink gw={view.prev}>‹</GameweekLink>
         <div className="text-center">
-          <h1 className="text-[22px] font-bold tracking-tight text-white">
+          <h1 className="text-[22px] font-bold tracking-tight md:text-[28px] text-white">
             Gameweek {view.event}
           </h1>
           {view.live && (
@@ -90,7 +91,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/matches"
               <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-400">
                 {d.day}
               </h2>
-              <div className="space-y-2">
+              <div className="grid items-start gap-2 md:grid-cols-2 md:gap-3 xl:grid-cols-3">
                 {d.matches.map((m) => (
                   <MatchRow key={m.id} m={m} />
                 ))}
@@ -100,7 +101,7 @@ export default async function MatchesPage({ searchParams }: PageProps<"/matches"
         </div>
       )}
 
-      <p className="mt-5 text-[11.5px] leading-relaxed text-slate-500">
+      <p className="mt-5 max-w-3xl text-[11.5px] leading-relaxed text-slate-500">
         Scores and points come from FPL and can run a minute or two behind the match. Bonus is
         shown as it would be if the match ended now, until FPL confirms it after full time.
       </p>

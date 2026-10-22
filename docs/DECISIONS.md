@@ -577,3 +577,15 @@ the same parameters. Selects submit on change through a three-line client compon
 Sort keys are checked with `Object.hasOwn`, not `in`: `?sort=toString` passed an `in` check,
 since every object has a `toString`, and would have crashed the page.
 
+### Full width on a computer, one column on a phone
+
+The rebuild started as one phone-width column at every size, so the web app would be judged on
+the layout the iOS app copies. On a computer that left most of the screen empty, so wider
+screens now get their own layout: tabs in the header, two columns of squad and watchlist rows,
+two or three matches per row, and the Players list as a sortable table. Phones are unchanged,
+and the phone layout is still the unprefixed one, so it remains the reference for iOS.
+
+The header takes the tabs from 1024 px rather than 768, because the logo, four tabs, deadline,
+theme and sign-in buttons need about 860 px. The Players filters fit one row only from 1280:
+at 1024 they pushed the page 110 px wider than the screen.
+

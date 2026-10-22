@@ -25,8 +25,8 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
 
   if (!entryId || wantsForm) {
     return (
-      <div>
-        <h1 className="mb-1 text-[22px] font-bold tracking-tight text-white">My Squad</h1>
+      <div className="max-w-md">
+        <h1 className="mb-1 text-[22px] font-bold tracking-tight md:text-[28px] text-white">My Squad</h1>
         <p className="mb-4 text-[13px] leading-snug text-slate-400">
           Enter your FPL team ID once. Every player gets a verdict, keep, watch or sell, with the
           reason in one line.
@@ -46,8 +46,8 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
     view = await getSquadView(entryId);
   } catch (e) {
     return (
-      <div>
-        <h1 className="mb-3 text-[22px] font-bold tracking-tight text-white">My Squad</h1>
+      <div className="max-w-xl">
+        <h1 className="mb-3 text-[22px] font-bold tracking-tight md:text-[28px] text-white">My Squad</h1>
         <div className="panel px-4 py-3 text-[13.5px] text-amber-300">
           {e instanceof EntryNotFound
             ? e.message
@@ -78,7 +78,7 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">
           Gameweek {team.nextEvent}
         </div>
-        <h1 className="truncate text-[22px] font-bold tracking-tight text-white">{team.name}</h1>
+        <h1 className="truncate text-[22px] font-bold tracking-tight md:text-[28px] text-white">{team.name}</h1>
         <p className="mt-0.5 text-[12.5px] text-slate-400">
           {money(team.bank)} in the bank · {team.freeTransfers} free transfer
           {team.freeTransfers === 1 ? "" : "s"}
@@ -98,13 +98,15 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         <span className="text-slate-500">Tap a player for the numbers.</span>
       </p>
 
-      <div className="space-y-2">
+      {/* Two columns on a wide screen. items-start, so opening one row does not stretch the
+          row beside it. */}
+      <div className="grid items-start gap-2 lg:grid-cols-2 lg:gap-3">
         {verdicts.map((v) => (
           <VerdictRow key={v.player.id} v={v} watched={watched} />
         ))}
       </div>
 
-      <p className="mt-5 text-[11.5px] leading-relaxed text-slate-500">
+      <p className="mt-5 max-w-3xl text-[11.5px] leading-relaxed text-slate-500">
         Verdicts compare each player with the best replacement you can afford over the next five
         gameweeks. Our points estimates are typically off by about 1.6 points per player per
         week, so a player is only marked Sell when the gap is clearly bigger than that. FPL does

@@ -5,7 +5,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthButton } from "./auth-button";
 import { LogoMark } from "./logo";
+import { TABS } from "./nav";
+import { isActiveTab, TAB_ICONS } from "./tab-bar";
 import { ThemeToggle } from "./theme-toggle";
+import { cn } from "@/lib/utils";
 
 export function SiteHeader({
   deadline,
@@ -21,7 +24,7 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-50 border-b border-pitch-700/80 bg-pitch-950/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-xl items-center gap-2 px-4 sm:gap-3">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 sm:gap-3 md:h-16 md:px-6 lg:px-8">
         <Link href="/squad" className="flex shrink-0 items-center gap-2">
           <LogoMark size={32} />
           <span className="text-[15px] font-bold tracking-tight whitespace-nowrap">
@@ -29,6 +32,31 @@ export function SiteHeader({
           </span>
         </Link>
 
+        {!bare && (
+          <nav aria-label="Main" className="ml-6 hidden items-center gap-1 lg:flex">
+            {TABS.map((tab) => {
+              const active = isActiveTab(pathname, tab.href);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex h-9 items-center gap-2 rounded-lg px-3 text-[13.5px] font-semibold transition",
+                    active
+                      ? "bg-brand-500/12 text-brand-300"
+                      : "text-slate-400 hover:bg-pitch-800 hover:text-white",
+                  )}
+                >
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden>
+                    {TAB_ICONS[tab.href]}
+                  </svg>
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
         {bare && (
           <div className="ml-auto">
             <ThemeToggle />

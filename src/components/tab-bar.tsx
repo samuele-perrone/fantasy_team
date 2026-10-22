@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { TABS } from "./nav";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<string, React.ReactNode> = {
+export const TAB_ICONS: Record<string, React.ReactNode> = {
   "/matches": (
     <g fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
       <circle cx="12" cy="12" r="8.5" />
@@ -27,16 +27,20 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-/** Bottom tabs, as the iOS app will have them, at every width. */
+/** Whether a tab is the one being viewed, counting its sub-pages (a player under Players). */
+export const isActiveTab = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
+
+/** Bottom tabs on a phone, as the iOS app will have them. Wider screens use the header's. */
 export function TabBar() {
   const pathname = usePathname();
   if (pathname === "/login") return null;
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-pitch-700/80 bg-pitch-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-pitch-700/80 bg-pitch-950/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex max-w-xl">
         {TABS.map((tab) => {
-          const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
+          const active = isActiveTab(pathname, tab.href);
           return (
             <Link
               key={tab.href}
@@ -48,7 +52,7 @@ export function TabBar() {
               )}
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden>
-                {ICONS[tab.href]}
+                {TAB_ICONS[tab.href]}
               </svg>
               {tab.label}
             </Link>
