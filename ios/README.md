@@ -62,9 +62,26 @@ One-time setup, outside the code:
 
 ## Shipping to TestFlight
 
-In Xcode: choose *Any iOS Device*, Product → Archive, then Distribute App → App Store
-Connect. The first upload also needs the app created in App Store Connect (bundle ID
-`com.fantasyteamhub.app`). Bump `CURRENT_PROJECT_VERSION` in `project.yml` for every upload.
+The app exists in App Store Connect as **FantasyTeamHub** (Apple ID 6825842076, SKU
+`fantasyteamhub-ios`). Its internal group **Team** has automatic distribution on, so every
+uploaded build reaches its testers through the TestFlight app once Apple has processed it,
+usually within fifteen minutes.
+
+To ship a new build, first raise `CURRENT_PROJECT_VERSION` in `project.yml`: App Store Connect
+refuses a build number it has seen ("Redundant Binary Upload"). Then:
+
+```bash
+cd ios && xcodegen generate
+xcodebuild -project FantasyTeamHub.xcodeproj -scheme FantasyTeamHub -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/FantasyTeamHub.xcarchive \
+  -allowProvisioningUpdates archive
+xcodebuild -exportArchive -archivePath build/FantasyTeamHub.xcarchive \
+  -exportOptionsPlist ExportOptions.plist -exportPath build/export -allowProvisioningUpdates
+```
+
+The export uploads straight to App Store Connect (`destination: upload`), signing with the
+Apple account Xcode is logged in to. Builds declare no non-exempt encryption
+(`ITSAppUsesNonExemptEncryption`), so TestFlight does not stop to ask about export compliance.
 
 ## Layout
 

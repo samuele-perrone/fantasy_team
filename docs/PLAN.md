@@ -173,8 +173,8 @@ Upgrade to the API-Football paid plan only once phases 1 and 2 are in daily use.
 ### Phase 4: iOS
 
 **Status: first version built** in `ios/`, SwiftUI, with the four tabs, Google and Apple
-sign-in and the verdict-bars icon. Runs in the simulator; not yet on TestFlight, which needs
-the one-time Supabase and App Store Connect steps in `ios/README.md`. Push notifications
+sign-in and the verdict-bars icon. Build 1.0 (1) uploaded to TestFlight on 2026-10-22, internal
+testing only. Push notifications
 are not built.
 
 - **SwiftUI, chosen over Expo** at the start of this phase: the most native feel, and the
