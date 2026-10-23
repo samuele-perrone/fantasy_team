@@ -10,7 +10,7 @@ enum APIError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .unauthorized:
-            "This account can't use FantasyTeamHub yet. Sign in with an invited email address."
+            "This account can't use FantasyTeamHub. Try signing in again, or with another account."
         case .server(_, let message):
             message
         case .offline:

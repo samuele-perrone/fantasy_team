@@ -5,6 +5,9 @@
  * The list comes from ALLOWED_EMAILS (comma separated) so it can change without a deploy.
  * It fails closed: an unset or empty list denies everyone rather than silently opening the
  * site up, and the login page explains that case so it is recoverable rather than baffling.
+ *
+ * `*` opens it to every signed-in account, which is how the public App Store release runs.
+ * Opening up has to be written down on purpose; it never happens by leaving the list empty.
  */
 
 /**
@@ -54,6 +57,8 @@ export function isAllowed(email: string | null | undefined): boolean {
   if (!email) return false;
   const list = allowedEmails();
   if (list.length === 0) return false;
+
+  if (list.includes("*")) return true;
 
   const candidate = normalise(email);
   return list.some((entry) => {

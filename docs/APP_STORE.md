@@ -5,8 +5,8 @@ Everything App Store Connect asks for, drafted to copy in. Apple ID 6825842076, 
 
 **Still open before submitting** (see the release checklist in the conversation of 23 Oct 2026):
 
-- **Public** release (decided 23 Oct 2026). Sign-in is still limited by `ALLOWED_EMAILS`;
-  opening it to every account is a change to make deliberately before submitting
+- **Public** release (decided 23 Oct 2026): `ALLOWED_EMAILS` is `*` in production, so any
+  Apple or Google account can sign in, including the reviewer's
 - **Premier League photos and club badges stay** (decided 23 Oct 2026), knowing guideline 5.2
   can reject apps showing another company's images without permission. If review rejects it,
   the fallback is placeholder avatars and club initials, and retaken screenshots
@@ -111,12 +111,10 @@ Offered beside Google on the app's sign-in screen and the website's login page.
 
 ## App Review notes (draft)
 
-> FantasyTeamHub gives advice on a Fantasy Premier League squad. Sign in with the demo account
-> below (Sign in with Google), or with Sign in with Apple. The demo account already has an FPL
-> team saved, so My Squad shows verdicts straight away; Matches, Players and Watchlist work
-> without a team. Account deletion: My Squad → account menu (top right) → Delete account.
->
-> Demo account: *(email and password)*
+> FantasyTeamHub gives advice on a Fantasy Premier League squad. Any Apple or Google account
+> can sign in. To see My Squad, enter an FPL team ID when asked: 849650 is a real public team
+> you can use. Matches, Players and Watchlist work without a team. Account deletion: My Squad →
+> account menu (top right) → Delete account.
 
 ## Screenshots
 

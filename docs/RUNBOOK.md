@@ -45,7 +45,7 @@ Set on Vercel across production, preview and development. Pull them locally with
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser client key — public by design, RLS protects the data |
-| `ALLOWED_EMAILS` | Comma-separated sign-in allow-list. **Fails closed** — unset means nobody can sign in |
+| `ALLOWED_EMAILS` | Comma-separated sign-in allow-list. **Fails closed** — unset means nobody can sign in. `*` admits every signed-in account: production is set to `*` since the public release (23 Oct 2026); replace it with a list of addresses to go back to invite-only |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID. Analytics only load when this is set. Changing it needs a redeploy, since `NEXT_PUBLIC_*` values are inlined at build time |
 | `FPL_API_BASE` | Local only — point the FPL client at a fixture server |

@@ -727,3 +727,11 @@ Apple also asks apps using Sign in with Apple to revoke the user's Apple token o
 That needs the Apple client secret on the server, which the site does not have; the Supabase
 account and all data are deleted, and the person can remove the app from *Settings → Apple ID
 → Sign in with Apple*. Revisit if review raises it.
+
+### Sign-in is open to every account, by writing `*`
+
+For the public App Store release the allow-list could have been deleted, but it fails closed
+on purpose and is the only thing between "has a Google or Apple account" and "can use the
+site". So it stays, and `*` in `ALLOWED_EMAILS` admits every signed-in account. Opening up is
+an explicit value someone wrote, never the result of an unset variable, and going back to
+invite-only is replacing `*` with addresses.

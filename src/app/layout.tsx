@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     template: "%s · FantasyTeamHub",
   },
   description: "Your FPL squad, what to keep, what to sell, and who to buy next.",
-  // Private while invite-only.
+  // Every page sits behind sign-in, so there is nothing for a search engine to index.
   robots: { index: false, follow: false },
 };
 

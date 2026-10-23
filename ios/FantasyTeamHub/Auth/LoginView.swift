@@ -53,7 +53,7 @@ struct LoginView: View {
                 if let error = auth.error {
                     Text(error).font(.footnote).foregroundStyle(Theme.sell).multilineTextAlignment(.center)
                 }
-                Text("FantasyTeamHub is invite-only for now. If you share your email with Apple, use the one you were invited with.")
+                Text("Sign in to keep your FPL teams and watchlist, in the app and on the website.")
                     .font(.caption)
                     .foregroundStyle(Theme.faint)
                     .multilineTextAlignment(.center)

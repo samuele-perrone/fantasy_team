@@ -39,4 +39,17 @@ describe("allow-list", () => {
     expect(isAllowed("anyone@club.org")).toBe(true);
     expect(isAllowed("anyone@other.org")).toBe(false);
   });
+
+  it("admits every signed-in account when the list holds *, alongside named entries", () => {
+    vi.stubEnv("ALLOWED_EMAILS", "a@example.com, *");
+    expect(isAllowed("stranger@elsewhere.org")).toBe(true);
+    expect(isAllowed("relay@privaterelay.appleid.com")).toBe(true);
+  });
+
+  it("still needs an email with *, and a * inside an address opens nothing", () => {
+    vi.stubEnv("ALLOWED_EMAILS", "*");
+    expect(isAllowed(null)).toBe(false);
+    vi.stubEnv("ALLOWED_EMAILS", "a*@example.com");
+    expect(isAllowed("stranger@elsewhere.org")).toBe(false);
+  });
 });
