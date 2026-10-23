@@ -109,6 +109,27 @@ struct SquadView: Codable, Sendable {
     let captain: CaptainPick?
 }
 
+/// The best squad a wildcard could buy with the manager's money, against keeping theirs.
+struct WildcardView: Codable, Sendable {
+    /// bank plus the estimated selling value of the current fifteen, in £m
+    let budget: Double
+    let cost: Double
+    let formation: String
+    /// set for the next gameweek
+    let starters: [Player]
+    let bench: [Player]
+    let captainId: Int?
+    let viceId: Int?
+    /// best XI, expected points over the next five gameweeks
+    let points: Double
+    let currentPoints: Double
+    let gain: Double
+    let keptIds: [Int]
+    /// the gain is too small to be worth the chip
+    let saveIt: Bool
+    let nextEvent: Int
+}
+
 /// Who to captain next gameweek. Players are referred to by ID; they are in `verdicts`.
 struct CaptainPick: Codable, Hashable, Sendable {
     let playerId: Int

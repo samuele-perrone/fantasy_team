@@ -1,6 +1,7 @@
 import "server-only";
 import { getGameData, getPlayerRows } from "@/lib/fpl/data";
 import { pickCaptain, type CaptainPick } from "@/lib/fpl/captain";
+import { planWildcard, type WildcardPlan } from "@/lib/fpl/wildcard";
 import { loadTeam, type LoadedTeam } from "@/lib/fpl/entry";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { foldName } from "@/lib/utils";
@@ -87,6 +88,23 @@ export async function getSquadView(entryId: number): Promise<SquadView> {
     verdicts,
     suggestions: suggestTransfers(input),
     captain: pickCaptain(verdicts, data.ctx.nextEvent),
+  };
+}
+
+export interface WildcardView extends WildcardPlan {
+  /** the gameweek the XI is set for */
+  nextEvent: number;
+}
+
+/** The best squad a wildcard could buy with this team's money, against keeping it. */
+export async function getWildcardView(entryId: number): Promise<WildcardView> {
+  const [team, data] = await Promise.all([
+    loadTeam(entryId, VERDICT_RULES.horizon),
+    getGameData(),
+  ]);
+  return {
+    ...planWildcard({ squad: team.squad, pool: team.pool, bank: team.bank, rules: team.rules }),
+    nextEvent: data.ctx.nextEvent,
   };
 }
 

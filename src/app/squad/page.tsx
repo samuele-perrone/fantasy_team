@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EntryForm } from "@/components/entry-form";
+import { LinkPending } from "@/components/link-pending";
 import { CaptainCard, VerdictRow } from "@/components/squad-ui";
-import { getSquadView } from "@/lib/app/squad";
+import { Wildcard } from "@/components/wildcard";
+import { getSquadView, getWildcardView } from "@/lib/app/squad";
 import { EntryNotFound } from "@/lib/fpl/entry";
 import { TeamSwitcher } from "@/components/team-switcher";
 import { listTeams, type TeamsView } from "@/lib/supabase/teams";
@@ -55,9 +57,17 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
     );
   }
 
+  // A team viewed by ID, rather than a saved one, keeps its ID on the links between views.
+  const idParam = rawId && /^\d+$/.test(rawId) ? `id=${rawId}` : "";
+  const squadHref = idParam ? `/squad?${idParam}` : "/squad";
+  const wildcardHref = `/squad?view=wildcard${idParam ? `&${idParam}` : ""}`;
+
+  const wantsWildcard = first(params.view) === "wildcard";
   let view;
+  let wildcard;
   try {
-    view = await getSquadView(entryId);
+    if (wantsWildcard) wildcard = await getWildcardView(entryId);
+    else view = await getSquadView(entryId);
   } catch (e) {
     return (
       <div className="max-w-xl">
@@ -76,6 +86,9 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
       </div>
     );
   }
+
+  if (wildcard) return <Wildcard view={wildcard} back={squadHref} />;
+  if (!view) return null;
 
   const watched = new Set(
     signedIn ? await listWatchlist((await createClient()) as unknown as SupabaseClient) : [],
@@ -121,6 +134,19 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
       </p>
 
       {view.captain && <CaptainCard pick={view.captain} verdicts={verdicts} />}
+
+      <Link
+        href={wildcardHref}
+        className="panel mb-3 flex items-center gap-3 px-3 py-2.5 text-[13px] transition hover:border-brand-500"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="font-semibold text-white">Thinking of a wildcard?</span>{" "}
+          <span className="text-slate-400">See the best squad your money buys.</span>
+        </span>
+        <LinkPending>
+          <span className="font-semibold text-brand-400">→</span>
+        </LinkPending>
+      </Link>
 
       {/* Two columns on a wide screen. items-start, so opening one row does not stretch the
           row beside it. */}

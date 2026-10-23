@@ -10,6 +10,8 @@ struct SquadScreen: View {
     @State private var saved: TeamsView?
     @State private var switching = false
     @State private var teamError: String?
+    // Demo builds can open straight onto it (`-demo -wildcard`) for checking.
+    @State private var showingWildcard = Config.isDemo && CommandLine.arguments.contains("-wildcard")
 
     enum Phase {
         case loading
@@ -38,6 +40,7 @@ struct SquadScreen: View {
                     TeamIDForm { enteringTeam = false; Task { await reload() } }
                         .presentationDetents([.medium])
                 }
+                .navigationDestination(isPresented: $showingWildcard) { WildcardScreen() }
                 .alert("Couldn't change team", isPresented: Binding(
                     get: { teamError != nil }, set: { if !$0 { teamError = nil } }
                 )) {
@@ -95,6 +98,20 @@ struct SquadScreen: View {
                     .buttonStyle(.plain)
                     .listRowBackground(Theme.surface)
                 }
+            }
+            Section {
+                Button { showingWildcard = true } label: {
+                    HStack {
+                        (Text("Thinking of a wildcard? ").bold().foregroundStyle(Theme.text)
+                            + Text("See the best squad your money buys.").foregroundStyle(Theme.secondary))
+                            .font(.subheadline)
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(Theme.faint)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(Theme.surface)
             }
             Section {
                 ForEach(view.verdicts) { v in

@@ -22,6 +22,7 @@ enum APIError: LocalizedError, Equatable {
 /// Everything the screens need from the server, so they can be shown with sample data.
 protocol FTHAPI: Sendable {
     func squad() async throws -> SquadView
+    func wildcard() async throws -> WildcardView
     func matches(gameweek: Int?) async throws -> MatchdayView
     func players(_ query: BrowseQuery) async throws -> PlayersView
     func watchlist() async throws -> WatchlistResponse
@@ -44,6 +45,10 @@ struct LiveAPI: FTHAPI {
 
     func squad() async throws -> SquadView {
         try await get("squad")
+    }
+
+    func wildcard() async throws -> WildcardView {
+        try await get("wildcard")
     }
 
     func matches(gameweek: Int?) async throws -> MatchdayView {

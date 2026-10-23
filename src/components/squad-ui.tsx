@@ -231,7 +231,7 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
 
 export { PlayerLine };
 
-function ArmBand({ letter, muted }: { letter: "C" | "V"; muted?: boolean }) {
+export function ArmBand({ letter, muted }: { letter: "C" | "V"; muted?: boolean }) {
   return (
     <span
       aria-hidden

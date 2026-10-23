@@ -21,6 +21,15 @@ struct ContractTests {
         #expect(pick.points >= (pick.vicePoints ?? 0))
     }
 
+    @Test func decodesTheWildcardSquad() throws {
+        let view: WildcardView = try Fixtures.load("wildcard")
+        #expect(view.starters.count == 11 && view.bench.count == 4)
+        #expect(view.cost <= view.budget)
+        let ids = Set((view.starters + view.bench).map(\.id))
+        #expect(ids.count == 15 && view.captainId.map(ids.contains) == true)
+        #expect(Set(view.keptIds).isSubset(of: ids))
+    }
+
     @Test func decodesMatches() throws {
         let view: MatchdayView = try Fixtures.load("matches")
         let matches = view.days.flatMap(\.matches)

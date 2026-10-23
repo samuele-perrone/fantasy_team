@@ -688,3 +688,16 @@ invite-only and the website has Google alone, and a *Hide My Email* relay addres
 `ALLOWED_EMAILS` anyway. TestFlight builds for the team are not reviewed against 4.8, so the
 button, the capability and the entitlement were removed. Restore them from git history before
 an App Store submission; the Apple provider can stay enabled in Supabase meanwhile.
+
+### The wildcard budget assumes the lowest selling prices
+
+A wildcard spends what the fifteen sell for, and FPL keeps half of any price rise since a
+player was bought (rounded down to £0.1m). The public API publishes neither purchase nor
+selling prices, and `entry_history.value` is the squad at today's prices, which overstates the
+budget by up to ~£2m on a squad that has risen. So `estimateSellingPrice` assumes a player who
+has risen since the season started was bought at the opening price: the least they could sell
+for. A suggested squad is then always affordable, at the cost of sometimes leaving a little
+money unspent. Verdicts still use today's price for a single swap, where the error is small.
+
+The `/api/v1/squad` and `/api/v1/wildcard` handlers share `entryRoute` (`src/lib/app/entry-route.ts`),
+which resolves `?id=` or the saved team and maps the errors, so the two cannot drift apart.

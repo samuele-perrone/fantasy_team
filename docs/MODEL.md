@@ -105,6 +105,15 @@ vice-captain. Players marked Sell are skipped, since the advice is to transfer t
 under 1 point between the two is reported as a close call: well inside the ~1.6-point error, so
 either is a fair pick. Like verdicts, this is a layer over the model and changes no projection.
 
+## Wildcard
+
+`src/lib/fpl/wildcard.ts` runs the optimiser over every player for the most expected points
+over five gameweeks (`xPts`), with the budget set to the bank plus an estimated selling value
+of the current fifteen, then sets the XI and captain for the next gameweek (`xPtsNext`). The
+gain is the new squad's best XI against the current squad's, both over five gameweeks; under
+10 points it says to save the chip, since that is ~2 points a week across an XI, inside the
+model's error. 10 is a starting value, not a fitted one.
+
 ## Limits worth knowing
 
 **The coefficients are hand-tuned, not fitted.** The rating weights, the 0.085 bonus slope,

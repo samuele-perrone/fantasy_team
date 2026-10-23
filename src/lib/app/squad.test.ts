@@ -18,7 +18,7 @@ vi.mock("@/lib/fpl/entry", () => ({
   }),
 }));
 
-import { getSquadView, getWatchedPlayers, searchPlayers } from "./squad";
+import { getSquadView, getWatchedPlayers, getWildcardView, searchPlayers } from "./squad";
 
 function loadedTeam(s: PlayerRow[], pool: PlayerRow[]) {
   return {
@@ -116,5 +116,17 @@ describe("searchPlayers", () => {
   it("needs at least two characters", async () => {
     expect(await searchPlayers("s")).toEqual([]);
     expect(await searchPlayers("  ")).toEqual([]);
+  });
+});
+
+describe("getWildcardView", () => {
+  it("plans a wildcard for the loaded team, for the next gameweek", async () => {
+    const s = squad();
+    const star = row({ posId: 4, teamId: 9, cost: 5, perGame: 10, xPts: 50 });
+    state.team = loadedTeam(s, [...s, star]);
+    const view = await getWildcardView(123);
+    expect(view.nextEvent).toBe(10);
+    expect([...view.starters, ...view.bench].map((p) => p.id)).toContain(star.id);
+    expect(view.budget).toBe(75.5);
   });
 });
