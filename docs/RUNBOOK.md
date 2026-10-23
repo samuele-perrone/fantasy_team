@@ -342,6 +342,24 @@ The login page's Apple button uses Supabase's Apple OAuth, which needs, once:
    `node scripts/apple-client-secret.mjs <path to .p8> <Key ID>`, which signs it with the
    Team ID `7RYYQ8M5X5` and Services ID and copies it to the clipboard without printing it.
 
+Pitfalls met setting this up (23 Oct 2026):
+
+- **Client IDs order.** Supabase's web flow uses the *first* Client ID, so it must be
+  `com.fantasyteamhub.web,com.fantasyteamhub.app`. App first gives Apple's "Invalid client id
+  or web redirect url". The native app accepts either order.
+- **Saving can blank the secret.** The secret box is a password field; saving the panel with
+  it empty stores an empty secret ("missing OAuth secret"). Change Client IDs and paste the
+  secret in the same save.
+- **1Password refills Client IDs** with an old value. Dismiss its suggestion, and reopen the
+  panel after saving to check what was stored.
+- **The Services ID needs Sign In with Apple ticked and configured**, or Apple answers
+  "Invalid client" even with everything right in Supabase.
+
+To check without signing in: `curl -s -o /dev/null -w "%{redirect_url}"
+"https://xplgtysifprqfxmvkwjy.supabase.co/auth/v1/authorize?provider=apple"` should redirect
+to Apple with `client_id=com.fantasyteamhub.web`, and that Apple page should carry no
+`errorCode` in its boot data.
+
 Until then the button fails with "missing OAuth secret". The secret expires after six months
 at most: put a reminder in the calendar and regenerate it the same way. The app's native
 Apple sign-in does not use it.
