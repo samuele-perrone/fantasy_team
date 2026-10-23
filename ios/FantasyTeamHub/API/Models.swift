@@ -105,6 +105,20 @@ struct SquadView: Codable, Sendable {
     let team: SquadSummary
     let verdicts: [PlayerVerdict]
     let suggestions: [Suggestion]
+    /// Optional: servers before the captain pick do not send it.
+    let captain: CaptainPick?
+}
+
+/// Who to captain next gameweek. Players are referred to by ID; they are in `verdicts`.
+struct CaptainPick: Codable, Hashable, Sendable {
+    let playerId: Int
+    /// expected points next gameweek, before the captain's doubling
+    let points: Double
+    let reason: String
+    let viceId: Int?
+    let vicePoints: Double?
+    /// captain and vice are within the model's error of each other
+    let close: Bool
 }
 
 struct Swap: Codable, Hashable, Sendable {

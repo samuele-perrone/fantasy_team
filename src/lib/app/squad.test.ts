@@ -58,6 +58,14 @@ describe("getSquadView", () => {
     expect(keepPositions).toEqual([...keepPositions].sort((a, b) => a - b));
     expect(view.suggestions[0].player.id).toBe(upgrade.id);
   });
+
+  it("names a captain from the squad for the next gameweek", async () => {
+    const s = squad();
+    const star = copy(s[8], { perGame: 9, xPtsNext: 9 });
+    s[8] = star;
+    state.team = loadedTeam(s, s);
+    expect((await getSquadView(123)).captain).toMatchObject({ playerId: star.id, points: 9 });
+  });
 });
 
 describe("getWatchedPlayers", () => {

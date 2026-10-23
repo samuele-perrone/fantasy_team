@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { setWatched } from "@/lib/app/actions";
+import type { CaptainPick } from "@/lib/fpl/captain";
 import { flaggedNewsAdded } from "@/lib/fpl/news";
 import type { PlayerRow } from "@/lib/fpl/row";
 import type { PlayerVerdict, Verdict } from "@/lib/fpl/verdict";
@@ -229,3 +230,67 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
 }
 
 export { PlayerLine };
+
+function ArmBand({ letter, muted }: { letter: "C" | "V"; muted?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-[11px] font-black",
+        muted ? "bg-pitch-700 text-slate-300" : "bg-brand-400 text-ink",
+      )}
+    >
+      {letter}
+    </span>
+  );
+}
+
+/** Who to captain next gameweek, and the vice-captain, above the verdicts. */
+export function CaptainCard({ pick, verdicts }: { pick: CaptainPick; verdicts: PlayerVerdict[] }) {
+  const find = (id: number | null) => verdicts.find((v) => v.player.id === id)?.player;
+  const captain = find(pick.playerId);
+  const vice = find(pick.viceId);
+  if (!captain) return null;
+  return (
+    <section aria-label="Captain" className="panel mb-3 flex items-center gap-3 px-3 py-2.5">
+      {/* flex, or the photo's inline span ignores its width and draws nothing */}
+      <div className="relative flex shrink-0">
+        <PlayerPhoto code={captain.code} size={44} />
+        <span className="absolute -bottom-1 -right-1">
+          <ArmBand letter="C" />
+        </span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10.5px] font-semibold uppercase tracking-wide text-brand-400">
+          Captain
+        </div>
+        <Link href={`/players/${captain.id}`} className="hover:underline">
+          <PlayerLine p={captain} />
+        </Link>
+        <p className="mt-0.5 text-[12.5px] leading-snug text-slate-300">
+          {pick.reason}
+          <span className="text-slate-500">
+            {" "}
+            · about {pick.points.toFixed(1)} points, doubled as captain
+          </span>
+        </p>
+        {/* On a phone the vice-captain is a line here; wider, it gets its own column. */}
+        {vice && (
+          <p className="mt-0.5 text-[12px] text-slate-500 sm:hidden">
+            Vice-captain: <span className="font-semibold text-slate-300">{vice.name}</span>, about{" "}
+            {pick.vicePoints?.toFixed(1)} points
+          </p>
+        )}
+      </div>
+      {vice && (
+        <div className="hidden shrink-0 items-center gap-2 border-l border-pitch-800 pl-3 sm:flex">
+          <ArmBand letter="V" muted />
+          <div className="text-[12.5px]">
+            <div className="font-semibold text-white">{vice.name}</div>
+            <div className="text-slate-500">about {pick.vicePoints?.toFixed(1)} points</div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

@@ -97,6 +97,14 @@ Sells are capped at the free transfers plus one hit, and settled as a single pla
 values, not fitted ones: 5 points is roughly where a gap over five gameweeks clearly exceeds
 the model's per-player error.
 
+## Captain
+
+`src/lib/fpl/captain.ts` picks the squad player with the most expected points next gameweek
+(`xPtsNext`, so a double gameweek counts both games and a blank none), and the next one as
+vice-captain. Players marked Sell are skipped, since the advice is to transfer them out. A gap
+under 1 point between the two is reported as a close call: well inside the ~1.6-point error, so
+either is a fair pick. Like verdicts, this is a layer over the model and changes no projection.
+
 ## Limits worth knowing
 
 **The coefficients are hand-tuned, not fitted.** The rating weights, the 0.085 bonus slope,

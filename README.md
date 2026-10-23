@@ -39,7 +39,7 @@ tag; its routes now return 404.
 | --- | --- |
 | `/` | Redirects to `/squad` |
 | `/matches` | **Matches.** Every Premier League match in a gameweek, grouped by day, with arrows between gameweeks. A match opens to goals, assists, cards and bonus (worked out from BPS until FPL confirms it), and your squad and watchlist players are highlighted with their points. Refreshes every minute while a match is live |
-| `/squad` | **My Squad.** Loads your FPL team from its ID; signed in, the team name opens your saved teams to switch between them. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. |
+| `/squad` | **My Squad.** Loads your FPL team from its ID; signed in, the team name opens your saved teams to switch between them. The captain and vice-captain for the next gameweek come first. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. |
 | `/watchlist` | **Watchlist.** Suggested buys for this week, the players you have starred, each compared with the squad player they would replace, and a name search to add more |
 | `/players` | **Players.** Every available player, filtered by position, club, maximum price and name, sorted by points over the next five, next game, form, season points, price or how many managers picked them. A star adds one to the watchlist; tapping opens the same numbers as My Squad |
 | `/players/[id]` | Player profile: points per fixture, underlying stats, gameweek history, and a star to watch them |

@@ -14,6 +14,11 @@ struct ContractTests {
         let order = view.verdicts.map(\.verdict)
         #expect(order == order.sorted { rank($0) < rank($1) })
         #expect(view.verdicts.allSatisfy { !$0.player.fixtures.isEmpty || $0.player.status != "a" })
+        // The captain and vice are players in the squad, referred to by ID
+        let pick = try #require(view.captain)
+        let ids = Set(view.verdicts.map(\.player.id))
+        #expect(ids.contains(pick.playerId) && pick.viceId.map(ids.contains) != false)
+        #expect(pick.points >= (pick.vicePoints ?? 0))
     }
 
     @Test func decodesMatches() throws {

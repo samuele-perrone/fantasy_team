@@ -80,6 +80,17 @@ struct SquadScreen: View {
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
             }
+            if let pick = view.captain,
+               let captain = view.verdicts.first(where: { $0.player.id == pick.playerId }) {
+                Section {
+                    Button { shown = captain } label: {
+                        CaptainRow(pick: pick, captain: captain.player,
+                                   vice: view.verdicts.first { $0.player.id == pick.viceId }?.player)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Theme.surface)
+                }
+            }
             Section {
                 ForEach(view.verdicts) { v in
                     Button { shown = v } label: { VerdictRow(verdict: v) }
@@ -207,6 +218,51 @@ struct VerdictRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+}
+
+/// Who to captain next gameweek, with the vice-captain underneath.
+struct CaptainRow: View {
+    let pick: CaptainPick
+    let captain: Player
+    let vice: Player?
+
+    var body: some View {
+        HStack(spacing: 10) {
+            PlayerPhoto(code: captain.code, size: 44)
+                .overlay(alignment: .bottomTrailing) { ArmBand(letter: "C").offset(x: 4, y: 4) }
+            VStack(alignment: .leading, spacing: 2) {
+                Eyebrow("Captain")
+                PlayerLine(player: captain)
+                (Text(pick.reason)
+                    + Text(" · about \(pick.points, format: .number.precision(.fractionLength(1))) points, doubled as captain")
+                        .foregroundStyle(Theme.faint))
+                    .font(.footnote).foregroundStyle(Theme.secondary)
+                if let vice, let points = pick.vicePoints {
+                    (Text("Vice-captain: ") + Text(vice.name).bold().foregroundStyle(Theme.text)
+                        + Text(", about \(points, format: .number.precision(.fractionLength(1))) points"))
+                        .font(.caption).foregroundStyle(Theme.faint)
+                }
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(Theme.faint)
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct ArmBand: View {
+    let letter: String
+
+    var body: some View {
+        Text(letter)
+            .font(.system(size: 11, weight: .black))
+            .foregroundStyle(Theme.ink)
+            .frame(width: 22, height: 22)
+            .background(Theme.brandFill, in: Circle())
+            .accessibilityHidden(true)
     }
 }
 

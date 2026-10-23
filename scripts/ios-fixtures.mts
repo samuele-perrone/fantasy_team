@@ -15,6 +15,7 @@ import { buildContext, projectAll } from "../src/lib/fpl/projection";
 import { toRow } from "../src/lib/fpl/row";
 import { readRules } from "../src/lib/fpl/rules";
 import { bestSwapFor, computeVerdicts, suggestTransfers, type VerdictInput } from "../src/lib/fpl/verdict";
+import { pickCaptain } from "../src/lib/fpl/captain";
 import { buildMatch, groupByDay } from "../src/lib/fpl/matches";
 import { buildSchedules, type OtherMatch } from "../src/lib/fpl/schedule";
 import { mapClubs, toOtherMatches, type EspnMatch } from "../src/lib/football/clubs";
@@ -89,6 +90,7 @@ const squadView = {
   verdicts: computeVerdicts(input).sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict] || a.player.posId - b.player.posId),
   suggestions: suggestTransfers(input),
 };
+const squadFixture = { ...squadView, captain: pickCaptain(squadView.verdicts, ctx.nextEvent) };
 
 // Watchlist: the top three suggestions, each against the player they would replace.
 const watchIds = squadView.suggestions.slice(0, 3).map((s) => s.player.id);
@@ -138,7 +140,7 @@ const savedTeams = {
     { entryId: 2, name: "Second Squad", managerName: "Demo Manager" },
   ],
 };
-for (const [name, body] of Object.entries({ squad: squadView, watchlist, matches: matchday, players, profile: { entryId: 1 }, teams: savedTeams })) {
+for (const [name, body] of Object.entries({ squad: squadFixture, watchlist, matches: matchday, players, profile: { entryId: 1 }, teams: savedTeams })) {
   await writeFile(join(out, `${name}.json`), JSON.stringify(body, null, 1) + "\n");
 }
 console.log(`Wrote ${out}: squad (${squad.length}), watchlist (${watchIds.length}), matches GW${gw} (${matches.length}), players (${players.players.length})`);

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EntryForm } from "@/components/entry-form";
-import { VerdictRow } from "@/components/squad-ui";
+import { CaptainCard, VerdictRow } from "@/components/squad-ui";
 import { getSquadView } from "@/lib/app/squad";
 import { EntryNotFound } from "@/lib/fpl/entry";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -119,6 +119,8 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
             : "Nothing to change this week."}{" "}
         <span className="text-slate-500">Tap a player for the numbers.</span>
       </p>
+
+      {view.captain && <CaptainCard pick={view.captain} verdicts={verdicts} />}
 
       {/* Two columns on a wide screen. items-start, so opening one row does not stretch the
           row beside it. */}

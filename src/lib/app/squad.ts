@@ -1,5 +1,6 @@
 import "server-only";
 import { getGameData, getPlayerRows } from "@/lib/fpl/data";
+import { pickCaptain, type CaptainPick } from "@/lib/fpl/captain";
 import { loadTeam, type LoadedTeam } from "@/lib/fpl/entry";
 import type { PlayerRow } from "@/lib/fpl/row";
 import { foldName } from "@/lib/utils";
@@ -37,6 +38,8 @@ export interface SquadView {
   team: SquadSummary;
   verdicts: PlayerVerdict[];
   suggestions: Suggestion[];
+  /** who to captain next gameweek; null when nobody in the squad has a game */
+  captain: CaptainPick | null;
 }
 
 const ORDER = { sell: 0, watch: 1, keep: 2 } as const;
@@ -68,6 +71,8 @@ export async function getSquadView(entryId: number): Promise<SquadView> {
   const input = verdictInput(team, data.ctx.nextEvent);
   const next = data.events.find((e) => e.id === data.ctx.nextEvent) ?? null;
 
+  const verdicts = await verdictsFor(team);
+
   return {
     team: {
       entryId,
@@ -79,8 +84,9 @@ export async function getSquadView(entryId: number): Promise<SquadView> {
       bank: team.bank,
       freeTransfers: team.freeTransfers,
     },
-    verdicts: await verdictsFor(team),
+    verdicts,
     suggestions: suggestTransfers(input),
+    captain: pickCaptain(verdicts, data.ctx.nextEvent),
   };
 }
 
