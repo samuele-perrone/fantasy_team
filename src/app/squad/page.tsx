@@ -4,7 +4,8 @@ import { EntryForm } from "@/components/entry-form";
 import { VerdictRow } from "@/components/squad-ui";
 import { getSquadView } from "@/lib/app/squad";
 import { EntryNotFound } from "@/lib/fpl/entry";
-import { getSavedEntryId } from "@/lib/supabase/profile";
+import { TeamSwitcher } from "@/components/team-switcher";
+import { listTeams, type TeamsView } from "@/lib/supabase/teams";
 import { createClient, getUserId } from "@/lib/supabase/server";
 import { listWatchlist } from "@/lib/supabase/watchlist";
 import { money } from "@/lib/utils";
@@ -16,12 +17,15 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
   const params = await searchParams;
-  const signedIn = Boolean(await getUserId());
+  const userId = await getUserId();
+  const signedIn = Boolean(userId);
   const rawId = first(params.id);
-  // ?enter=1 is "I want to type a different ID", so the saved one must not load over it.
+  // ?enter=1 is "I want to add a team", so the saved one must not load over the form.
   const wantsForm = Boolean(first(params.enter));
-  const savedId = signedIn && !rawId && !wantsForm ? await getSavedEntryId() : null;
-  const entryId = rawId && /^\d+$/.test(rawId) ? Number(rawId) : savedId;
+  const saved: TeamsView = userId
+    ? await listTeams((await createClient()) as unknown as SupabaseClient, userId)
+    : { active: null, teams: [] };
+  const entryId = rawId && /^\d+$/.test(rawId) ? Number(rawId) : wantsForm ? null : saved.active;
 
   if (!entryId || wantsForm) {
     return (
@@ -34,8 +38,18 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         <EntryForm action="/squad" signedIn={signedIn} defaultValue={rawId} />
         {first(params.error) && (
           <p className="mt-3 text-[13px] text-rose-400">
-            That does not look like a team ID. It should be digits only.
+            {first(params.error) === "notfound"
+              ? `No FPL team found for ID ${first(params.id) ?? ""}. Check the number and try again.`
+              : "That does not look like a team ID. It should be digits only."}
           </p>
+        )}
+        {saved.teams.length > 0 && (
+          <Link
+            href="/squad"
+            className="mt-3 inline-block text-[13px] font-semibold text-slate-400 hover:text-white hover:underline"
+          >
+            ← Back to my teams
+          </Link>
         )}
       </div>
     );
@@ -78,14 +92,22 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
         <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-400">
           Gameweek {team.nextEvent}
         </div>
-        <h1 className="truncate text-[22px] font-bold tracking-tight md:text-[28px] text-white">{team.name}</h1>
+        {signedIn && saved.teams.length > 0 ? (
+          <TeamSwitcher name={team.name} current={team.entryId} teams={saved.teams} />
+        ) : (
+          <h1 className="truncate text-[22px] font-bold tracking-tight md:text-[28px] text-white">{team.name}</h1>
+        )}
         <p className="mt-0.5 text-[12.5px] text-slate-400">
           {money(team.bank)} in the bank · {team.freeTransfers} free transfer
           {team.freeTransfers === 1 ? "" : "s"}
-          {" · "}
-          <Link href="/squad?enter=1" className="text-slate-500 hover:text-white hover:underline">
-            change team
-          </Link>
+          {!(signedIn && saved.teams.length > 0) && (
+            <>
+              {" · "}
+              <Link href="/squad?enter=1" className="text-slate-500 hover:text-white hover:underline">
+                change team
+              </Link>
+            </>
+          )}
         </p>
       </div>
 

@@ -66,7 +66,7 @@ It is read at runtime, not baked into the build, so no redeploy is needed. A bar
 Schema lives in `supabase/migrations/` and is applied by pasting into the Supabase SQL
 editor at `https://supabase.com/dashboard/project/xplgtysifprqfxmvkwjy/sql/new`, or through
 the Supabase connector. Migrations are written to be idempotent, so re-running is safe. All
-of `0001`–`0005` are applied.
+of `0001`–`0006` are applied.
 
 `scripts/db-push.mjs` can apply them over a direct Postgres connection instead, but it needs
 `POSTGRES_URL_NON_POOLING` in `.env.local`, which is not set.
@@ -74,6 +74,9 @@ of `0001`–`0005` are applied.
 Tables, all with row-level security:
 
 - `profiles` — one row per auth user, holding their FPL team id
+- `saved_teams` — one row per user and FPL team id, with the team's FPL name
+  (`0006_saved_teams.sql`). `profiles.fpl_entry_id` is the one My Squad shows. A profile
+  from before this table carries its team over on first read (`src/lib/supabase/teams.ts`)
 - `watchlist` — one row per user and FPL player id (`0003_watchlist.sql`). FPL reassigns
   player ids every season, so **empty this table at the season rollover**
 - `squads` — the old builder's saved squads, created by `0001` and dropped by `0004`, so a

@@ -14,6 +14,7 @@ enum Fixtures {
 /// An API that answers from the fixtures and keeps the watchlist in memory.
 actor DemoAPI: FTHAPI {
     private var watched: Set<Int>
+    private var saved: TeamsView = (try? Fixtures.load("teams", as: TeamsView.self)) ?? TeamsView(active: nil, teams: [])
 
     init() {
         let list = (try? Fixtures.load("watchlist", as: WatchlistResponse.self))?.players ?? []
@@ -24,6 +25,28 @@ actor DemoAPI: FTHAPI {
     func matches(gameweek: Int?) async throws -> MatchdayView { try Fixtures.load("matches") }
     func profile() async throws -> Profile { try Fixtures.load("profile") }
     func saveProfile(entryId: Int) async throws -> Profile { Profile(entryId: entryId) }
+
+    func teams() async throws -> TeamsView { saved }
+
+    func addTeam(entryId: Int) async throws -> TeamsView {
+        var teams = saved.teams
+        if !teams.contains(where: { $0.entryId == entryId }) {
+            teams.append(SavedTeam(entryId: entryId, name: "Team \(entryId)", managerName: nil))
+        }
+        saved = TeamsView(active: entryId, teams: teams)
+        return saved
+    }
+
+    func switchTeam(entryId: Int) async throws -> TeamsView {
+        saved = TeamsView(active: entryId, teams: saved.teams)
+        return saved
+    }
+
+    func removeTeam(entryId: Int) async throws -> TeamsView {
+        let teams = saved.teams.filter { $0.entryId != entryId }
+        saved = TeamsView(active: saved.active == entryId ? teams.first?.entryId : saved.active, teams: teams)
+        return saved
+    }
 
     func players(_ query: BrowseQuery) async throws -> PlayersView {
         let all: PlayersView = try Fixtures.load("players")

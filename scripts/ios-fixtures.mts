@@ -131,7 +131,14 @@ const players = {
 };
 
 await mkdir(out, { recursive: true });
-for (const [name, body] of Object.entries({ squad: squadView, watchlist, matches: matchday, players, profile: { entryId: 1 } })) {
+const savedTeams = {
+  active: 1,
+  teams: [
+    { entryId: 1, name: "Demo XI", managerName: "Demo Manager" },
+    { entryId: 2, name: "Second Squad", managerName: "Demo Manager" },
+  ],
+};
+for (const [name, body] of Object.entries({ squad: squadView, watchlist, matches: matchday, players, profile: { entryId: 1 }, teams: savedTeams })) {
   await writeFile(join(out, `${name}.json`), JSON.stringify(body, null, 1) + "\n");
 }
 console.log(`Wrote ${out}: squad (${squad.length}), watchlist (${watchIds.length}), matches GW${gw} (${matches.length}), players (${players.players.length})`);

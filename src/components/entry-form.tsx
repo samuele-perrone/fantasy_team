@@ -23,7 +23,11 @@ export function EntryForm({
     "use server";
     const id = String(formData.get("id") ?? "").trim();
     if (!/^\d+$/.test(id)) redirect(`${action}?error=invalid`);
-    if (formData.get("remember") === "on") await saveEntryId(Number(id));
+    if (formData.get("remember") === "on") {
+      // Saved teams load from the profile, so there is no need to carry the id in the URL.
+      const saved = await saveEntryId(Number(id));
+      redirect(saved.ok ? action : `${action}?enter=1&error=notfound&id=${id}`);
+    }
     redirect(`${action}?id=${id}`);
   }
 
@@ -61,7 +65,7 @@ export function EntryForm({
               defaultChecked
               className="accent-brand-500"
             />
-            Remember this ID on my account
+            Save this team to my account
           </label>
         )}
       </div>

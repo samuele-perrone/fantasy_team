@@ -213,6 +213,19 @@ struct PlayersView: Codable, Sendable {
     let teams: [TeamOption]
 }
 
+struct SavedTeam: Codable, Hashable, Identifiable, Sendable {
+    var id: Int { entryId }
+    let entryId: Int
+    let name: String
+    let managerName: String?
+}
+
+/// The manager's saved teams and which one My Squad shows (`/api/v1/teams`).
+struct TeamsView: Codable, Sendable {
+    let active: Int?
+    let teams: [SavedTeam]
+}
+
 struct Profile: Codable, Sendable {
     let entryId: Int?
 }

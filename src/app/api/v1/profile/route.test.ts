@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const auth = vi.hoisted(() => ({ value: null as null | { userId: string; supabase: unknown } }));
-const fpl = vi.hoisted(() => ({ getEntry: vi.fn() }));
+const teams = vi.hoisted(() => {
+  class TeamNotFound extends Error {}
+  return { TeamNotFound, addTeam: vi.fn() };
+});
 
 vi.mock("@/lib/supabase/server", () => ({ getRequestAuth: vi.fn(async () => auth.value) }));
-vi.mock("@/lib/fpl/client", () => fpl);
+vi.mock("@/lib/supabase/teams", () => teams);
 
 import { GET, PUT } from "./route";
 
@@ -30,7 +33,7 @@ let db: ReturnType<typeof supabase>;
 beforeEach(() => {
   db = supabase(42);
   auth.value = { userId: "u1", supabase: db.client };
-  fpl.getEntry.mockReset().mockResolvedValue({ id: 1 });
+  teams.addTeam.mockReset().mockResolvedValue({});
 });
 
 describe("/api/v1/profile", () => {
@@ -44,22 +47,21 @@ describe("/api/v1/profile", () => {
     expect(await (await GET(new Request("http://t/api/v1/profile"))).json()).toEqual({ entryId: 42 });
   });
 
-  it("saves a team ID FPL knows", async () => {
+  it("saves a team ID as a saved team, which also shows it", async () => {
     const res = await put({ entryId: 849650 });
     expect(res.status).toBe(200);
-    expect(db.upserts).toEqual([{ id: "u1", fpl_entry_id: 849650 }]);
+    expect(teams.addTeam).toHaveBeenCalledWith(db.client, "u1", 849650);
   });
 
   it("rejects an ID that is not a positive whole number, without asking FPL", async () => {
     for (const entryId of [0, -1, 1.5, "abc", null]) {
       expect((await put({ entryId })).status).toBe(400);
     }
-    expect(fpl.getEntry).not.toHaveBeenCalled();
+    expect(teams.addTeam).not.toHaveBeenCalled();
   });
 
-  it("does not save an ID FPL has no team for", async () => {
-    fpl.getEntry.mockRejectedValue(new Error("404"));
+  it("answers 404 for an ID FPL has no team for", async () => {
+    teams.addTeam.mockRejectedValue(new teams.TeamNotFound("No FPL team found for ID 999"));
     expect((await put({ entryId: 999 })).status).toBe(404);
-    expect(db.upserts).toEqual([]);
   });
 });

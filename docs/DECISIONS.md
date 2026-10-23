@@ -635,3 +635,19 @@ and a tab only refetches when its data is over a minute old. Links that load ano
 the website (gameweek arrows, Players filters) show a spinner while they wait, because a tap
 that looks like it did nothing gets tapped again.
 
+### Saved teams: added by ID once, switched by name
+
+FPL has no public search for a team by name or manager, so the first time still needs the ID
+from the FPL website. After that a team is kept in `saved_teams` under the name FPL gives it,
+and My Squad's title opens a list to switch between them, on the web and in the app.
+
+`profiles.fpl_entry_id` stays the active team rather than moving to a flag on `saved_teams`.
+Every reader of the active team — My Squad, the Watchlist's comparisons, Matches'
+highlighting, `/api/v1/squad` — already reads it there, and so does every installed app build.
+Profiles from before the table carry their team over on first read instead of in a migration,
+because the team's name has to come from FPL, which SQL cannot call.
+
+Migration 0006 was applied with `execute_sql` after `apply_migration` failed twice with
+"Invalid or expired requestState". It is idempotent, so the SQL editor can re-run it safely,
+but it is missing from Supabase's own migration history.
+

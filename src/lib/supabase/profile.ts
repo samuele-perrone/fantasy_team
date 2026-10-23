@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, getUserId } from "./server";
+import { addTeam, TeamNotFound } from "./teams";
 
 export interface ActionResult {
   ok: boolean;
@@ -30,13 +32,12 @@ export async function saveEntryId(entryId: number): Promise<ActionResult> {
     return { ok: false, error: "That is not a valid FPL team ID." };
   }
 
-  const supabase = await createClient();
-  // upsert keyed on the primary key, which is the auth user id
-  const { error } = await supabase
-    .from("profiles")
-    .upsert({ id: userId, fpl_entry_id: entryId }, { onConflict: "id" });
-
-  if (error) return { ok: false, error: error.message };
+  // Adding it saves the team under its FPL name and makes it the one My Squad shows.
+  try {
+    await addTeam((await createClient()) as unknown as SupabaseClient, userId, entryId);
+  } catch (e) {
+    return { ok: false, error: e instanceof TeamNotFound ? e.message : "Could not save the team." };
+  }
 
   revalidatePath("/squad");
   return { ok: true };

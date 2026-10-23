@@ -28,6 +28,11 @@ protocol FTHAPI: Sendable {
     func setWatched(_ playerId: Int, _ watched: Bool) async throws
     func profile() async throws -> Profile
     func saveProfile(entryId: Int) async throws -> Profile
+    func teams() async throws -> TeamsView
+    /// Adds a team, checked with FPL, and shows it on My Squad.
+    func addTeam(entryId: Int) async throws -> TeamsView
+    func switchTeam(entryId: Int) async throws -> TeamsView
+    func removeTeam(entryId: Int) async throws -> TeamsView
 }
 
 /// Talks to the website's `/api/v1`, sending the Supabase access token as a bearer token.
@@ -71,6 +76,26 @@ struct LiveAPI: FTHAPI {
 
     func saveProfile(entryId: Int) async throws -> Profile {
         try await send("profile", method: "PUT", body: ["entryId": entryId])
+    }
+
+    func teams() async throws -> TeamsView {
+        try await get("teams")
+    }
+
+    func addTeam(entryId: Int) async throws -> TeamsView {
+        try await send("teams", method: "POST", body: ["entryId": entryId])
+    }
+
+    func switchTeam(entryId: Int) async throws -> TeamsView {
+        try await send("teams", method: "PUT", body: ["entryId": entryId])
+    }
+
+    func removeTeam(entryId: Int) async throws -> TeamsView {
+        try await send(
+            "teams", method: "DELETE",
+            query: [URLQueryItem(name: "entryId", value: String(entryId))],
+            body: nil as [String: Int]?
+        )
     }
 
     /// The Players filters as the server reads them (`parseBrowseQuery`), defaults left out.

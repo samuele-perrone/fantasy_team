@@ -4,6 +4,11 @@ const user = vi.hoisted(() => ({ id: "u1" as string | null }));
 const db = vi.hoisted(() => ({ upserts: [] as unknown[], saved: 99 as number | null }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+const teams = vi.hoisted(() => {
+  class TeamNotFound extends Error {}
+  return { TeamNotFound, addTeam: vi.fn(async () => ({})) };
+});
+vi.mock("./teams", () => teams);
 vi.mock("./server", () => {
   const chain = {
     select: () => chain,
@@ -20,6 +25,7 @@ vi.mock("./server", () => {
 import { getSavedEntryId, saveEntryId } from "./profile";
 
 beforeEach(() => {
+  teams.addTeam.mockClear();
   user.id = "u1";
   db.upserts = [];
   db.saved = 99;
@@ -32,9 +38,14 @@ describe("profile", () => {
     expect(await getSavedEntryId()).toBeNull();
   });
 
-  it("saves a valid id against the signed-in user", async () => {
+  it("saves a valid id as a saved team for the signed-in user", async () => {
     expect(await saveEntryId(1234)).toEqual({ ok: true });
-    expect(db.upserts).toEqual([{ id: "u1", fpl_entry_id: 1234 }]);
+    expect(teams.addTeam).toHaveBeenCalledWith(expect.anything(), "u1", 1234);
+  });
+
+  it("reports a team FPL does not have", async () => {
+    teams.addTeam.mockRejectedValueOnce(new teams.TeamNotFound("No FPL team found for ID 9"));
+    expect(await saveEntryId(9)).toEqual({ ok: false, error: "No FPL team found for ID 9" });
   });
 
   it("rejects invalid ids and signed-out callers without writing", async () => {
@@ -42,6 +53,6 @@ describe("profile", () => {
     expect((await saveEntryId(1.5)).ok).toBe(false);
     user.id = null;
     expect((await saveEntryId(1234)).ok).toBe(false);
-    expect(db.upserts).toEqual([]);
+    expect(teams.addTeam).not.toHaveBeenCalled();
   });
 });

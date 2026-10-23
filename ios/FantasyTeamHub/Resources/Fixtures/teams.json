@@ -1,0 +1,15 @@
+{
+ "active": 1,
+ "teams": [
+  {
+   "entryId": 1,
+   "name": "Demo XI",
+   "managerName": "Demo Manager"
+  },
+  {
+   "entryId": 2,
+   "name": "Second Squad",
+   "managerName": "Demo Manager"
+  }
+ ]
+}

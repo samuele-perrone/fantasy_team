@@ -44,6 +44,22 @@ struct ContractTests {
         #expect(profile.entryId != nil)
     }
 
+    @Test func decodesSavedTeams() throws {
+        let view: TeamsView = try Fixtures.load("teams")
+        #expect(view.teams.count == 2)
+        #expect(view.active == view.teams.first?.entryId)
+    }
+
+    @Test func demoTeamsSwitchAndFallBackWhenTheActiveOneIsRemoved() async throws {
+        let api = DemoAPI()
+        let start = try await api.teams()
+        let other = try #require(start.teams.last?.entryId)
+        #expect(try await api.switchTeam(entryId: other).active == other)
+        let after = try await api.removeTeam(entryId: other)
+        #expect(after.active == after.teams.first?.entryId)
+        #expect(!after.teams.contains { $0.entryId == other })
+    }
+
     private func rank(_ v: Verdict) -> Int {
         switch v { case .sell: 0; case .watch: 1; case .keep: 2 }
     }
