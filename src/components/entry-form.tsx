@@ -70,7 +70,19 @@ export function EntryForm({
         )}
       </div>
 
-      <FindYourId />
+      {/* Folded behind an (i): needed once, by someone who has not found it yet. */}
+      <details className="group mt-3 border-t border-pitch-800 pt-3">
+        <summary className="flex w-fit cursor-pointer list-none items-center gap-2 text-[12.5px] font-semibold text-slate-400 transition hover:text-white [&::-webkit-details-marker]:hidden">
+          <span
+            aria-hidden
+            className="grid h-[20px] w-[20px] place-items-center rounded-full border border-pitch-600 text-[11px] font-bold transition group-open:border-brand-500 group-open:bg-brand-500/15 group-open:text-brand-300"
+          >
+            i
+          </span>
+          Where do I find my team ID?
+        </summary>
+        <FindYourId className="mt-3" />
+      </details>
     </form>
   );
 }

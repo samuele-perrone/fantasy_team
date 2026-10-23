@@ -209,12 +209,20 @@ struct TeamIDForm: View {
     @State private var text = ""
     @State private var saving = false
     @State private var error: String?
+    @State private var showingHelp = false
     let saved: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Add an FPL team").font(.title3.bold()).foregroundStyle(Theme.text)
-            Text("Find its ID on the FPL website under Points: it's the number in the address, after /entry/. It's saved under its name, so after this you switch teams from My Squad.")
+            HStack {
+                Text("Add an FPL team").font(.title3.bold()).foregroundStyle(Theme.text)
+                Spacer()
+                Button { showingHelp = true } label: {
+                    Image(systemName: "info.circle").font(.title3)
+                }
+                .accessibilityLabel("Where do I find my team ID?")
+            }
+            Text("Enter the team's FPL ID once. It's saved under its name, so after this you switch teams from My Squad.")
                 .font(.footnote).foregroundStyle(Theme.secondary)
             TextField("e.g. 1234567", text: $text)
                 .keyboardType(.numberPad)
@@ -237,6 +245,9 @@ struct TeamIDForm: View {
         }
         .padding(20)
         .background(Theme.background)
+        .sheet(isPresented: $showingHelp) {
+            FindYourID().presentationDetents([.medium, .large])
+        }
     }
 
     private func save() async {
@@ -252,6 +263,53 @@ struct TeamIDForm: View {
             saved()
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+}
+
+/// How to find an FPL team ID: the same steps as the website's (i).
+struct FindYourID: View {
+    @Environment(\.dismiss) private var dismiss
+    private static let steps = [
+        "Log in to the official Fantasy Premier League website.",
+        "Open the **Pick Team** tab.",
+        "Open your **Gameweek History** or **Transfer History**.",
+        "Look at the address bar. Your ID is the number right after **/entry/**.",
+    ]
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                ForEach(Array(Self.steps.enumerated()), id: \.offset) { i, step in
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text("\(i + 1)")
+                            .font(.caption.bold())
+                            .frame(width: 22, height: 22)
+                            .background(Theme.surfaceRaised, in: Circle())
+                        Text(.init(step)).font(.callout).foregroundStyle(Theme.text)
+                    }
+                }
+                (Text("fantasy.premierleague.com/entry/").foregroundStyle(Theme.faint)
+                    + Text("1234567").foregroundStyle(Theme.brand).bold()
+                    + Text("/history").foregroundStyle(Theme.faint))
+                    .font(.system(.footnote, design: .monospaced))
+                    .padding(.top, 4)
+                Text("The FPL app doesn't show the ID, so use a browser. You only need it once per team.")
+                    .font(.footnote).foregroundStyle(Theme.secondary)
+                Link(destination: URL(string: "https://fantasy.premierleague.com/")!) {
+                    Text("Open the FPL website")
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .background(Theme.brandFill, in: RoundedRectangle(cornerRadius: 12))
+                }
+                Spacer()
+            }
+            .padding(20)
+            .background(Theme.background)
+            .navigationTitle("Find your team ID")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button("Done") { dismiss() } }
         }
     }
 }
