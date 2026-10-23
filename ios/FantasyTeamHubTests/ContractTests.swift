@@ -85,6 +85,15 @@ struct RequestTests {
         #expect(items == ["q": "saka", "pos": "MID", "team": "1", "max": "7.5", "sort": "form", "n": "60"])
     }
 
+    @Test func loadsPhotosThroughTheImageOptimiser() throws {
+        let url = try #require(URLComponents(url: Config.photoURL(code: 223094), resolvingAgainstBaseURL: false))
+        #expect(url.host == "fantasyteamhub.com" && url.path == "/_next/image")
+        let query = Dictionary(uniqueKeysWithValues: (url.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+        // The website only optimises widths in next.config's imageSizes, and only FPL's photos.
+        #expect(query["w"] == "128")
+        #expect(query["url"] == "https://resources.premierleague.com/premierleague/photos/players/110x140/p223094.png")
+    }
+
     @Test func buildsPathsUnderTheAPIBase() {
         #expect(api.url("matches", query: [URLQueryItem(name: "gw", value: "7")]).absoluteString
             == "https://example.com/api/v1/matches?gw=7")

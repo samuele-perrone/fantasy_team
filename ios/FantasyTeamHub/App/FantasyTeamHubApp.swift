@@ -4,6 +4,12 @@ import SwiftUI
 struct FantasyTeamHubApp: App {
     @State private var auth = AuthStore()
 
+    init() {
+        // AsyncImage loads through URLSession.shared, whose default cache (512 kB in memory)
+        // holds a few photos at most, so scrolling back up downloaded them again.
+        URLCache.shared = URLCache(memoryCapacity: 32 * 1024 * 1024, diskCapacity: 200 * 1024 * 1024)
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

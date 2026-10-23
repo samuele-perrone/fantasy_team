@@ -2,8 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+/**
+ * The Supabase client is loaded on the tap, not with the page: this button is in the header of
+ * every page, and importing it statically put the whole library (~67 kB compressed, a quarter
+ * of the site's JavaScript) on all of them for a button that is rarely pressed.
+ */
+const supabase = () => import("@/lib/supabase/client").then((m) => m.createClient());
 
 export function AuthButton({
   email,
@@ -24,8 +30,7 @@ export function AuthButton({
 
   const signIn = async () => {
     setBusy(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await (await supabase()).auth.signInWithOAuth({
       provider: "google",
       // Signing in from /login must return to the intended page, not back to /login.
       options: {
@@ -39,7 +44,7 @@ export function AuthButton({
 
   const signOut = async () => {
     setBusy(true);
-    await createClient().auth.signOut();
+    await (await supabase()).auth.signOut();
     // The proxy will bounce the now-unauthenticated request to /login.
     router.push("/login");
     router.refresh();

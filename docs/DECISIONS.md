@@ -555,6 +555,21 @@ Some players have no photo. The headshot is a CSS background over a placeholder 
 than an `<img>`: Safari draws a broken-image icon for a failed `<img>` even with `alt=""`,
 which the first version did, while a background that fails to load just draws nothing.
 
+Pass `PlayerPhoto` the drawn size. `getImageProps` already returns the 2× image as `src`, and
+the first version doubled the size as well, asking for 256px images: upscaled from FPL's 110px
+originals and twice the bytes (9 KB against 4 KB each, ~150 KB on a page of Players).
+
+The app loads the same photos through the website's optimiser (`Config.photoURL`, `w=128`),
+not from FPL directly: FPL's PNG is ~96 KB with no cache header, the optimised copy ~12 KB
+(iOS does not ask for WebP) and cached for a month. The app also raises `URLCache.shared`
+from 512 KB in memory, which held a few photos at most, to 32 MB, and 200 MB on disk.
+
+### The Supabase client loads when Sign in or Sign out is tapped
+
+`AuthButton` is in every page's header. Importing the browser Supabase client statically put
+the whole library (~67 KB compressed, a quarter of the site's JavaScript) on every page, for a
+button rarely pressed. It is imported on the tap instead: 216 KB → 149 KB per page.
+
 ### The logo is the verdict bars
 
 Keep, watch and sell as three bars of falling length, in the verdict colours. It says what the

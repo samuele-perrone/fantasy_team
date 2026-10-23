@@ -91,7 +91,9 @@ export function DifficultyPill({
  * The photo is a CSS background rather than an <img>: FPL has no photo for some players, and
  * Safari draws a broken-image icon for a failed <img> even with alt="". A background that
  * fails to load simply draws nothing, so the placeholder shows through. It is still served
- * through the image optimiser, at twice the drawn size for sharp retina screens.
+ * through the image optimiser. Pass the drawn size: getImageProps already returns the 2×
+ * version as `src`, and doubling it here as well asked for 256px images, upscaled from FPL's
+ * 110px originals and twice the bytes.
  */
 export function PlayerPhoto({
   code,
@@ -105,8 +107,8 @@ export function PlayerPhoto({
   const { props } = getImageProps({
     src: photoUrl(code),
     alt: "",
-    width: size * 2,
-    height: size * 2,
+    width: size,
+    height: size,
   });
   return (
     <span

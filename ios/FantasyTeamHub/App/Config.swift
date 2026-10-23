@@ -13,8 +13,18 @@ enum Config {
     /// redirect URLs (Authentication → URL Configuration), and its scheme in Info.plist.
     static let authCallback = URL(string: "fantasyteamhub://auth-callback")!
 
+    /// A player's headshot through the website's image optimiser: FPL's PNG is ~96 kB with no
+    /// cache header, the optimised WebP ~6 kB and cached for a month. 128px covers the largest
+    /// drawn size (64pt) on a 3× screen as far as FPL's 110px original allows.
     static func photoURL(code: Int) -> URL {
-        URL(string: "https://resources.premierleague.com/premierleague/photos/players/110x140/p\(code).png")!
+        let source = "https://resources.premierleague.com/premierleague/photos/players/110x140/p\(code).png"
+        var url = URLComponents(string: "https://fantasyteamhub.com/_next/image")!
+        url.queryItems = [
+            URLQueryItem(name: "url", value: source),
+            URLQueryItem(name: "w", value: "128"),
+            URLQueryItem(name: "q", value: "75"),
+        ]
+        return url.url!
     }
 
     static func badgeURL(teamCode: Int) -> URL {
