@@ -11,7 +11,7 @@ settings:
     DEVELOPMENT_TEAM: 7RYYQ8M5X5
     SWIFT_VERSION: "6.0"
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "6"
+    CURRENT_PROJECT_VERSION: "7"
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
@@ -34,7 +34,12 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:
           UIColorName: LaunchBackground
-        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Every orientation: iPhone Duo's inner screen is wide, and a portrait lock there leaves
+        # the app letterboxed. Layout reads the window's width, never the orientation.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
         # Google sign-in returns here, through Supabase.
         CFBundleURLTypes:

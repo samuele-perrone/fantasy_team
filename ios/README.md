@@ -93,3 +93,20 @@ FantasyTeamHub/Resources/        asset catalog (app icon, launch colour), fixtur
 FantasyTeamHubTests/             contract, request and date tests (Swift Testing)
 scripts/make-app-icon.swift      renders the app icons from the logo's geometry
 ```
+
+## iPhone Duo and wide windows
+
+The app runs on iPhone Duo's outer and inner screens, in landscape, and side by side with
+another app. What that relies on, and should stay true:
+
+- built with the iOS 27.1 SDK or later (Xcode 27.1), so the app resizes rather than being
+  letterboxed; no `UIRequiresFullScreen`
+- every orientation allowed in `project.yml`; nothing reads the device orientation, idiom or
+  `UIScreen.main`, only the window's own size
+- list screens use `.readableWidth()` (`Shared/Components.swift`), which centres the rows at
+  720pt at most when the window is wider; on a phone in portrait it changes nothing
+
+To check: Xcode 27.1's **iPhone Duo** simulator needs the iOS 27.1 runtime
+(`xcodebuild -downloadPlatform iOS -buildVersion 27.1`, ~8 GB), and opens and closes from the
+controls under the device in Device Hub. A build with `TARGETED_DEVICE_FAMILY=1,2` on an iPad
+simulator shows the wide layout without unfolding; do not commit that setting.

@@ -79,6 +79,7 @@ struct WildcardScreen: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .readableWidth()
     }
 
     private func row(_ p: Player, view: WildcardView, kept: Set<Int>) -> some View {

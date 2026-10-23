@@ -51,6 +51,7 @@ struct WatchlistScreen: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .readableWidth()
             .background(Theme.background)
             .navigationTitle("Watchlist")
             .refreshable { await load() }

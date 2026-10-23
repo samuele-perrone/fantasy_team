@@ -216,3 +216,31 @@ struct StateView: View {
         }
     }
 }
+
+/// Keeps a list's rows a readable width, centred, when the window is wide: iPhone Duo open,
+/// or any iPhone in landscape. Reads the view's own width, never the screen or orientation,
+/// so it follows Split View and folding too. On a phone in portrait it changes nothing.
+struct ReadableWidth: ViewModifier {
+    var maxWidth: CGFloat = 720
+    @State private var width: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        let extra = (width - maxWidth) / 2
+        Group {
+            // Only when wider: a margin of 0 is not "no change", it replaces the inset list's
+            // own side margins and runs the rows into the screen edges.
+            if extra > 0 {
+                content.contentMargins(.horizontal, extra, for: .scrollContent)
+            } else {
+                content
+            }
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+    }
+}
+
+extension View {
+    func readableWidth(_ maxWidth: CGFloat = 720) -> some View {
+        modifier(ReadableWidth(maxWidth: maxWidth))
+    }
+}

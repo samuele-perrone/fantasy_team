@@ -701,3 +701,12 @@ money unspent. Verdicts still use today's price for a single swap, where the err
 
 The `/api/v1/squad` and `/api/v1/wildcard` handlers share `entryRoute` (`src/lib/app/entry-route.ts`),
 which resolves `?id=` or the saved team and maps the errors, so the two cannot drift apart.
+
+### The app follows the window, for iPhone Duo
+
+iPhone Duo's inner screen reports regular size classes like an iPad, and apps resize when it is
+folded, unfolded or put beside another app. The app was locked to portrait and its lists ran
+the full window width, so it now allows every orientation and caps list rows at a readable
+720pt, centred, from the window's own width (`ReadableWidth`). The cap is applied only when the
+window is wider: setting the margin to 0 replaced the inset list's own side margins, which the
+first version did on every iPhone before the Duo simulator showed it.

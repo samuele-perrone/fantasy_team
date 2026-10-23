@@ -125,6 +125,7 @@ struct SquadScreen: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .readableWidth()
     }
 
     private var accountMenu: some ToolbarContent {

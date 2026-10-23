@@ -47,6 +47,7 @@ struct PlayersScreen: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .readableWidth()
             .background(Theme.background)
             .navigationTitle("Players")
             .searchable(text: $search, prompt: "Search by name")

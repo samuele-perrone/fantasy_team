@@ -86,6 +86,7 @@ struct MatchesView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .readableWidth()
     }
 
     private func step(_ delta: Int) {
