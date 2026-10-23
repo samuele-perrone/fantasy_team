@@ -43,8 +43,12 @@ tag; its routes now return 404.
 | `/watchlist` | **Watchlist.** Suggested buys for this week, the players you have starred, each compared with the squad player they would replace, and a name search to add more |
 | `/players` | **Players.** Every available player, filtered by position, club, maximum price and name, sorted by points over the next five, next game, form, season points, price or how many managers picked them. A star adds one to the watchlist; tapping opens the same numbers as My Squad |
 | `/players/[id]` | Player profile: points per fixture, underlying stats, gameweek history, and a star to watch them |
+| `/account` | The signed-in account: email, sign out, and delete the account with everything saved under it (asks twice). The header's person icon links here |
+| `/privacy` | Privacy policy, public. Linked from App Store Connect, so it must match what the code collects |
+| `/support` | Support page and common questions, public. Linked from App Store Connect |
 | `/api/v1/squad` | My Squad as JSON, for the iOS app. Accepts a cookie session or `Authorization: Bearer` |
 | `/api/v1/wildcard` | The wildcard view as JSON, for the iOS app. Same auth and `?id=` as `/api/v1/squad` |
+| `/api/v1/account` | `DELETE` deletes the caller's account, for the app's Delete account |
 | `/api/v1/players` | Players as JSON, with the page's filters as query parameters |
 | `/api/v1/matches` | Matches as JSON. `?gw=` picks the gameweek |
 | `/api/v1/watchlist` | Watchlist as JSON. `GET`, `POST {playerId}`, `DELETE ?playerId=` |

@@ -66,7 +66,7 @@ It is read at runtime, not baked into the build, so no redeploy is needed. A bar
 Schema lives in `supabase/migrations/` and is applied by pasting into the Supabase SQL
 editor at `https://supabase.com/dashboard/project/xplgtysifprqfxmvkwjy/sql/new`, or through
 the Supabase connector. Migrations are written to be idempotent, so re-running is safe. All
-of `0001`–`0006` are applied.
+of `0001`–`0007` are applied.
 
 `scripts/db-push.mjs` can apply them over a direct Postgres connection instead, but it needs
 `POSTGRES_URL_NON_POOLING` in `.env.local`, which is not set.
@@ -79,6 +79,9 @@ Tables, all with row-level security:
   from before this table carries its team over on first read (`src/lib/supabase/teams.ts`)
 - `watchlist` — one row per user and FPL player id (`0003_watchlist.sql`). FPL reassigns
   player ids every season, so **empty this table at the season rollover**
+- `delete_my_account()` — not a table: a `security definer` function (`0007`) that deletes
+  the caller's own `auth.users` row, which cascades to every table here. It is how Delete
+  account works without the site holding a service-role key
 - `squads` — the old builder's saved squads, created by `0001` and dropped by `0004`, so a
   fresh project replaying the migrations in order ends up without it
 
@@ -341,3 +344,10 @@ The login page's Apple button uses Supabase's Apple OAuth, which needs, once:
 Until then the button fails with "missing OAuth secret". The secret expires after six months
 at most: put a reminder in the calendar and regenerate it the same way. The app's native
 Apple sign-in does not use it.
+
+## App Store
+
+The submission's text, privacy answers and review notes are drafted in
+[APP_STORE.md](APP_STORE.md), with what is still open. `/privacy` and `/support` are public
+(in `PUBLIC_PREFIXES`) because App Store Connect links to them; their contact address is
+`CONTACT_EMAIL` in `src/lib/site.ts`.

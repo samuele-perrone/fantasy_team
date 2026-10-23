@@ -101,6 +101,13 @@ final class AuthStore {
         }
     }
 
+    /// Deletes the account on the server, then signs out here. Throws if the server did not
+    /// confirm, so nobody is told their account is gone when it is not.
+    func deleteAccount() async throws {
+        try await api.deleteAccount()
+        await signOut()
+    }
+
     func signOut() async {
         try? await auth?.signOut()
         if Config.isDemo { state = .signedOut }

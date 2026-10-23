@@ -43,6 +43,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           Sign in to continue
         </h1>
 
+        {params.deleted && (
+          <p className="mt-4 rounded-lg border border-brand-500/40 bg-brand-500/10 px-3 py-2 text-[12.5px] text-brand-300">
+            Your account and everything saved in it have been deleted.
+          </p>
+        )}
+
         {errorParam && (
           <p className="mt-4 rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[12.5px] text-rose-300">
             {errorParam}

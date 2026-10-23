@@ -3,14 +3,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const user = vi.hoisted(() => ({ id: "u1" as string | null }));
 const store = vi.hoisted(() => ({ addToWatchlist: vi.fn(), removeFromWatchlist: vi.fn() }));
 const cache = vi.hoisted(() => ({ revalidatePath: vi.fn() }));
+/** The fake client: a stand-in the other mocks are checked against, which can also sign out. */
+const sb = vi.hoisted(() => ({ auth: { signOut: vi.fn(async () => ({})) } }));
+const account = vi.hoisted(() => ({ deleteAccount: vi.fn(async () => {}) }));
+const nav = vi.hoisted(() => ({
+  redirect: vi.fn((to: string) => {
+    throw new Error(`redirect:${to}`);
+  }),
+}));
 
-vi.mock("@/lib/supabase/server", () => ({ getUserId: async () => user.id, createClient: async () => "sb" }));
+vi.mock("@/lib/supabase/server", () => ({ getUserId: async () => user.id, createClient: async () => sb }));
+vi.mock("@/lib/supabase/account", () => account);
+vi.mock("next/navigation", () => nav);
 vi.mock("@/lib/supabase/watchlist", () => store);
 const teams = vi.hoisted(() => ({ switchTeam: vi.fn(async () => {}), removeTeam: vi.fn(async () => ({})) }));
 vi.mock("next/cache", () => cache);
 vi.mock("@/lib/supabase/teams", () => teams);
 
-import { forgetTeam, selectTeam, setWatched } from "./actions";
+import { deleteMyAccount, forgetTeam, selectTeam, setWatched } from "./actions";
 
 const form = (fields: Record<string, string>) => {
   const f = new FormData();
@@ -26,9 +36,9 @@ beforeEach(() => {
 describe("setWatched", () => {
   it("stars and unstars, then refreshes the pages that show stars", async () => {
     await setWatched(form({ playerId: "12", watch: "1" }));
-    expect(store.addToWatchlist).toHaveBeenCalledWith("sb", "u1", 12);
+    expect(store.addToWatchlist).toHaveBeenCalledWith(sb, "u1", 12);
     await setWatched(form({ playerId: "12", watch: "0" }));
-    expect(store.removeFromWatchlist).toHaveBeenCalledWith("sb", 12);
+    expect(store.removeFromWatchlist).toHaveBeenCalledWith(sb, 12);
     expect(cache.revalidatePath).toHaveBeenCalledWith("/watchlist");
     expect(cache.revalidatePath).toHaveBeenCalledWith("/players");
     expect(cache.revalidatePath).toHaveBeenCalledWith("/players/12");
@@ -47,9 +57,9 @@ describe("setWatched", () => {
 describe("selectTeam and forgetTeam", () => {
   it("switch to and forget a team for the signed-in user, then refresh My Squad", async () => {
     await selectTeam(form({ entryId: "22" }));
-    expect(teams.switchTeam).toHaveBeenCalledWith("sb", "u1", 22);
+    expect(teams.switchTeam).toHaveBeenCalledWith(sb, "u1", 22);
     await forgetTeam(form({ entryId: "33" }));
-    expect(teams.removeTeam).toHaveBeenCalledWith("sb", "u1", 33);
+    expect(teams.removeTeam).toHaveBeenCalledWith(sb, "u1", 33);
     expect(cache.revalidatePath).toHaveBeenCalledWith("/squad");
   });
 
@@ -67,3 +77,24 @@ describe("selectTeam and forgetTeam", () => {
   });
 });
 
+
+describe("deleteMyAccount", () => {
+  it("deletes the account, signs out, then lands on the login page saying so", async () => {
+    await expect(deleteMyAccount()).rejects.toThrow("redirect:/login?deleted=1");
+    expect(account.deleteAccount).toHaveBeenCalledWith(sb);
+    expect(sb.auth.signOut).toHaveBeenCalled();
+  });
+
+  it("does nothing for someone signed out", async () => {
+    user.id = null;
+    await expect(deleteMyAccount()).rejects.toThrow("redirect:/login");
+    expect(account.deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("does not sign out or claim success when the delete fails", async () => {
+    account.deleteAccount.mockRejectedValueOnce(new Error("boom"));
+    await expect(deleteMyAccount()).rejects.toThrow("boom");
+    expect(sb.auth.signOut).not.toHaveBeenCalled();
+    expect(nav.redirect).not.toHaveBeenCalled();
+  });
+});

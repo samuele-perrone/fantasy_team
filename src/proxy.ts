@@ -9,7 +9,7 @@ import { isAllowed } from "@/lib/auth/allowlist";
  * app sends a bearer token rather than a cookie, and a redirect to an HTML login page is no
  * use to it. Each route calls getRequestAuth before doing anything.
  */
-const PUBLIC_PREFIXES = ["/login", "/auth", "/icon", "/apple-icon", "/manifest", "/api/v1"];
+const PUBLIC_PREFIXES = ["/login", "/privacy", "/support", "/auth", "/icon", "/apple-icon", "/manifest", "/api/v1"];
 
 /**
  * Refreshes the Supabase session and gates the whole site behind it.

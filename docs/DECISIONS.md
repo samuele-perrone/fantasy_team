@@ -713,3 +713,17 @@ the full window width, so it now allows every orientation and caps list rows at 
 720pt, centred, from the window's own width (`ReadableWidth`). The cap is applied only when the
 window is wider: setting the margin to 0 replaced the inset list's own side margins, which the
 first version did on every iPhone before the Duo simulator showed it.
+
+### Account deletion runs as a database function, not with an admin key
+
+App Store guideline 5.1.1(v) requires deleting an account from inside the app. Deleting a
+Supabase user normally needs the service-role key, which this site has never held and should
+not: one leaked server variable would expose every account. Instead `delete_my_account()`
+(migration 0007) is `security definer`, takes no arguments, and deletes `auth.uid()`'s own
+row; `profiles`, `saved_teams` and `watchlist` follow by `on delete cascade`. Only
+`authenticated` may execute it.
+
+Apple also asks apps using Sign in with Apple to revoke the user's Apple token on deletion.
+That needs the Apple client secret on the server, which the site does not have; the Supabase
+account and all data are deleted, and the person can remove the app from *Settings → Apple ID
+→ Sign in with Apple*. Revisit if review raises it.

@@ -10,6 +10,8 @@ struct SquadScreen: View {
     @State private var saved: TeamsView?
     @State private var switching = false
     @State private var teamError: String?
+    @State private var confirmingDelete = false
+    @State private var deleteError: String?
     // Demo builds can open straight onto it (`-demo -wildcard`) for checking.
     @State private var showingWildcard = Config.isDemo && CommandLine.arguments.contains("-wildcard")
 
@@ -41,6 +43,24 @@ struct SquadScreen: View {
                         .presentationDetents([.medium])
                 }
                 .navigationDestination(isPresented: $showingWildcard) { WildcardScreen() }
+                .confirmationDialog(
+                    "Delete your account?", isPresented: $confirmingDelete, titleVisibility: .visible
+                ) {
+                    Button("Delete account and everything saved", role: .destructive) {
+                        Task {
+                            do { try await auth.deleteAccount() } catch { deleteError = error.localizedDescription }
+                        }
+                    }
+                } message: {
+                    Text("Removes your account, your saved FPL teams and your watchlist, in the app and on the website. This cannot be undone. Your FPL team itself is not affected.")
+                }
+                .alert("Couldn't delete your account", isPresented: Binding(
+                    get: { deleteError != nil }, set: { if !$0 { deleteError = nil } }
+                )) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("Nothing was deleted. \(deleteError ?? "")")
+                }
                 .alert("Couldn't change team", isPresented: Binding(
                     get: { teamError != nil }, set: { if !$0 { teamError = nil } }
                 )) {
@@ -132,8 +152,11 @@ struct SquadScreen: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button("Add a team", systemImage: "plus") { enteringTeam = true }
-                Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
                     Task { await auth.signOut() }
+                }
+                Button("Delete account…", systemImage: "trash", role: .destructive) {
+                    confirmingDelete = true
                 }
             } label: {
                 Image(systemName: "person.crop.circle").accessibilityLabel("Account")

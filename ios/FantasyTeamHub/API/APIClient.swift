@@ -34,6 +34,8 @@ protocol FTHAPI: Sendable {
     func addTeam(entryId: Int) async throws -> TeamsView
     func switchTeam(entryId: Int) async throws -> TeamsView
     func removeTeam(entryId: Int) async throws -> TeamsView
+    /// Deletes the account and everything saved under it (App Store guideline 5.1.1(v)).
+    func deleteAccount() async throws
 }
 
 /// Talks to the website's `/api/v1`, sending the Supabase access token as a bearer token.
@@ -101,6 +103,10 @@ struct LiveAPI: FTHAPI {
             query: [URLQueryItem(name: "entryId", value: String(entryId))],
             body: nil as [String: Int]?
         )
+    }
+
+    func deleteAccount() async throws {
+        let _: [String: Bool] = try await send("account", method: "DELETE", body: nil as [String: Int]?)
     }
 
     /// The Players filters as the server reads them (`parseBrowseQuery`), defaults left out.

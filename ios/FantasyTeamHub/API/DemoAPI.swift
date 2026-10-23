@@ -43,6 +43,8 @@ actor DemoAPI: FTHAPI {
         return saved
     }
 
+    func deleteAccount() async throws {}
+
     func removeTeam(entryId: Int) async throws -> TeamsView {
         let teams = saved.teams.filter { $0.entryId != entryId }
         saved = TeamsView(active: saved.active == entryId ? teams.first?.entryId : saved.active, teams: teams)
