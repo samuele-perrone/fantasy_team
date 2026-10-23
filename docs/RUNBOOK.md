@@ -235,6 +235,7 @@ it needs from this side:
 
 - `fantasyteamhub://auth-callback` on Supabase's redirect URL list, or Google sign-in in the
   app ends on the website
+- the Apple provider enabled in Supabase with `com.fantasyteamhub.app` as a client ID
 - every `/api/v1` route keeps accepting `Authorization: Bearer <token>` (`getRequestAuth`)
 - after changing an `/api/v1` response, `npx tsx scripts/ios-fixtures.mts` and the iOS tests,
   so the app's models are checked against the new shape
@@ -321,3 +322,22 @@ Bare domains work too: `@example.com` admits everyone at that domain. Gmail dots
 are normalised, so `a.b+fpl@gmail.com` and `ab@gmail.com` are the same account.
 
 The list fails closed: unset or empty denies everyone rather than opening the site.
+
+## Sign in with Apple on the website
+
+The login page's Apple button uses Supabase's Apple OAuth, which needs, once:
+
+1. **Apple Developer → Identifiers → +  → Services IDs:** e.g. `com.fantasyteamhub.web`, with
+   Sign in with Apple enabled. Configure it: primary App ID `com.fantasyteamhub.app`, domain
+   `xplgtysifprqfxmvkwjy.supabase.co`, return URL
+   `https://xplgtysifprqfxmvkwjy.supabase.co/auth/v1/callback`.
+2. **Apple Developer → Keys → +:** a key with Sign in with Apple, for that App ID. Download
+   the `.p8` (Apple shows it once) and note the Key ID.
+3. **Supabase → Authentication → Sign In / Providers → Apple:** add the Services ID to
+   **Client IDs** beside `com.fantasyteamhub.app` (comma-separated), and paste the secret into
+   **Secret Key (for OAuth)**. Supabase's Apple provider page generates the secret from the
+   `.p8`, Key ID, Team ID `7RYYQ8M5X5` and Services ID.
+
+Until then the button fails with "missing OAuth secret". The secret expires after six months
+at most: put a reminder in the calendar and regenerate it the same way. The app's native
+Apple sign-in does not use it.

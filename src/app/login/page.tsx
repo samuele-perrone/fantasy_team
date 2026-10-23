@@ -76,7 +76,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </p>
         )}
 
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
+          <AuthButton email={null} redirectTo={next} full provider="apple" />
           <AuthButton email={null} redirectTo={next} full />
         </div>
 

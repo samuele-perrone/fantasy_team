@@ -191,8 +191,7 @@ are not built.
   `/api/v1` through. The iOS app will need token auth instead of cookies; design for that in
   phase 1a rather than retrofitting it.
 - **Sign-in must work for the App Store.** If the iOS app offers Google sign-in, Apple will very
-  likely require Sign in with Apple alongside it. Supabase supports both. The app is Google-only
-  while it is on TestFlight; Apple sign-in returns before an App Store submission.
+  likely require Sign in with Apple alongside it. Supabase supports both, and both are in.
 - Third-party responses are cached and trimmed before caching, as the FPL client already does.
 
 ## What carries over

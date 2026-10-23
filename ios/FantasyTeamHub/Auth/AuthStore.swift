@@ -1,5 +1,6 @@
 import Auth
 import AuthenticationServices
+import CryptoKit
 import Foundation
 import Observation
 
@@ -19,6 +20,8 @@ final class AuthStore {
 
     let api: any FTHAPI
     private let auth: AuthClient?
+    /// The raw nonce for the Sign in with Apple request in flight; Apple returns its hash.
+    private var appleNonce: String?
 
     init() {
         if Config.isDemo {
@@ -62,6 +65,42 @@ final class AuthStore {
         }
     }
 
+    /// Prepares the Sign in with Apple request with a fresh nonce, which Supabase checks.
+    func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
+        let nonce = Self.randomNonce()
+        appleNonce = nonce
+        request.requestedScopes = [.email]
+        request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    func completeApple(_ result: Result<ASAuthorization, any Error>) async {
+        guard let auth else { return }
+        error = nil
+        switch result {
+        case .success(let authorization):
+            guard
+                let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                let tokenData = credential.identityToken,
+                let idToken = String(data: tokenData, encoding: .utf8),
+                let nonce = appleNonce
+            else {
+                error = "Apple didn't return a sign-in token. Try again."
+                return
+            }
+            do {
+                try await auth.signInWithIdToken(
+                    credentials: .init(provider: .apple, idToken: idToken, nonce: nonce)
+                )
+            } catch {
+                self.error = "Apple sign-in didn't finish. \(error.localizedDescription)"
+            }
+        case .failure(let e as ASAuthorizationError) where e.code == .canceled:
+            break
+        case .failure(let e):
+            error = "Apple sign-in didn't finish. \(e.localizedDescription)"
+        }
+    }
+
     func signOut() async {
         try? await auth?.signOut()
         if Config.isDemo { state = .signedOut }
@@ -70,5 +109,11 @@ final class AuthStore {
     /// The app is opened on fantasyteamhub://auth-callback when Google sign-in returns.
     func handle(url: URL) {
         auth?.handle(url)
+    }
+
+    private static func randomNonce(length: Int = 32) -> String {
+        let chars = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var generator = SystemRandomNumberGenerator()
+        return String((0..<length).map { _ in chars.randomElement(using: &generator)! })
     }
 }

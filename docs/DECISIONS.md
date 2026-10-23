@@ -680,14 +680,17 @@ The time is shown only while the player is flagged (`flaggedNewsAdded` in `news.
 sets a cleared doubt's chance to 100 rather than back to null. The app used to flag those
 players yellow; it now uses the website's rule, so a chance of 100 is fit.
 
-### The app signs in with Google only, while it is on TestFlight
+### Sign in with Apple, on the app and the website
 
-Builds 1–5 also offered Sign in with Apple, because App Store guideline 4.8 requires it (or an
-equivalent private sign-in) of an app that offers Google. Nobody signs in that way: the site is
-invite-only and the website has Google alone, and a *Hide My Email* relay address is not on
-`ALLOWED_EMAILS` anyway. TestFlight builds for the team are not reviewed against 4.8, so the
-button, the capability and the entitlement were removed. Restore them from git history before
-an App Store submission; the Apple provider can stay enabled in Supabase meanwhile.
+App Store guideline 4.8 requires Sign in with Apple of an app that offers Google. Builds 6 and
+7 dropped it while the app was TestFlight-only; it came back for the App Store submission, and
+the website's login page got it too, so an account made in the app can sign in on the web.
+
+The app signs in natively (`ASAuthorizationAppleIDRequest` → an ID token Supabase verifies),
+which needs only the bundle ID as a client ID. The website goes through Supabase's Apple OAuth,
+which needs a Services ID and a secret generated from a Sign in with Apple key (RUNBOOK). That
+secret is a JWT Apple caps at six months, so it has to be regenerated twice a year or the web
+Apple button stops working; the app is unaffected.
 
 ### The wildcard budget assumes the lowest selling prices
 
