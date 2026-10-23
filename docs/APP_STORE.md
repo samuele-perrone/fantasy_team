@@ -5,12 +5,13 @@ Everything App Store Connect asks for, drafted to copy in. Apple ID 6825842076, 
 
 **Still open before submitting** (see the release checklist in the conversation of 23 Oct 2026):
 
-- who the app is for: public, Unlisted, or TestFlight only — decides the review notes below
-- Premier League player photos and club badges (guideline 5.2): keep only with permission,
-  otherwise the App Store build shows placeholder avatars and club initials, and the
-  screenshots are retaken
-- `CONTACT_EMAIL` in `src/lib/site.ts`: the address the privacy and support pages publish
-- a reviewer account on `ALLOWED_EMAILS` with a team saved, if the app stays invite-only
+- **Public** release (decided 23 Oct 2026). Sign-in is still limited by `ALLOWED_EMAILS`;
+  opening it to every account is a change to make deliberately before submitting
+- **Premier League photos and club badges stay** (decided 23 Oct 2026), knowing guideline 5.2
+  can reject apps showing another company's images without permission. If review rejects it,
+  the fallback is placeholder avatars and club initials, and retaken screenshots
+- `support@fantasyteamhub.com` must forward before submitting: Squarespace → Domains →
+  fantasyteamhub.com → Email forwarding → to the owner's inbox
 
 ## App information
 
