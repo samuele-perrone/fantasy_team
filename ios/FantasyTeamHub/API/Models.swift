@@ -49,6 +49,20 @@ struct Player: Codable, Hashable, Identifiable, Sendable {
     let otherGames: [OtherGame]?
 }
 
+extension Player {
+    /// Whether FPL flags the player, as the website's PlayerFlag decides it. A cleared doubt
+    /// leaves the chance at 100 rather than null, and that player is fit.
+    var isFlagged: Bool {
+        status != "a" || (availability.map { $0 < 100 } ?? false)
+    }
+
+    /// When FPL last changed a flagged player's news, the same rule as the website's
+    /// `flaggedNewsAdded`. Nil for a fit player: FPL keeps the time after clearing the news.
+    var flaggedNewsAdded: Date? {
+        isFlagged && !news.isEmpty ? FPLDate.parse(newsAdded) : nil
+    }
+}
+
 enum Verdict: String, Codable, Sendable {
     case keep, watch, sell
 }

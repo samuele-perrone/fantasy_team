@@ -4,9 +4,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getElementSummary } from "@/lib/fpl/client";
 import { getGameData, POSITIONS, toRow } from "@/lib/fpl/data";
+import { flaggedNewsAdded } from "@/lib/fpl/news";
 import { projectPlayer } from "@/lib/fpl/projection";
 import { DifficultyPill, OtherGames, PageHeader, PositionBadge } from "@/components/ui";
-import { badgeUrl, cn, formatKickoff, money, photoUrl } from "@/lib/utils";
+import { badgeUrl, cn, formatKickoff, money, photoUrl, timeAgo } from "@/lib/utils";
 import { WatchButton } from "@/components/squad-ui";
 import { createClient, getUserId } from "@/lib/supabase/server";
 import { listWatchlist } from "@/lib/supabase/watchlist";
@@ -37,6 +38,8 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
 
   const projection = projectPlayer(player, data.ctx, 8);
   const row = toRow(player, projection, data.teams, data.schedules.get(player.team));
+  // Rendered with the page, which is cached for ten minutes, so "just now" can be that old.
+  const newsUpdated = timeAgo(flaggedNewsAdded(row));
   const team = data.teams.get(player.team);
 
   let summary: Awaited<ReturnType<typeof getElementSummary>> | null = null;
@@ -120,6 +123,7 @@ export default async function PlayerProfile({ params }: PageProps<"/players/[id]
             {player.chance_of_playing_next_round !== null &&
               !/% chance/i.test(player.news) &&
               ` · ${player.chance_of_playing_next_round}% chance of playing`}
+            {newsUpdated && <span> · updated {newsUpdated}</span>}
           </div>
         )}
 

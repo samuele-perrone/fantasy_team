@@ -125,3 +125,18 @@ export function rowNewsLabel(row: {
   if (row.status === "i" || row.status === "u" || row.status === "n") return "out";
   return null;
 }
+
+/**
+ * When FPL last changed a flagged player's news, so a row can say how fresh it is. Null for a
+ * player who is not flagged: FPL keeps `news_added` after clearing the news, and "updated 3
+ * days ago" beside a fit player would read as a warning.
+ */
+export function flaggedNewsAdded(row: {
+  status: string;
+  news: string;
+  availability: number | null;
+  newsAdded: string | null;
+}): string | null {
+  const flagged = row.status !== "a" || (row.availability !== null && row.availability < 100);
+  return flagged && row.news ? row.newsAdded : null;
+}

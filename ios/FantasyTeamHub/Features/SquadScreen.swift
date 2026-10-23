@@ -193,7 +193,14 @@ struct VerdictRow: View {
             PlayerPhoto(code: verdict.player.code)
             VStack(alignment: .leading, spacing: 2) {
                 PlayerLine(player: verdict.player)
-                Text(verdict.reason).font(.footnote).foregroundStyle(Theme.secondary).lineLimit(3)
+                // A flagged player's reason is FPL's news, so say how fresh it is.
+                if let added = verdict.player.flaggedNewsAdded {
+                    (Text(verdict.reason)
+                        + Text(" · updated \(added, format: .relative(presentation: .named))").foregroundStyle(Theme.faint))
+                        .font(.footnote).foregroundStyle(Theme.secondary).lineLimit(3)
+                } else {
+                    Text(verdict.reason).font(.footnote).foregroundStyle(Theme.secondary).lineLimit(3)
+                }
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").font(.caption.bold()).foregroundStyle(Theme.faint)

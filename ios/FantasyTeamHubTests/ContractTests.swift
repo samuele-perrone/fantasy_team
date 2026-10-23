@@ -100,6 +100,31 @@ struct DateTests {
         #expect(FPLDate.parse(nil) == nil)
     }
 
+    @Test func datesNewsOnlyWhileThePlayerIsFlagged() throws {
+        let fit = try player(status: "a", news: "", availability: nil)
+        let cleared = try player(status: "a", news: "Back in training", availability: 100)
+        let doubt = try player(status: "d", news: "Knee injury - 75% chance of playing", availability: 75)
+        let out = try player(status: "i", news: "Hamstring injury", availability: 0)
+        let undated = try player(status: "i", news: "", availability: 0)
+        #expect(!fit.isFlagged && !cleared.isFlagged && doubt.isFlagged && out.isFlagged)
+        #expect(fit.flaggedNewsAdded == nil)
+        #expect(cleared.flaggedNewsAdded == nil)
+        #expect(undated.flaggedNewsAdded == nil)
+        #expect(doubt.flaggedNewsAdded == FPLDate.parse("2026-10-22T09:30:00Z"))
+        #expect(out.flaggedNewsAdded != nil)
+    }
+
+    /// A real player from the fixtures with the news fields replaced.
+    private func player(status: String, news: String, availability: Int?) throws -> Player {
+        let view: SquadView = try Fixtures.load("squad")
+        var json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(view.verdicts[0].player)) as! [String: Any]
+        json["status"] = status
+        json["news"] = news
+        json["availability"] = availability ?? NSNull()
+        json["newsAdded"] = "2026-10-22T09:30:00Z"
+        return try JSONDecoder().decode(Player.self, from: JSONSerialization.data(withJSONObject: json))
+    }
+
     @Test func showsKickoffsInUKTime() {
         // 19:00 UTC in late October is 19:00 GMT; in August it is 20:00 BST
         #expect(FPLDate.format("2026-10-30T19:00:00Z", "HH:mm") == "19:00")

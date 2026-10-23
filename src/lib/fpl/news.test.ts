@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { element } from "@/test/factories";
-import { availabilityFor, newsLabel, parseReturnDate, readNews, rowNewsLabel } from "./news";
+import {
+  availabilityFor,
+  flaggedNewsAdded,
+  newsLabel,
+  parseReturnDate,
+  readNews,
+  rowNewsLabel,
+} from "./news";
 
 const OCT = new Date("2026-10-20T12:00:00Z");
 
@@ -79,5 +86,29 @@ describe("labels", () => {
     expect(rowNewsLabel({ status: "a", news: "", availability: null })).toBeNull();
     expect(rowNewsLabel({ status: "d", news: "Knock", availability: 50 })).toBe("50% chance");
     expect(rowNewsLabel({ status: "i", news: "Injured", availability: null })).toBe("out");
+  });
+});
+
+describe("flaggedNewsAdded", () => {
+  const added = "2026-10-22T09:30:00Z";
+  const flagged = {
+    status: "d",
+    news: "Knee injury - 75% chance of playing",
+    availability: 75,
+    newsAdded: added,
+  };
+
+  it("gives the time for a flagged player's news", () => {
+    expect(flaggedNewsAdded(flagged)).toBe(added);
+    expect(flaggedNewsAdded({ ...flagged, status: "i", availability: 0 })).toBe(added);
+  });
+
+  it("is null once FPL has cleared the flag, though it keeps the time", () => {
+    expect(flaggedNewsAdded({ status: "a", news: "", availability: null, newsAdded: added })).toBeNull();
+    expect(flaggedNewsAdded({ status: "a", news: "Back in training", availability: 100, newsAdded: added })).toBeNull();
+  });
+
+  it("is null for a flag with no news to date", () => {
+    expect(flaggedNewsAdded({ ...flagged, news: "" })).toBeNull();
   });
 });

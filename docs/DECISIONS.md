@@ -651,3 +651,16 @@ Migration 0006 was applied with `execute_sql` after `apply_migration` failed twi
 "Invalid or expired requestState". It is idempotent, so the SQL editor can re-run it safely,
 but it is missing from Supabase's own migration history.
 
+
+### How fresh the news is, beside a flagged player
+
+A verdict on a flagged player quotes FPL's news, and that news is only as current as FPL's
+last update, usually after the press conferences. So the reason on My Squad (web and app) and
+the profile's news banner end with "updated 2 hours ago", from FPL's `news_added`. No other
+free source was worth adding: ESPN's injuries endpoint returns an empty list for the Premier
+League, and predicted line-ups exist only as articles.
+
+The time is shown only while the player is flagged (`flaggedNewsAdded` in `news.ts`, and
+`Player.flaggedNewsAdded` in the app). FPL keeps `news_added` after it clears the news, and it
+sets a cleared doubt's chance to 100 rather than back to null. The app used to flag those
+players yellow; it now uses the website's rule, so a chance of 100 is fit.

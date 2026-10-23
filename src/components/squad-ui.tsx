@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { setWatched } from "@/lib/app/actions";
+import { flaggedNewsAdded } from "@/lib/fpl/news";
 import type { PlayerRow } from "@/lib/fpl/row";
 import type { PlayerVerdict, Verdict } from "@/lib/fpl/verdict";
 import { cn, money, timeAgo } from "@/lib/utils";
@@ -178,12 +179,20 @@ export function ExpandableRow({
 
 export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<number> }) {
   const showReplacements = v.verdict !== "keep" && v.replacements.length > 0;
+  // A flagged player's reason is FPL's news, so say how fresh it is: news from before the
+  // press conferences may already be out of date.
+  const updated = timeAgo(flaggedNewsAdded(v.player));
   return (
     <ExpandableRow
       leading={<VerdictPill verdict={v.verdict} />}
       photo={v.player}
       title={<PlayerLine p={v.player} />}
-      reason={v.reason}
+      reason={
+        <>
+          {v.reason}
+          {updated && <span className="text-slate-500"> · updated {updated}</span>}
+        </>
+      }
     >
       <PlayerNumbers p={v.player} />
       {v.needsHit && (

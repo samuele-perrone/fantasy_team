@@ -97,7 +97,7 @@ struct AvailabilityFlag: View {
     }
 
     private var color: Color? {
-        if player.status == "a" && player.availability == nil { return nil }
+        guard player.isFlagged else { return nil }
         switch player.availability ?? 0 {
         case 75...: return Theme.watch
         case 50..<75: return Color(hex: 0xF59E0B)
