@@ -88,10 +88,10 @@ login redirect and every route must call `getRequestAuth` itself.
 ### Auth and gating
 
 `src/proxy.ts` (Next 16's rename of middleware) refreshes the Supabase session **and** gates
-what needs an account. The four tabs, `/login`, `/privacy` and `/support` are public (App
-Store guideline 5.1.1: no sign-in for features that need no account); pages read the session
-and only offer saving, stars and the watchlist when signed in. `/account` is gated. Two rules
-it exists to enforce:
+the website: every page needs an account except `/login`, `/privacy` and `/support`. The iOS
+app works signed out (App Store guideline 5.1.1) through `/api/v1`, which is not gated here
+and whose Matches, Players and by-ID squad routes answer without a session. Two rules it
+exists to enforce:
 
 - cookies set during the refresh must be copied onto any redirect response, or the session is
   dropped and sign-in loops
@@ -99,8 +99,7 @@ it exists to enforce:
   and again in `getUserId()`. Production sets it to `*` (every account) since the public
   release; it still fails closed when unset
 
-The tabs render signed out, so `curl` sees them. `/account` and signed-in views still return
-307. To verify those locally,
+Because the pages are gated, `curl` returns 307 on them. To verify rendering locally,
 add `""` to `PUBLIC_PREFIXES` — the match is `pathname === p || pathname.startsWith(`${p}/`)`,
 so an empty prefix opens everything while `"/"` only matches the home page. Back the file up
 first, restore it from the backup afterwards, and grep to confirm no bypass remains before

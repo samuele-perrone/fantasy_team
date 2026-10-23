@@ -3,24 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAllowed } from "@/lib/auth/allowlist";
 
 /**
- * Paths reachable without a session. Everything else redirects to /login.
+ * Paths reachable without a session. Everything else, the four tabs included, redirects to
+ * /login: the website requires an account (the owner's choice, 23 Oct 2026).
  *
- * The four tabs are public: Matches and Players need no account, My Squad works from a team ID
- * in the address, and the Watchlist says to sign in. App Store guideline 5.1.1 rejects apps
- * that demand a sign-in for features that do not need one, and the website matches the app.
- * Each page reads the session itself and only offers saving, stars and the watchlist to a
- * signed-in user. `/account` is not listed: it is the one page that only makes sense signed in.
+ * The iOS app is different. App Store guideline 5.1.1 rejects apps that demand a sign-in for
+ * features that need no account, so the app works signed out through `/api/v1`, whose
+ * Matches, Players and by-ID squad routes answer without a session. Requiring sign-in on the
+ * website does not touch that: keep those routes open.
  *
  * `/api/v1` is listed because those routes authenticate themselves and answer 401 — a native
  * app sends a bearer token rather than a cookie, and a redirect to an HTML login page is no
  * use to it. Each route calls getRequestAuth before doing anything.
  */
 const PUBLIC_PREFIXES = [
-  "/",
-  "/matches",
-  "/squad",
-  "/players",
-  "/watchlist",
   "/login",
   "/privacy",
   "/support",

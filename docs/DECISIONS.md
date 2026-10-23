@@ -746,3 +746,11 @@ saved to the account on first sign-in. Saving teams, stars, the Watchlist and th
 still need an account. `/api/v1/matches` and `/players` answer anyone; `/squad` and
 `/wildcard` answer anyone for an explicit `?id=`, as the website already did, and need a
 session only to fall back on a saved team.
+
+### The website requires sign-in; the app does not
+
+The tabs were opened to signed-out visitors on both the website and the app for App Store
+guideline 5.1.1, then the owner chose to keep the website behind sign-in. The guideline only
+binds the app, which reaches the server through `/api/v1`; those routes keep answering
+signed-out requests for Matches, Players and a squad by ID. The pages themselves still handle
+a signed-out visitor, so opening the website again is only a change to `PUBLIC_PREFIXES`.
