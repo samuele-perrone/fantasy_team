@@ -338,8 +338,9 @@ The login page's Apple button uses Supabase's Apple OAuth, which needs, once:
    the `.p8` (Apple shows it once) and note the Key ID.
 3. **Supabase → Authentication → Sign In / Providers → Apple:** add the Services ID to
    **Client IDs** beside `com.fantasyteamhub.app` (comma-separated), and paste the secret into
-   **Secret Key (for OAuth)**. Supabase's Apple provider page generates the secret from the
-   `.p8`, Key ID, Team ID `7RYYQ8M5X5` and Services ID.
+   **Secret Key (for OAuth)**. Make it with
+   `node scripts/apple-client-secret.mjs <path to .p8> <Key ID>`, which signs it with the
+   Team ID `7RYYQ8M5X5` and Services ID and copies it to the clipboard without printing it.
 
 Until then the button fails with "missing OAuth secret". The secret expires after six months
 at most: put a reminder in the calendar and regenerate it the same way. The app's native

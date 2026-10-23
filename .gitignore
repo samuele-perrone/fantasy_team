@@ -45,3 +45,6 @@ next-env.d.ts
 
 # scratch output from local testing
 r.html
+
+# Apple private keys (Sign in with Apple)
+*.p8
