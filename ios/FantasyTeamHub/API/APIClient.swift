@@ -21,8 +21,9 @@ enum APIError: LocalizedError, Equatable {
 
 /// Everything the screens need from the server, so they can be shown with sample data.
 protocol FTHAPI: Sendable {
-    func squad() async throws -> SquadView
-    func wildcard() async throws -> WildcardView
+    /// My Squad for `entryId`, or the signed-in account's active team when nil.
+    func squad(entryId: Int?) async throws -> SquadView
+    func wildcard(entryId: Int?) async throws -> WildcardView
     func matches(gameweek: Int?) async throws -> MatchdayView
     func players(_ query: BrowseQuery) async throws -> PlayersView
     func watchlist() async throws -> WatchlistResponse
@@ -42,15 +43,20 @@ protocol FTHAPI: Sendable {
 struct LiveAPI: FTHAPI {
     let base: URL
     /// A fresh access token for every request; the auth client refreshes it when it expires.
-    let token: @Sendable () async throws -> String
+    /// Nil when signed out: Matches, Players, and a squad by ID answer without one.
+    let token: @Sendable () async -> String?
     var session: URLSession = .shared
 
-    func squad() async throws -> SquadView {
-        try await get("squad")
+    func squad(entryId: Int?) async throws -> SquadView {
+        try await get("squad", query: Self.entryQuery(entryId))
     }
 
-    func wildcard() async throws -> WildcardView {
-        try await get("wildcard")
+    func wildcard(entryId: Int?) async throws -> WildcardView {
+        try await get("wildcard", query: Self.entryQuery(entryId))
+    }
+
+    static func entryQuery(_ entryId: Int?) -> [URLQueryItem] {
+        entryId.map { [URLQueryItem(name: "id", value: String($0))] } ?? []
     }
 
     func matches(gameweek: Int?) async throws -> MatchdayView {
@@ -136,7 +142,9 @@ struct LiveAPI: FTHAPI {
     ) async throws -> T {
         var request = URLRequest(url: url(path, query: query))
         request.httpMethod = method
-        request.setValue("Bearer \(try await token())", forHTTPHeaderField: "Authorization")
+        if let token = await token() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body {
             request.httpBody = try JSONEncoder().encode(body)

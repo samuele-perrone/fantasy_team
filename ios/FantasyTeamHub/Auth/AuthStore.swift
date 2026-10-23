@@ -17,6 +17,27 @@ final class AuthStore {
 
     private(set) var state: State = .loading
     var error: String?
+    /// The sign-in sheet. The app opens on its tabs signed out (App Store guideline 5.1.1);
+    /// saving teams, stars and the watchlist ask for an account when they are used.
+    var signingIn = false
+
+    var isSignedIn: Bool {
+        if case .signedIn = state { true } else { false }
+    }
+
+    /// True when signed in; otherwise opens the sign-in sheet and returns false, so a feature
+    /// that needs an account can ask in one line.
+    func requireSignIn() -> Bool {
+        if isSignedIn { return true }
+        signingIn = true
+        return false
+    }
+
+    /// The team a signed-out visitor is looking at, kept on the phone only. Signing in saves it
+    /// to the account (see SquadScreen).
+    var guestEntryId: Int? = UserDefaults.standard.object(forKey: "guestEntryId") as? Int {
+        didSet { UserDefaults.standard.set(guestEntryId, forKey: "guestEntryId") }
+    }
 
     let api: any FTHAPI
     private let auth: AuthClient?
@@ -40,7 +61,7 @@ final class AuthStore {
             )
         )
         auth = client
-        api = LiveAPI(base: Config.apiBase) { try await client.session.accessToken }
+        api = LiveAPI(base: Config.apiBase) { try? await client.session.accessToken }
         Task { await watchSession() }
     }
 
@@ -50,6 +71,7 @@ final class AuthStore {
         // every API call asks for a fresh token, so an expired one still counts as signed in.
         for await (_, session) in auth.authStateChanges {
             state = session.map { .signedIn(email: $0.user.email) } ?? .signedOut
+            if session != nil { signingIn = false }
         }
     }
 

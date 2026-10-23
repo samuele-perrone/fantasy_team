@@ -14,52 +14,65 @@ struct WatchlistScreen: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    if let suggestions {
-                        if suggestions.isEmpty {
-                            Text("Nobody you can afford is clearly better than what you have.")
-                                .font(.footnote).foregroundStyle(Theme.secondary)
-                        }
-                        ForEach(suggestions) { s in
-                            row(s.player, detail: "For \(s.replaces.name), about \(Int(s.gain.rounded())) more points over five gameweeks")
-                        }
-                    } else {
-                        Text("Load your squad on My Squad to see who is worth buying for it.")
-                            .font(.footnote).foregroundStyle(Theme.secondary)
-                    }
-                } header: {
-                    Text("Suggested this week")
-                } footer: {
-                    Text("The best buys you can afford, whether or not anyone is marked Sell.")
-                }
-                .listRowBackground(Theme.surface)
-
-                Section("Watching") {
-                    if watched.isEmpty {
-                        Text("Nobody yet. Tap ☆ on a suggestion, a replacement or any player on the Players tab.")
-                            .font(.footnote).foregroundStyle(Theme.secondary)
-                    }
-                    ForEach(watched) { w in
-                        row(w.player, detail: comparison(w))
-                    }
-                }
-                .listRowBackground(Theme.surface)
-
-                if let error {
-                    Text(error).font(.footnote).foregroundStyle(Theme.sell).listRowBackground(Color.clear)
-                }
+            if auth.isSignedIn {
+                list
+            } else {
+                // The one tab that is all about the account.
+                StateView(systemImage: "star", title: "Keep a watchlist",
+                          message: "Sign in to star players and see who is worth buying for your squad, in the app and on the website.",
+                          action: ("Sign in", { auth.signingIn = true }))
+                    .background(Theme.background)
+                    .navigationTitle("Watchlist")
             }
-            .scrollContentBackground(.hidden)
-            .readableWidth()
-            .background(Theme.background)
-            .navigationTitle("Watchlist")
-            .refreshable { await load() }
-            .task(id: watch.version) {
-                if watch.version != loadedVersion || isStale(loadedAt) { await load() }
-            }
-            .sheet(item: $shown) { PlayerDetailView(player: $0) }
         }
+    }
+
+    private var list: some View {
+        List {
+            Section {
+                if let suggestions {
+                    if suggestions.isEmpty {
+                        Text("Nobody you can afford is clearly better than what you have.")
+                            .font(.footnote).foregroundStyle(Theme.secondary)
+                    }
+                    ForEach(suggestions) { s in
+                        row(s.player, detail: "For \(s.replaces.name), about \(Int(s.gain.rounded())) more points over five gameweeks")
+                    }
+                } else {
+                    Text("Load your squad on My Squad to see who is worth buying for it.")
+                        .font(.footnote).foregroundStyle(Theme.secondary)
+                }
+            } header: {
+                Text("Suggested this week")
+            } footer: {
+                Text("The best buys you can afford, whether or not anyone is marked Sell.")
+            }
+            .listRowBackground(Theme.surface)
+
+            Section("Watching") {
+                if watched.isEmpty {
+                    Text("Nobody yet. Tap ☆ on a suggestion, a replacement or any player on the Players tab.")
+                        .font(.footnote).foregroundStyle(Theme.secondary)
+                }
+                ForEach(watched) { w in
+                    row(w.player, detail: comparison(w))
+                }
+            }
+            .listRowBackground(Theme.surface)
+
+            if let error {
+                Text(error).font(.footnote).foregroundStyle(Theme.sell).listRowBackground(Color.clear)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .readableWidth()
+        .background(Theme.background)
+        .navigationTitle("Watchlist")
+        .refreshable { await load() }
+        .task(id: watch.version) {
+            if watch.version != loadedVersion || isStale(loadedAt) { await load() }
+        }
+        .sheet(item: $shown) { PlayerDetailView(player: $0) }
     }
 
     private func row(_ p: Player, detail: String) -> some View {
@@ -87,7 +100,7 @@ struct WatchlistScreen: View {
 
     private func load() async {
         async let list = auth.api.watchlist()
-        async let squad = try? auth.api.squad()
+        async let squad = try? auth.api.squad(entryId: nil)
         do {
             watched = try await list.players
             suggestions = await squad?.suggestions

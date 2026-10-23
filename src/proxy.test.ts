@@ -37,19 +37,32 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("proxy", () => {
   it("sends a signed-out visitor to /login, remembering where they were going", async () => {
-    const res = await visit("/watchlist?q=saka");
+    const res = await visit("/account?tab=x");
     expect(res.status).toBe(307);
-    expect(location(res)).toBe("http://localhost/login?next=%2Fwatchlist%3Fq%3Dsaka");
+    expect(location(res)).toBe("http://localhost/login?next=%2Faccount%3Ftab%3Dx");
   });
 
   it("lets public paths through signed out", async () => {
-    for (const path of ["/login", "/auth/callback", "/apple-icon", "/api/v1/squad"]) {
+    for (const path of [
+      "/login",
+      "/auth/callback",
+      "/apple-icon",
+      "/api/v1/squad",
+      "/",
+      "/matches",
+      "/squad?id=1",
+      "/players/430",
+      "/watchlist",
+      "/privacy",
+    ]) {
       expect((await visit(path)).headers.get("location"), path).toBeNull();
     }
   });
 
   it("does not treat a path that merely starts like a public one as public", async () => {
     expect((await visit("/loginx")).status).toBe(307);
+    // "/" is public as the home page only, not as a prefix of every path
+    expect((await visit("/accountx")).status).toBe(307);
   });
 
   it("lets an allowed user through", async () => {

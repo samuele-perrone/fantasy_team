@@ -41,7 +41,10 @@ someone's phone. The fixtures name no real manager, because the repository is pu
 
 ## Signing in
 
-Sign in with Apple (native, an ID token checked by Supabase) and Google (through Supabase, in
+The app opens on its tabs signed out: Matches and Players need no account, and My Squad works
+from a team ID kept on the phone (`AuthStore.guestEntryId`), saved to the account on first
+sign-in. Anything that needs an account calls `auth.requireSignIn()`, which opens the sign-in
+sheet. Sign-in itself is Sign in with Apple (native, an ID token checked by Supabase) and Google (through Supabase, in
 a browser sheet). App Store guideline 4.8 requires Apple sign-in of any app that offers Google.
 The session is kept in the Keychain and refreshed by the Supabase Auth library; every request
 sends its access token as a bearer token, which `getRequestAuth` on the server checks against

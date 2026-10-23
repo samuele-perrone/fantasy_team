@@ -17,10 +17,10 @@ beforeEach(() => {
 });
 
 describe("GET /api/v1/players", () => {
-  it("answers 401 without a session or token", async () => {
+  it("answers signed out: browsing needs no account", async () => {
     auth.value = null;
-    expect((await GET(new Request("http://t/api/v1/players"))).status).toBe(401);
-    expect(app.browsePlayers).not.toHaveBeenCalled();
+    expect((await GET(new Request("http://t/api/v1/players?q=saka"))).status).toBe(200);
+    expect(app.browsePlayers).toHaveBeenCalledWith({ q: "saka" });
   });
 
   it("passes the URL's filters through", async () => {

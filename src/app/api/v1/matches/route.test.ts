@@ -27,10 +27,11 @@ beforeEach(() => {
 });
 
 describe("GET /api/v1/matches", () => {
-  it("answers 401 without a session or token", async () => {
+  it("answers signed out with the same matches and nothing highlighted", async () => {
     auth.value = null;
-    expect((await get()).status).toBe(401);
-    expect(app.getMatchday).not.toHaveBeenCalled();
+    const res = await get("?gw=8");
+    expect(res.status).toBe(200);
+    expect(app.getMatchday).toHaveBeenCalledWith(8, { entryId: null, watchIds: [] });
   });
 
   it("rejects a gameweek that is not a positive whole number", async () => {

@@ -4,6 +4,7 @@ import SwiftUI
 struct LoginView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dismiss) private var dismiss
     @State private var busy = false
 
     var body: some View {
@@ -58,6 +59,11 @@ struct LoginView: View {
                     .foregroundStyle(Theme.faint)
                     .multilineTextAlignment(.center)
                     .padding(.top, 4)
+                // Shown as a sheet over the tabs, which work without an account.
+                Button("Not now") { dismiss() }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.secondary)
+                    .padding(.top, 6)
             }
         }
         .padding(24)

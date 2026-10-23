@@ -24,16 +24,18 @@ struct RootView: View {
     @Environment(AuthStore.self) private var auth
 
     var body: some View {
+        @Bindable var auth = auth
         switch auth.state {
         case .loading:
             ZStack {
                 Theme.background.ignoresSafeArea()
                 LogoMark(size: 72)
             }
-        case .signedOut:
-            LoginView()
-        case .signedIn:
-            MainTabs(api: auth.api)
+        case .signedOut, .signedIn:
+            // The tabs work signed out (App Store guideline 5.1.1); sign-in is a sheet that
+            // whatever needs an account opens through AuthStore.requireSignIn.
+            MainTabs(auth: auth)
+                .sheet(isPresented: $auth.signingIn) { LoginView() }
         }
     }
 }
@@ -44,8 +46,11 @@ struct MainTabs: View {
 
     enum Tab: Hashable { case matches, squad, players, watchlist }
 
-    init(api: any FTHAPI) {
-        _watch = State(initialValue: WatchStore(api: api))
+    private let auth: AuthStore
+
+    init(auth: AuthStore) {
+        self.auth = auth
+        _watch = State(initialValue: WatchStore(api: auth.api, requireSignIn: { auth.requireSignIn() }))
         // Demo builds can open on a tab (`-demo -tab players`), so each screen can be captured
         // from the command line, which cannot tap.
         if Config.isDemo, let i = CommandLine.arguments.firstIndex(of: "-tab"),
@@ -73,7 +78,10 @@ struct MainTabs: View {
                 .tag(Tab.watchlist)
         }
         .environment(watch)
-        .task { await watch.load() }
+        // Stars belong to the account: load them on sign-in, drop them on sign-out.
+        .task(id: auth.isSignedIn) {
+            if auth.isSignedIn { await watch.load() } else { watch.clear() }
+        }
         .alert("Couldn't update the watchlist", isPresented: Binding(
             get: { watch.error != nil }, set: { if !$0 { watch.error = nil } }
         )) {

@@ -27,10 +27,17 @@ beforeEach(() => {
 });
 
 describe("GET /api/v1/squad", () => {
-  it("answers 401 without a session or token", async () => {
+  it("answers 401 signed out with no team ID, as there is no saved team to fall back on", async () => {
     auth.value = null;
-    expect((await get("?id=1")).status).toBe(401);
+    expect((await get()).status).toBe(401);
     expect(view.getSquadView).not.toHaveBeenCalled();
+  });
+
+  it("answers signed out for a team named by ID, as the website does", async () => {
+    auth.value = null;
+    view.getSquadView.mockResolvedValue({ ok: true });
+    expect((await get("?id=7")).status).toBe(200);
+    expect(view.getSquadView).toHaveBeenCalledWith(7);
   });
 
   it("answers 400 with no id and nothing saved", async () => {

@@ -178,7 +178,16 @@ export function ExpandableRow({
   );
 }
 
-export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<number> }) {
+export function VerdictRow({
+  v,
+  watched,
+  signedIn = true,
+}: {
+  v: PlayerVerdict;
+  watched: Set<number>;
+  /** stars need an account; signed out, the replacements show without them */
+  signedIn?: boolean;
+}) {
   const showReplacements = v.verdict !== "keep" && v.replacements.length > 0;
   // A flagged player's reason is FPL's news, so say how fresh it is: news from before the
   // press conferences may already be out of date.
@@ -219,7 +228,7 @@ export function VerdictRow({ v, watched }: { v: PlayerVerdict; watched: Set<numb
                     {r.reason} · about {Math.round(r.gain)} more points over five gameweeks
                   </p>
                 </div>
-                <WatchButton playerId={r.player.id} watched={watched.has(r.player.id)} />
+                {signedIn && <WatchButton playerId={r.player.id} watched={watched.has(r.player.id)} />}
               </li>
             ))}
           </ul>

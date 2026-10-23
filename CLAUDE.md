@@ -88,14 +88,19 @@ login redirect and every route must call `getRequestAuth` itself.
 ### Auth and gating
 
 `src/proxy.ts` (Next 16's rename of middleware) refreshes the Supabase session **and** gates
-the whole site. Two rules it exists to enforce:
+what needs an account. The four tabs, `/login`, `/privacy` and `/support` are public (App
+Store guideline 5.1.1: no sign-in for features that need no account); pages read the session
+and only offer saving, stars and the watchlist when signed in. `/account` is gated. Two rules
+it exists to enforce:
 
 - cookies set during the refresh must be copied onto any redirect response, or the session is
   dropped and sign-in loops
 - a valid session is not sufficient — the email must be on `ALLOWED_EMAILS`, enforced here
-  and again in `getUserId()`
+  and again in `getUserId()`. Production sets it to `*` (every account) since the public
+  release; it still fails closed when unset
 
-Because everything is gated, `curl` returns 307 on every page. To verify rendering locally,
+The tabs render signed out, so `curl` sees them. `/account` and signed-in views still return
+307. To verify those locally,
 add `""` to `PUBLIC_PREFIXES` — the match is `pathname === p || pathname.startsWith(`${p}/`)`,
 so an empty prefix opens everything while `"/"` only matches the home page. Back the file up
 first, restore it from the backup afterwards, and grep to confirm no bypass remains before

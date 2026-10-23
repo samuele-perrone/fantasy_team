@@ -117,7 +117,8 @@ struct WildcardScreen: View {
 
     private func load() async {
         do {
-            phase = .loaded(try await auth.api.wildcard())
+            // Signed out, the team is the one kept on the phone.
+            phase = .loaded(try await auth.api.wildcard(entryId: auth.isSignedIn ? nil : auth.guestEntryId))
         } catch is CancellationError {
         } catch {
             if case .loaded = phase { return }

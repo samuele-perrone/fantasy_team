@@ -30,6 +30,8 @@ struct SquadScreen: View {
                 .toolbar { accountMenu }
                 .refreshable { await load() }
                 .task { if isStale(loadedAt) { await load() } }
+                // Signing in or out changes whose team this is.
+                .onChange(of: auth.isSignedIn) { Task { await reload() } }
                 .sheet(item: $shown) { v in
                     PlayerDetailView(
                         player: v.player,
@@ -151,12 +153,19 @@ struct SquadScreen: View {
     private var accountMenu: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Button("Add a team", systemImage: "plus") { enteringTeam = true }
-                Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
-                    Task { await auth.signOut() }
-                }
-                Button("Delete account…", systemImage: "trash", role: .destructive) {
-                    confirmingDelete = true
+                if auth.isSignedIn {
+                    Button("Add a team", systemImage: "plus") { enteringTeam = true }
+                    Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {
+                        Task { await auth.signOut() }
+                    }
+                    Button("Delete account…", systemImage: "trash", role: .destructive) {
+                        confirmingDelete = true
+                    }
+                } else {
+                    Button("Sign in", systemImage: "person.crop.circle") { auth.signingIn = true }
+                    if auth.guestEntryId != nil {
+                        Button("Use another team ID", systemImage: "number") { enteringTeam = true }
+                    }
                 }
             } label: {
                 Image(systemName: "person.crop.circle").accessibilityLabel("Account")
@@ -167,24 +176,29 @@ struct SquadScreen: View {
     /// The team's name, opening to the manager's saved teams to switch between them.
     private func teamMenu(current: SquadSummary) -> some View {
         Menu {
-            Section("Your teams") {
-                ForEach(saved?.teams ?? []) { t in
-                    Button {
-                        Task { await change { try await auth.api.switchTeam(entryId: t.entryId) } }
-                    } label: {
-                        if t.entryId == current.entryId {
-                            Label(t.name, systemImage: "checkmark")
-                        } else {
-                            Text(t.name)
+            if !auth.isSignedIn {
+                Button("Use another team ID", systemImage: "number") { enteringTeam = true }
+                Button("Sign in to save your teams", systemImage: "person.crop.circle") { auth.signingIn = true }
+            } else {
+                Section("Your teams") {
+                    ForEach(saved?.teams ?? []) { t in
+                        Button {
+                            Task { await change { try await auth.api.switchTeam(entryId: t.entryId) } }
+                        } label: {
+                            if t.entryId == current.entryId {
+                                Label(t.name, systemImage: "checkmark")
+                            } else {
+                                Text(t.name)
+                            }
                         }
+                        .disabled(t.entryId == current.entryId)
                     }
-                    .disabled(t.entryId == current.entryId)
                 }
-            }
-            Button("Add another team", systemImage: "plus") { enteringTeam = true }
-            if (saved?.teams.count ?? 0) > 0 {
-                Button("Remove \(current.name)", systemImage: "trash", role: .destructive) {
-                    Task { await change { try await auth.api.removeTeam(entryId: current.entryId) } }
+                Button("Add another team", systemImage: "plus") { enteringTeam = true }
+                if (saved?.teams.count ?? 0) > 0 {
+                    Button("Remove \(current.name)", systemImage: "trash", role: .destructive) {
+                        Task { await change { try await auth.api.removeTeam(entryId: current.entryId) } }
+                    }
                 }
             }
         } label: {
@@ -220,12 +234,28 @@ struct SquadScreen: View {
     }
 
     private func load() async {
+        // Signed out, the team ID lives on the phone and the squad is fetched by it.
+        guard auth.isSignedIn else {
+            saved = nil
+            guard let guest = auth.guestEntryId else { phase = .needsTeam; return }
+            await show { try await auth.api.squad(entryId: guest) }
+            return
+        }
+        // Just signed in after looking at a team as a guest: keep it, saved to the account.
+        if let guest = auth.guestEntryId {
+            _ = try? await auth.api.addTeam(entryId: guest)
+            auth.guestEntryId = nil
+        }
         async let teams = try? auth.api.teams()
+        await show { try await auth.api.squad(entryId: nil) }
+        saved = await teams
+    }
+
+    private func show(_ fetch: () async throws -> SquadView) async {
         do {
             // The squad endpoint uses the saved team ID, and says so with a 400 when there is
             // none, so one request does what a profile check and a squad load did.
-            let view = try await auth.api.squad()
-            saved = await teams
+            let view = try await fetch()
             loadedAt = .now
             phase = .loaded(view)
             // Demo builds can open the first player's sheet (`-demo -detail`) for checking.
@@ -331,7 +361,9 @@ struct TeamIDForm: View {
                 }
                 .accessibilityLabel("Where do I find my team ID?")
             }
-            Text("Enter the team's FPL ID once. It's saved under its name, so after this you switch teams from My Squad.")
+            Text(auth.isSignedIn
+                 ? "Enter the team's FPL ID once. It's saved under its name, so after this you switch teams from My Squad."
+                 : "Enter the team's FPL ID. It's kept on this phone; sign in to save teams to your account and switch between them.")
                 .font(.footnote).foregroundStyle(Theme.secondary)
             TextField("e.g. 1234567", text: $text)
                 .keyboardType(.numberPad)
@@ -367,7 +399,13 @@ struct TeamIDForm: View {
         saving = true
         defer { saving = false }
         do {
-            _ = try await auth.api.addTeam(entryId: id)
+            if auth.isSignedIn {
+                _ = try await auth.api.addTeam(entryId: id)
+            } else {
+                // Checked by loading it: FPL answers 404 for a team that does not exist.
+                _ = try await auth.api.squad(entryId: id)
+                auth.guestEntryId = id
+            }
             error = nil
             saved()
         } catch {

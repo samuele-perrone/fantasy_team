@@ -11,9 +11,18 @@ final class WatchStore {
     var error: String?
 
     private let api: any FTHAPI
+    /// Opens sign-in when there is no account to star players for.
+    private let requireSignIn: @MainActor () -> Bool
 
-    init(api: any FTHAPI) {
+    init(api: any FTHAPI, requireSignIn: @escaping @MainActor () -> Bool = { true }) {
         self.api = api
+        self.requireSignIn = requireSignIn
+    }
+
+    /// Forgets the stars, on sign-out.
+    func clear() {
+        ids = []
+        version += 1
     }
 
     func load() async {
@@ -26,6 +35,7 @@ final class WatchStore {
 
     /// Optimistic: the star changes at once and goes back if the server refuses.
     func toggle(_ id: Int) {
+        guard requireSignIn() else { return }
         let watch = !ids.contains(id)
         if watch { ids.insert(id) } else { ids.remove(id) }
         Task {

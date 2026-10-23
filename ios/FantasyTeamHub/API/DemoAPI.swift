@@ -21,8 +21,8 @@ actor DemoAPI: FTHAPI {
         watched = Set(list.map(\.player.id))
     }
 
-    func squad() async throws -> SquadView { try Fixtures.load("squad") }
-    func wildcard() async throws -> WildcardView { try Fixtures.load("wildcard") }
+    func squad(entryId: Int?) async throws -> SquadView { try Fixtures.load("squad") }
+    func wildcard(entryId: Int?) async throws -> WildcardView { try Fixtures.load("wildcard") }
     func matches(gameweek: Int?) async throws -> MatchdayView { try Fixtures.load("matches") }
     func profile() async throws -> Profile { try Fixtures.load("profile") }
     func saveProfile(entryId: Int) async throws -> Profile { Profile(entryId: entryId) }

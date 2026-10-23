@@ -152,7 +152,7 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
           row beside it. */}
       <div className="grid items-start gap-2 lg:grid-cols-2 lg:gap-3">
         {verdicts.map((v) => (
-          <VerdictRow key={v.player.id} v={v} watched={watched} />
+          <VerdictRow key={v.player.id} v={v} watched={watched} signedIn={signedIn} />
         ))}
       </div>
 

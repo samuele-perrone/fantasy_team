@@ -4,17 +4,18 @@ import { EntryNotFound } from "@/lib/fpl/entry";
 
 /**
  * A GET handler for an `/api/v1` view of one FPL team: `?id=` names it, or else the caller's
- * active saved team does. Checks auth itself — see getRequestAuth. 401 without a session,
- * 400 without a usable ID, 404 for a team FPL does not have.
+ * active saved team does. With `?id=` it answers signed out too, as the website does: a team
+ * ID is public on FPL, and needing an account just to look would fall foul of App Store
+ * guideline 5.1.1. Reads auth itself — see getRequestAuth. 401 with neither an ID nor a
+ * session, 400 without a usable ID, 404 for a team FPL does not have.
  */
 export function entryRoute<T>(load: (entryId: number) => Promise<T>) {
   return async function GET(req: Request) {
-    const auth = await getRequestAuth(req);
-    if (!auth) return Response.json({ error: "Not signed in" }, { status: 401 });
-
     const param = new URL(req.url).searchParams.get("id");
     let entryId = param ? Number(param) : null;
-    if (!entryId) {
+    if (!param) {
+      const auth = await getRequestAuth(req);
+      if (!auth) return Response.json({ error: "Not signed in" }, { status: 401 });
       const { data } = await auth.supabase
         .from("profiles")
         .select("fpl_entry_id")

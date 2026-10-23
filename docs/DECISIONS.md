@@ -735,3 +735,14 @@ on purpose and is the only thing between "has a Google or Apple account" and "ca
 site". So it stays, and `*` in `ALLOWED_EMAILS` admits every signed-in account. Opening up is
 an explicit value someone wrote, never the result of an unset variable, and going back to
 invite-only is replacing `*` with addresses.
+
+### The tabs work signed out
+
+App Store guideline 5.1.1 rejects apps that make people sign in for features that need no
+account. Matches and Players need none, and My Squad only needs a team ID, which FPL publishes
+for every team. So the website's four tabs are public, and the app opens on its tabs with
+sign-in as a sheet: a signed-out visitor's team ID is kept on the phone (`guestEntryId`) and
+saved to the account on first sign-in. Saving teams, stars, the Watchlist and the Account page
+still need an account. `/api/v1/matches` and `/players` answer anyone; `/squad` and
+`/wildcard` answer anyone for an explicit `?id=`, as the website already did, and need a
+session only to fall back on a saved team.
