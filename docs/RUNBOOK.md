@@ -235,7 +235,6 @@ it needs from this side:
 
 - `fantasyteamhub://auth-callback` on Supabase's redirect URL list, or Google sign-in in the
   app ends on the website
-- the Apple provider enabled in Supabase with `com.fantasyteamhub.app` as a client ID
 - every `/api/v1` route keeps accepting `Authorization: Bearer <token>` (`getRequestAuth`)
 - after changing an `/api/v1` response, `npx tsx scripts/ios-fixtures.mts` and the iOS tests,
   so the app's models are checked against the new shape

@@ -1,9 +1,7 @@
-import AuthenticationServices
 import SwiftUI
 
 struct LoginView: View {
     @Environment(AuthStore.self) private var auth
-    @Environment(\.colorScheme) private var scheme
     @State private var busy = false
 
     var body: some View {
@@ -23,15 +21,6 @@ struct LoginView: View {
             }
             Spacer()
             VStack(spacing: 12) {
-                SignInWithAppleButton(.signIn) { request in
-                    auth.prepareAppleRequest(request)
-                } onCompletion: { result in
-                    Task { await auth.completeApple(result) }
-                }
-                .signInWithAppleButtonStyle(scheme == .dark ? .white : .black)
-                .frame(height: 50)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-
                 Button {
                     busy = true
                     Task {
@@ -53,7 +42,7 @@ struct LoginView: View {
                 if let error = auth.error {
                     Text(error).font(.footnote).foregroundStyle(Theme.sell).multilineTextAlignment(.center)
                 }
-                Text("FantasyTeamHub is invite-only for now. If you share your email with Apple, use the one you were invited with.")
+                Text("FantasyTeamHub is invite-only for now. Sign in with the Google account you were invited with.")
                     .font(.caption)
                     .foregroundStyle(Theme.faint)
                     .multilineTextAlignment(.center)

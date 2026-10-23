@@ -679,3 +679,12 @@ The time is shown only while the player is flagged (`flaggedNewsAdded` in `news.
 `Player.flaggedNewsAdded` in the app). FPL keeps `news_added` after it clears the news, and it
 sets a cleared doubt's chance to 100 rather than back to null. The app used to flag those
 players yellow; it now uses the website's rule, so a chance of 100 is fit.
+
+### The app signs in with Google only, while it is on TestFlight
+
+Builds 1–5 also offered Sign in with Apple, because App Store guideline 4.8 requires it (or an
+equivalent private sign-in) of an app that offers Google. Nobody signs in that way: the site is
+invite-only and the website has Google alone, and a *Hide My Email* relay address is not on
+`ALLOWED_EMAILS` anyway. TestFlight builds for the team are not reviewed against 4.8, so the
+button, the capability and the entitlement were removed. Restore them from git history before
+an App Store submission; the Apple provider can stay enabled in Supabase meanwhile.

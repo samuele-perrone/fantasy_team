@@ -66,7 +66,10 @@ struct SquadScreen: View {
         let sells = view.verdicts.filter { $0.verdict == .sell }.count
         let watches = view.verdicts.filter { $0.verdict == .watch }.count
         return List {
+            // The summary is the section's header, not a row: a row is clipped to the section's
+            // rounded corner, which cut the top off the G of "GAMEWEEK".
             Section {
+            } header: {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("GAMEWEEK \(view.team.nextEvent)")
                         .font(.system(size: 11, weight: .bold)).tracking(1.4).foregroundStyle(Theme.brand)
@@ -77,8 +80,10 @@ struct SquadScreen: View {
                          : watches > 0 ? "Nothing to sell. \(watches) to watch." : "Nothing to change this week.")
                         .font(.subheadline).foregroundStyle(Theme.text).padding(.top, 6)
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 4, leading: 4, bottom: 4, trailing: 4))
+                // Headers are upper-cased by default, which would shout the team name.
+                .textCase(nil)
+                // Headers sit further in than rows; this keeps it where the row had it.
+                .padding(.leading, -12)
             }
             if let pick = view.captain,
                let captain = view.verdicts.first(where: { $0.player.id == pick.playerId }) {

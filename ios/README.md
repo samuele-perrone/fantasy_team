@@ -41,24 +41,21 @@ someone's phone. The fixtures name no real manager, because the repository is pu
 
 ## Signing in
 
-Google (through Supabase, in a browser sheet) and Sign in with Apple, which the App Store
-requires of any app that offers Google. The session is kept in the Keychain and refreshed by
-the Supabase Auth library; every request sends its access token as a bearer token, which
-`getRequestAuth` on the server checks against `ALLOWED_EMAILS` like a web session.
+Google only, through Supabase in a browser sheet, the same as the website. The session is kept
+in the Keychain and refreshed by the Supabase Auth library; every request sends its access
+token as a bearer token, which `getRequestAuth` on the server checks against `ALLOWED_EMAILS`
+like a web session.
+
+**Before submitting to the App Store,** Sign in with Apple has to come back: guideline 4.8
+requires it (or an equivalent private sign-in) of any app offering Google. TestFlight builds for
+the team are not reviewed against it, which is why it was removed for now. It was in builds
+1–5 — see git history for `prepareAppleRequest` and DECISIONS.md.
 
 One-time setup, outside the code:
 
 1. **Supabase → Authentication → URL Configuration → Redirect URLs:** add
    `fantasyteamhub://auth-callback`. Without it, Google sign-in ends on the website instead of
    returning to the app.
-2. **Supabase → Authentication → Sign In / Providers → Apple:** enable it and add
-   `com.fantasyteamhub.app` to **Client IDs**. Native Sign in with Apple needs no secret key.
-3. **Apple Developer → Identifiers:** Xcode creates the App ID `com.fantasyteamhub.app` with
-   the Sign in with Apple capability the first time it signs a build for a device (team
-   `7RYYQ8M5X5`, automatic signing).
-4. **Allow-list:** someone who signs in with Apple and chooses *Hide My Email* gets a relay
-   address, which is not on `ALLOWED_EMAILS`, and is refused. Invited people should share their
-   real email, or the relay address can be added to the list.
 
 ## Shipping to TestFlight
 
