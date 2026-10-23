@@ -109,17 +109,27 @@ Offered beside Google on the app's sign-in screen and the website's login page.
 
 `ITSAppUsesNonExemptEncryption` is false in the build (HTTPS only), so no questions.
 
-## App Review notes (draft)
+## App Review notes (as entered)
 
-> FantasyTeamHub gives advice on a Fantasy Premier League squad. Any Apple or Google account
-> can sign in. To see My Squad, enter an FPL team ID when asked: 849650 is a real public team
-> you can use. Matches, Players and Watchlist work without a team. Account deletion: My Squad →
-> account menu (top right) → Delete account.
+"Sign-in required" is unticked: the app works without an account.
+
+> FantasyTeamHub gives advice on a Fantasy Premier League squad. No account is needed to look
+> around: Matches and Players work straight away, and My Squad works from any FPL team ID -
+> 849650 is a real public team you can use.
+>
+> Signing in (Sign in with Apple or Google, any account) adds saved teams, starred players and
+> the Watchlist.
+>
+> Account deletion: My Squad > account menu (top right) > Delete account. It removes the
+> account, saved teams and watchlist at once.
 
 ## Screenshots
 
-`ios/AppStore/screenshots/6.9/` — 1320×2868, iPhone 17 Pro Max, from the app's demo data
-(`-demo`), status bar set to 9:41:
+App Store Connect's iPhone slot ("iPhone with Dynamic Island, medium display") takes 6.1"/6.3"
+screenshots, 1206×2622, and scales them for every other iPhone. The uploaded set is
+`ios/AppStore/screenshots/6.3/`, from an iPhone 17 simulator; `6.9/` (1320×2868) was refused
+there and is kept only in case a 6.9" slot is needed later. From the app's demo data
+(`-demo`), status bar at 9:41:
 
 1. My Squad — captain and verdicts
 2. Wildcard — best squad for the budget
@@ -128,6 +138,17 @@ Offered beside Google on the app's sign-in screen and the website's login page.
 5. A player's numbers and replacements
 6. Watchlist — suggested buys
 
-To retake: boot an iPhone 17 Pro Max simulator, `xcrun simctl status_bar <id> override --time
+To retake: boot an iPhone 17 simulator, `xcrun simctl status_bar <id> override --time
 9:41 --batteryState charged --batteryLevel 100`, install a Debug build, and launch with
 `-demo -tab <squad|matches|players|watchlist>` (add `-wildcard` or `-detail`).
+
+## Entered in App Store Connect (23 Oct 2026)
+
+Version 1.0 text, support URL, copyright, review contact and notes; six screenshots; build 10;
+subtitle; category Sports; age rating 4+ (every questionnaire answer No or None); privacy
+policy URL; the four privacy data types (App Functionality, linked, no tracking); price free;
+available in all 175 countries or regions; release automatically after approval.
+
+Left for the owner, because each is a declaration in their name: **Content Rights** (App
+Information) for the Premier League images, **Publish** on App Privacy, and **Add for Review**
+then **Submit**.
