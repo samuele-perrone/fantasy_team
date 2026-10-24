@@ -11,6 +11,8 @@ struct SquadScreen: View {
     @State private var switching = false
     @State private var teamError: String?
     @State private var confirmingDelete = false
+    // Demo builds can open it directly (`-demo -notifications`) for checking.
+    @State private var showingNotifications = Config.isDemo && CommandLine.arguments.contains("-notifications")
     @State private var deleteError: String?
     // Demo builds can open straight onto it (`-demo -wildcard`) for checking.
     @State private var showingWildcard = Config.isDemo && CommandLine.arguments.contains("-wildcard")
@@ -45,6 +47,7 @@ struct SquadScreen: View {
                         .presentationDetents([.medium])
                 }
                 .navigationDestination(isPresented: $showingWildcard) { WildcardScreen() }
+                .sheet(isPresented: $showingNotifications) { NotificationsScreen() }
                 .confirmationDialog(
                     "Delete your account?", isPresented: $confirmingDelete, titleVisibility: .visible
                 ) {
@@ -153,6 +156,7 @@ struct SquadScreen: View {
     private var accountMenu: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                Button("Notifications…", systemImage: "bell") { showingNotifications = true }
                 if auth.isSignedIn {
                     Button("Add a team", systemImage: "plus") { enteringTeam = true }
                     Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right") {

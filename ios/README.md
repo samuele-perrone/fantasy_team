@@ -115,3 +115,12 @@ To check: Xcode 27.1's **iPhone Duo** simulator needs the iOS 27.1 runtime
 (`xcodebuild -downloadPlatform iOS -buildVersion 27.1`, ~8 GB), and opens and closes from the
 controls under the device in Device Hub. A build with `TARGETED_DEVICE_FAMILY=1,2` on an iPad
 simulator shows the wide layout without unfolding; do not commit that setting.
+
+## Live match notifications
+
+`Push/PushStore.swift` holds the settings and Apple's device token and keeps the server's copy
+current (`PUT /api/v1/push`) whenever the token, a setting, the sign-in or the guest team
+changes. `Push/NotificationsScreen.swift` is opened from the account menu on My Squad (and
+`-demo -notifications`). Tapping a notification opens Matches. The entitlement is
+`aps-environment: development` in `project.yml`; Xcode signs App Store and TestFlight builds
+as production, and the app tells the server which environment its token belongs to.

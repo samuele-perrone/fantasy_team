@@ -108,6 +108,15 @@ struct RequestTests {
         #expect(query["url"] == "https://resources.premierleague.com/premierleague/photos/players/110x140/p223094.png")
     }
 
+    @Test func sendsNotificationSettingsUnderTheServersNames() throws {
+        // PUT /api/v1/push reads exactly these keys (src/lib/push.ts, parsePushSettings).
+        let settings = PushSettings(token: "ab12", environment: "production", enabled: true, scope: "mine",
+                                    goals: true, redCards: false, fullTime: true, entryId: nil)
+        let json = try JSONSerialization.jsonObject(with: JSONEncoder().encode(settings)) as! [String: Any]
+        #expect(Set(json.keys).isSuperset(of: ["token", "environment", "enabled", "scope", "goals", "redCards", "fullTime"]))
+        #expect(json["redCards"] as? Bool == false)
+    }
+
     @Test func buildsPathsUnderTheAPIBase() {
         #expect(api.url("matches", query: [URLQueryItem(name: "gw", value: "7")]).absoluteString
             == "https://example.com/api/v1/matches?gw=7")

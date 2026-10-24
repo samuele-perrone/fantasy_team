@@ -754,3 +754,16 @@ guideline 5.1.1, then the owner chose to keep the website behind sign-in. The gu
 binds the app, which reaches the server through `/api/v1`; those routes keep answering
 signed-out requests for Matches, Players and a squad by ID. The pages themselves still handle
 a signed-out visitor, so opening the website again is only a change to `PUBLIC_PREFIXES`.
+
+### Live match notifications run in Supabase, from the site's cache
+
+The notifier needs every phone's settings, which only a service role can read; the website
+has never held that key. Supabase edge functions get it built in, so the sender runs there,
+on a pg_cron schedule (Vercel's free plan schedules once a day). It reads `/api/v1/matches`,
+the site's 60-second FPL cache, rather than FPL, so the one new background poller adds no FPL
+load, and its comparison logic is plain TypeScript tested by Vitest. The first look after
+switching on, or in a new gameweek, only sets the baseline: never a burst of old goals.
+Phones register signed in or out (the app works signed out), keyed by Apple's device token,
+through a security-definer function that takes the account from the session, never the
+request. "Matches with my players" means a squad player plays for either club; the account's
+active team is used when signed in, the phone's team ID otherwise.

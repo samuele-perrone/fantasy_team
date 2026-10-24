@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct FantasyTeamHubApp: App {
     @State private var auth = AuthStore()
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
         // AsyncImage loads through URLSession.shared, whose default cache (512 kB in memory)
@@ -42,6 +43,7 @@ struct RootView: View {
 
 struct MainTabs: View {
     @State private var watch: WatchStore
+    @State private var push = PushStore.shared
     // Matches first: on a match day, the scores are what people open the app for.
     @State private var tab = Tab.matches
 
@@ -79,6 +81,19 @@ struct MainTabs: View {
                 .tag(Tab.watchlist)
         }
         .environment(watch)
+        .environment(push)
+        // A tapped notification is about a match.
+        .onChange(of: push.openMatches) { tab = .matches }
+        .task { await push.start() }
+        // Keep the server's copy of this phone's settings current: the token arriving, a
+        // setting changing, signing in or out, or a signed-out visitor changing team.
+        .task(id: PushSync(
+            token: push.token, enabled: push.enabled, scope: push.scope, goals: push.goals,
+            redCards: push.redCards, fullTime: push.fullTime, signedIn: auth.isSignedIn,
+            guestEntryId: auth.guestEntryId
+        )) {
+            await push.sync(api: auth.api, entryId: auth.isSignedIn ? nil : auth.guestEntryId)
+        }
         // Stars belong to the account: load them on sign-in, drop them on sign-out.
         .task(id: auth.isSignedIn) {
             if auth.isSignedIn { await watch.load() } else { watch.clear() }
@@ -91,4 +106,16 @@ struct MainTabs: View {
             Text(watch.error ?? "")
         }
     }
+}
+
+/// Everything the server's copy of the notification settings depends on.
+private struct PushSync: Equatable {
+    let token: String?
+    let enabled: Bool
+    let scope: PushStore.Scope
+    let goals: Bool
+    let redCards: Bool
+    let fullTime: Bool
+    let signedIn: Bool
+    let guestEntryId: Int?
 }

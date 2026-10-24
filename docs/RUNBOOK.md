@@ -66,7 +66,7 @@ It is read at runtime, not baked into the build, so no redeploy is needed. A bar
 Schema lives in `supabase/migrations/` and is applied by pasting into the Supabase SQL
 editor at `https://supabase.com/dashboard/project/xplgtysifprqfxmvkwjy/sql/new`, or through
 the Supabase connector. Migrations are written to be idempotent, so re-running is safe. All
-of `0001`–`0007` are applied.
+of `0001`–`0009` are applied.
 
 `scripts/db-push.mjs` can apply them over a direct Postgres connection instead, but it needs
 `POSTGRES_URL_NON_POOLING` in `.env.local`, which is not set.
@@ -370,3 +370,24 @@ The submission's text, privacy answers and review notes are drafted in
 [APP_STORE.md](APP_STORE.md), with what is still open. `/privacy` and `/support` are public
 (in `PUBLIC_PREFIXES`) because App Store Connect links to them; their contact address is
 `CONTACT_EMAIL` in `src/lib/site.ts`.
+
+## Live match notifications
+
+- **Sender:** the `live-push` edge function (`supabase/functions/live-push`), deployed to
+  Supabase with JWT verification off. It refuses a second run within 40 seconds and only
+  returns counts, so calling it is harmless. Redeploy after changing `index.ts` or `events.ts`
+  (Supabase connector `deploy_edge_function`, or `supabase functions deploy live-push`).
+- **Schedule:** pg_cron job `live-push`, every minute (migration 0009). Pause with
+  `select cron.unschedule('live-push');`; re-run the migration to resume. Check it runs with
+  `select ran_at from push_state;`, which should be under a minute old.
+- **Apple Push key:** Supabase → Edge Functions → Secrets → `APNS_KEY` = the full contents of
+  the `.p8` key with Apple Push Notifications service enabled. `APNS_KEY_ID` defaults to
+  `5RK43T6R6V`; set it if the push key is a different one. Without `APNS_KEY` nothing is
+  sent, and the function errors only when there is something to send.
+- **Phones:** `push_devices`, written only through `register_push_device()` from
+  `PUT /api/v1/push`. Debug builds register as `sandbox`, TestFlight and App Store builds as
+  `production`; Apple rejects a token sent to the other. Tokens Apple reports as gone are
+  deleted.
+- **Testing a send:** with a goal in a live match the next run sends it. Outside matches,
+  `update push_state set snapshot = null` makes the next run a fresh baseline (it never sends
+  on a baseline).

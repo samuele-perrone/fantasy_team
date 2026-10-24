@@ -139,6 +139,18 @@ struct WatchSkipped: Codable, Hashable, Sendable {
     let name: String
 }
 
+/// One phone's live-match notification settings, as `PUT /api/v1/push` takes them.
+struct PushSettings: Codable, Hashable, Sendable {
+    let token: String
+    let environment: String
+    let enabled: Bool
+    let scope: String
+    let goals: Bool
+    let redCards: Bool
+    let fullTime: Bool
+    let entryId: Int?
+}
+
 /// Who to captain next gameweek. Players are referred to by ID; they are in `verdicts`.
 struct CaptainPick: Codable, Hashable, Sendable {
     let playerId: Int

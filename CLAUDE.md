@@ -74,7 +74,11 @@ neighbour. Check a layout change at 390, 768, 1024 and 1280 — the RUNBOOK has 
 
 Matches (`src/lib/fpl/matches.ts`) reads FPL's fixtures and live endpoints through a 60-second
 shared cache, and the page refreshes itself only while a match is live. Never poll FPL from the
-browser or add a background poller: the cache is what keeps FPL's load flat as users grow.
+browser or add another background poller: the cache is what keeps FPL's load flat as users
+grow. The one poller is `supabase/functions/live-push` (live match notifications), called
+once a minute by pg_cron; it reads the site's own `/api/v1/matches`, never FPL, so it adds
+one cached request a minute whatever the number of users. Its event logic lives in
+`events.ts` beside it and is unit-tested with the rest (`vitest.config.mts` includes it).
 
 **The iOS app (`ios/`) reads `/api/v1` in production.** Keep response changes additive — add
 fields, never rename or remove them — because installed copies cannot update themselves. After
