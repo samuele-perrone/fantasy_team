@@ -53,4 +53,11 @@ describe("GET /api/v1/matches", () => {
     await get();
     expect(app.getMatchday).toHaveBeenCalledWith(null, { entryId: null, watchIds: [201] });
   });
+
+  it("highlights a team named by ?entry= without a session, and rejects a bad one", async () => {
+    auth.value = null;
+    expect((await get("?gw=8&entry=849650")).status).toBe(200);
+    expect(app.getMatchday).toHaveBeenCalledWith(8, { entryId: 849650, watchIds: [] });
+    expect((await get("?entry=abc")).status).toBe(400);
+  });
 });

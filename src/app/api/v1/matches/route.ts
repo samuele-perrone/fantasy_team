@@ -21,7 +21,16 @@ export async function GET(req: Request) {
     return Response.json({ error: "Gameweek must be a positive whole number" }, { status: 400 });
   }
 
-  if (!auth) return Response.json(await getMatchday(gw, { entryId: null, watchIds: [] }));
+  // ?entry= highlights an FPL team's players without a session, as /squad?id= does: the
+  // live-push function uses it to tell which matches involve a phone's players.
+  const entryParam = new URL(req.url).searchParams.get("entry");
+  const entry = entryParam === null ? null : Number(entryParam);
+  if (entry !== null && !(Number.isInteger(entry) && entry > 0)) {
+    return Response.json({ error: "entry must be an FPL team ID" }, { status: 400 });
+  }
+  if (!auth || entry !== null) {
+    return Response.json(await getMatchday(gw, { entryId: entry, watchIds: [] }));
+  }
 
   const [{ data }, watchIds] = await Promise.all([
     auth.supabase.from("profiles").select("fpl_entry_id").eq("id", auth.userId).maybeSingle(),
