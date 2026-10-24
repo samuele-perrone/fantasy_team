@@ -39,7 +39,7 @@ tag; its routes now return 404.
 | --- | --- |
 | `/` | Redirects to `/squad` |
 | `/matches` | **Matches.** Every Premier League match in a gameweek, grouped by day, with arrows between gameweeks. A match opens to goals, assists, cards and bonus (worked out from BPS until FPL confirms it), and your squad and watchlist players are highlighted with their points. Refreshes every minute while a match is live |
-| `/squad` | **My Squad.** Loads your FPL team from its ID; signed in, the team name opens your saved teams to switch between them. The captain and vice-captain for the next gameweek come first, then a link to `?view=wildcard`: the best squad the manager's money buys, against keeping theirs. Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. |
+| `/squad` | **My Squad.** Loads your FPL team from its ID; signed in, the team name opens your saved teams to switch between them. The captain and vice-captain for the next gameweek come first, then a link to `?view=wildcard`: the best squad the manager's money buys, against keeping theirs, optionally built around the watchlist (`&watch=1`). Every player gets a verdict and a one-line reason; tapping opens the numbers, the news and, for Sell and Watch, the best replacements you can afford. |
 | `/watchlist` | **Watchlist.** Suggested buys for this week, the players you have starred, each compared with the squad player they would replace, and a name search to add more |
 | `/players` | **Players.** Every available player, filtered by position, club, maximum price and name, sorted by points over the next five, next game, form, season points, price or how many managers picked them. A star adds one to the watchlist; tapping opens the same numbers as My Squad |
 | `/players/[id]` | Player profile: points per fixture, underlying stats, gameweek history, and a star to watch them |
@@ -47,7 +47,7 @@ tag; its routes now return 404.
 | `/privacy` | Privacy policy, public. Linked from App Store Connect, so it must match what the code collects |
 | `/support` | Support page and common questions, public. Linked from App Store Connect |
 | `/api/v1/squad` | My Squad as JSON, for the iOS app. Accepts a cookie session or `Authorization: Bearer`; with `?id=` it also answers signed out |
-| `/api/v1/wildcard` | The wildcard view as JSON, for the iOS app. Same auth and `?id=` as `/api/v1/squad` |
+| `/api/v1/wildcard` | The wildcard view as JSON, for the iOS app. Same auth and `?id=` as `/api/v1/squad`; `&watch=1` builds it around the caller's watchlist |
 | `/api/v1/account` | `DELETE` deletes the caller's account, for the app's Delete account |
 | `/api/v1/players` | Players as JSON, with the page's filters as query parameters. Public |
 | `/api/v1/matches` | Matches as JSON. `?gw=` picks the gameweek. Public; signed in, your squad and watchlist are highlighted |

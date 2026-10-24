@@ -42,7 +42,8 @@ struct RootView: View {
 
 struct MainTabs: View {
     @State private var watch: WatchStore
-    @State private var tab = Tab.squad
+    // Matches first: on a match day, the scores are what people open the app for.
+    @State private var tab = Tab.matches
 
     enum Tab: Hashable { case matches, squad, players, watchlist }
 
@@ -58,7 +59,7 @@ struct MainTabs: View {
             let name = CommandLine.arguments[i + 1]
             _tab = State(initialValue: [
                 "matches": .matches, "squad": .squad, "players": .players, "watchlist": .watchlist,
-            ][name] ?? .squad)
+            ][name] ?? .matches)
         }
     }
 

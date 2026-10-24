@@ -9,6 +9,12 @@ struct MatchesView: View {
     @State private var expanded: Set<Int> = []
     @State private var loading = false
     @State private var loadedAt: Date?
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// How old the scores may be before showing the tab, or coming back to the app, fetches
+    /// them again. The server's FPL cache is 60 seconds, so live scores are worth asking for
+    /// after 15; otherwise once a minute is plenty.
+    private var freshFor: TimeInterval { view?.live == true ? 15 : 60 }
 
     /// FPL seasons have 38 gameweeks.
     private static let gameweeks = 1...38
@@ -48,15 +54,20 @@ struct MatchesView: View {
                 }
             }
             .refreshable { await load() }
+            // Runs each time the tab appears, not only the first.
             .task(id: gameweek) {
-                if gameweek != view?.event || isStale(loadedAt) { await load() }
+                if gameweek != view?.event || isStale(loadedAt, after: freshFor) { await load() }
+            }
+            // Coming back to the app does not make the tab appear again, so check here too.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active, isStale(loadedAt, after: freshFor) { Task { await load() } }
             }
             // While a match is live, refresh every minute; the server caches FPL for 60 seconds.
             .task(id: view?.live) {
                 guard view?.live == true else { return }
                 while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(60))
-                    await load()
+                    if isStale(loadedAt, after: 55) { await load() }
+                    try? await Task.sleep(for: .seconds(15))
                 }
             }
         }

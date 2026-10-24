@@ -96,14 +96,19 @@ export interface WildcardView extends WildcardPlan {
   nextEvent: number;
 }
 
-/** The best squad a wildcard could buy with this team's money, against keeping it. */
-export async function getWildcardView(entryId: number): Promise<WildcardView> {
+/**
+ * The best squad a wildcard could buy with this team's money, against keeping it. With
+ * `watchIds`, built around those watched players where they fit.
+ */
+export async function getWildcardView(entryId: number, watchIds: number[] = []): Promise<WildcardView> {
   const [team, data] = await Promise.all([
     loadTeam(entryId, VERDICT_RULES.horizon),
     getGameData(),
   ]);
+  const byId = new Map(team.pool.map((p) => [p.id, p]));
+  const watched = watchIds.map((id) => byId.get(id)).filter((p): p is PlayerRow => Boolean(p));
   return {
-    ...planWildcard({ squad: team.squad, pool: team.pool, bank: team.bank, rules: team.rules }),
+    ...planWildcard({ squad: team.squad, pool: team.pool, bank: team.bank, rules: team.rules, watched }),
     nextEvent: data.ctx.nextEvent,
   };
 }

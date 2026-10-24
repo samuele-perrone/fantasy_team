@@ -49,22 +49,69 @@ export interface WildcardPlan {
   keptIds: number[];
   /** the gain is too small to be worth the chip */
   saveIt: boolean;
+  /** watched players the squad was built around, when asked to use the watchlist */
+  watchIds: number[];
+  /** watched players left out: unavailable, or no legal squad within budget could hold them */
+  watchSkipped: { id: number; name: string }[];
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/**
+ * Which watched players a wildcard squad can be built around: tried best first, each kept only
+ * if a full legal squad within budget still exists with it. Forcing them all in at once would
+ * make the optimiser give up on any set that breaks a quota, the club limit or the budget.
+ */
+function fitWatched(
+  watched: PlayerRow[],
+  pool: PlayerRow[],
+  budget: number,
+  rules: SquadRules,
+): { locked: PlayerRow[]; skipped: PlayerRow[] } {
+  const locked: PlayerRow[] = [];
+  const skipped: PlayerRow[] = [];
+  for (const p of [...watched].sort((a, b) => b.xPts - a.xPts)) {
+    // The optimiser never picks an unavailable player, so neither is one built around.
+    if (p.status === "u" || p.status === "n") {
+      skipped.push(p);
+      continue;
+    }
+    const trial = [...locked, p];
+    const r = optimiseSquad(pool, {
+      budget,
+      key: "xPts",
+      includeCaptain: true,
+      rules,
+      locked: trial.map((t) => t.id),
+    });
+    const ids = new Set(r.squad.map((s) => s.id));
+    if (r.squad.length === rules.squadSize && trial.every((t) => ids.has(t.id))) locked.push(p);
+    else skipped.push(p);
+  }
+  return { locked, skipped };
+}
 
 export function planWildcard(input: {
   squad: PlayerRow[];
   pool: PlayerRow[];
   bank: number;
   rules?: SquadRules;
+  /** build around these watched players where they fit */
+  watched?: PlayerRow[];
 }): WildcardPlan {
   const rules = input.rules ?? DEFAULT_RULES;
   const budget = round1(
     input.bank + input.squad.reduce((a, p) => a + estimateSellingPrice(p), 0),
   );
+  const { locked, skipped } = fitWatched(input.watched ?? [], input.pool, budget, rules);
   // Squad players are in the pool too, so keeping one is a choice the optimiser can make.
-  const result = optimiseSquad(input.pool, { budget, key: "xPts", includeCaptain: true, rules });
+  const result = optimiseSquad(input.pool, {
+    budget,
+    key: "xPts",
+    includeCaptain: true,
+    rules,
+    locked: locked.map((p) => p.id),
+  });
   const xi = bestXI(result.squad, "xPtsNext", undefined, rules);
   const points = bestXI(result.squad, "xPts", undefined, rules).startingPoints;
   const currentPoints = bestXI(input.squad, "xPts", undefined, rules).startingPoints;
@@ -84,5 +131,7 @@ export function planWildcard(input: {
     gain,
     keptIds: result.squad.filter((p) => owned.has(p.id)).map((p) => p.id),
     saveIt: gain < WILDCARD_WORTH,
+    watchIds: locked.map((p) => p.id),
+    watchSkipped: skipped.map((p) => ({ id: p.id, name: p.name })),
   };
 }

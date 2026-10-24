@@ -6,6 +6,8 @@ struct WildcardScreen: View {
     @Environment(AuthStore.self) private var auth
     @State private var phase = Phase.loading
     @State private var shown: Player?
+    /// Build around the watchlist; remembered between visits.
+    @AppStorage("wildcardUsesWatchlist") private var useWatchlist = false
 
     enum Phase {
         case loading
@@ -20,6 +22,7 @@ struct WildcardScreen: View {
             .navigationBarTitleDisplayMode(.inline)
             .refreshable { await load() }
             .task { if case .loading = phase { await load() } }
+            .onChange(of: useWatchlist) { Task { await load() } }
             .sheet(item: $shown) { PlayerDetailView(player: $0) }
     }
 
@@ -37,6 +40,7 @@ struct WildcardScreen: View {
 
     private func list(_ view: WildcardView) -> some View {
         let kept = Set(view.keptIds)
+        let watched = Set(view.watchIds ?? [])
         let gain = Int(view.gain.rounded())
         return List {
             Section {
@@ -66,11 +70,31 @@ struct WildcardScreen: View {
                 .textCase(nil)
                 .padding(.leading, -12)
             }
+            if auth.isSignedIn {
+                Section {
+                    Toggle(isOn: $useWatchlist) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Build around my watchlist").font(.subheadline.weight(.semibold))
+                            Text("Keeps your starred players where the budget and squad rules allow.")
+                                .font(.caption).foregroundStyle(Theme.secondary)
+                        }
+                    }
+                    .tint(Theme.brandFill)
+                    if useWatchlist, let skipped = view.watchSkipped, !skipped.isEmpty {
+                        Text("Could not fit \(skipped.map(\.name).joined(separator: ", ")): unavailable, or no squad within budget and the squad rules could hold them.")
+                            .font(.caption).foregroundStyle(Theme.faint)
+                    } else if useWatchlist, watched.isEmpty {
+                        Text("Your watchlist is empty. Star players on Players or My Squad to build around them.")
+                            .font(.caption).foregroundStyle(Theme.faint)
+                    }
+                }
+                .listRowBackground(Theme.surface)
+            }
             Section("Starting XI") {
-                ForEach(view.starters.sorted { $0.posId < $1.posId }) { p in row(p, view: view, kept: kept) }
+                ForEach(view.starters.sorted { $0.posId < $1.posId }) { p in row(p, view: view, kept: kept, watched: watched) }
             }
             Section {
-                ForEach(view.bench) { p in row(p, view: view, kept: kept) }
+                ForEach(view.bench) { p in row(p, view: view, kept: kept, watched: watched) }
             } header: {
                 Text("Bench")
             } footer: {
@@ -82,7 +106,7 @@ struct WildcardScreen: View {
         .readableWidth()
     }
 
-    private func row(_ p: Player, view: WildcardView, kept: Set<Int>) -> some View {
+    private func row(_ p: Player, view: WildcardView, kept: Set<Int>, watched: Set<Int>) -> some View {
         Button { shown = p } label: {
             HStack(spacing: 10) {
                 Text(kept.contains(p.id) ? "KEEP" : "NEW")
@@ -100,7 +124,13 @@ struct WildcardScreen: View {
                         }
                     }
                 VStack(alignment: .leading, spacing: 2) {
-                    PlayerLine(player: p)
+                    HStack(spacing: 4) {
+                        PlayerLine(player: p)
+                        if watched.contains(p.id) {
+                            Image(systemName: "star.fill").font(.caption2).foregroundStyle(Theme.watch)
+                                .accessibilityLabel("From your watchlist")
+                        }
+                    }
                     (Text("\(p.xPtsNext, format: .number.precision(.fractionLength(1))) points next week")
                         + Text(" · \(p.xPts, format: .number.precision(.fractionLength(1))) over five").foregroundStyle(Theme.faint))
                         .font(.footnote).foregroundStyle(Theme.secondary)
@@ -118,7 +148,10 @@ struct WildcardScreen: View {
     private func load() async {
         do {
             // Signed out, the team is the one kept on the phone.
-            phase = .loaded(try await auth.api.wildcard(entryId: auth.isSignedIn ? nil : auth.guestEntryId))
+            phase = .loaded(try await auth.api.wildcard(
+                entryId: auth.isSignedIn ? nil : auth.guestEntryId,
+                watch: auth.isSignedIn && useWatchlist
+            ))
         } catch is CancellationError {
         } catch {
             if case .loaded = phase { return }

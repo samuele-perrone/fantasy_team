@@ -104,7 +104,9 @@ const watchlist = {
 };
 
 // Matches: last finished gameweek, so every kind of incident appears.
-const gw = ctx.nextEvent - 1;
+// The latest gameweek whose matches are all over: one in progress would make the fixture
+// (and the tests that read it) change from one run to the next.
+const gw = Math.max(...bootstrap.events.filter((e) => e.finished).map((e) => e.id), 1);
 const live = new Map(
   (await fpl<{ elements: { id: number }[] }>(`/event/${gw}/live/`)).elements.map((e) => [e.id, e as never]),
 );

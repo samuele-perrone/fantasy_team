@@ -23,7 +23,8 @@ enum APIError: LocalizedError, Equatable {
 protocol FTHAPI: Sendable {
     /// My Squad for `entryId`, or the signed-in account's active team when nil.
     func squad(entryId: Int?) async throws -> SquadView
-    func wildcard(entryId: Int?) async throws -> WildcardView
+    /// `watch` builds it around the signed-in account's watchlist where it fits.
+    func wildcard(entryId: Int?, watch: Bool) async throws -> WildcardView
     func matches(gameweek: Int?) async throws -> MatchdayView
     func players(_ query: BrowseQuery) async throws -> PlayersView
     func watchlist() async throws -> WatchlistResponse
@@ -51,8 +52,8 @@ struct LiveAPI: FTHAPI {
         try await get("squad", query: Self.entryQuery(entryId))
     }
 
-    func wildcard(entryId: Int?) async throws -> WildcardView {
-        try await get("wildcard", query: Self.entryQuery(entryId))
+    func wildcard(entryId: Int?, watch: Bool) async throws -> WildcardView {
+        try await get("wildcard", query: Self.entryQuery(entryId) + (watch ? [URLQueryItem(name: "watch", value: "1")] : []))
     }
 
     static func entryQuery(_ entryId: Int?) -> [URLQueryItem] {

@@ -5,6 +5,7 @@ const view = vi.hoisted(() => ({ getWildcardView: vi.fn() }));
 
 vi.mock("@/lib/supabase/server", () => ({ getRequestAuth: vi.fn(async () => auth.value) }));
 vi.mock("@/lib/app/squad", () => view);
+vi.mock("@/lib/supabase/watchlist", () => ({ listWatchlist: vi.fn(async () => [11, 12]) }));
 
 import { EntryNotFound } from "@/lib/fpl/entry";
 import { GET } from "./route";
@@ -37,7 +38,7 @@ describe("GET /api/v1/wildcard", () => {
     auth.value = null;
     view.getWildcardView.mockResolvedValue({ ok: true });
     expect((await get("?id=7")).status).toBe(200);
-    expect(view.getWildcardView).toHaveBeenCalledWith(7);
+    expect(view.getWildcardView).toHaveBeenCalledWith(7, []);
   });
 
   it("answers 400 with no id and nothing saved", async () => {
@@ -54,7 +55,7 @@ describe("GET /api/v1/wildcard", () => {
     view.getWildcardView.mockResolvedValue({ team: { entryId: 77 } });
     const res = await get();
     expect(res.status).toBe(200);
-    expect(view.getWildcardView).toHaveBeenCalledWith(77);
+    expect(view.getWildcardView).toHaveBeenCalledWith(77, []);
   });
 
   it("returns the view as JSON", async () => {
@@ -68,5 +69,18 @@ describe("GET /api/v1/wildcard", () => {
     const res = await get("?id=9");
     expect(res.status).toBe(404);
     expect((await res.json()).error).toContain("No FPL squad");
+  });
+
+  it("builds around the caller's watchlist with watch=1", async () => {
+    view.getWildcardView.mockResolvedValue({ ok: true });
+    expect((await get("?id=5&watch=1")).status).toBe(200);
+    expect(view.getWildcardView).toHaveBeenCalledWith(5, [11, 12]);
+  });
+
+  it("ignores watch=1 signed out, where there is no watchlist", async () => {
+    auth.value = null;
+    view.getWildcardView.mockResolvedValue({ ok: true });
+    expect((await get("?id=5&watch=1")).status).toBe(200);
+    expect(view.getWildcardView).toHaveBeenCalledWith(5, []);
   });
 });

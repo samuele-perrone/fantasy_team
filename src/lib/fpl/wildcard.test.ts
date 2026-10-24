@@ -60,3 +60,48 @@ describe("planWildcard", () => {
     expect(plan.captainId).toBe(s[i].id);
   });
 });
+
+describe("planWildcard with the watchlist", () => {
+  const pick = (plan: ReturnType<typeof planWildcard>) =>
+    [...plan.starters, ...plan.bench].map((p) => p.id);
+
+  it("builds around a watched player the optimiser would otherwise leave out", () => {
+    const s = squad(4, 5);
+    // worse than anyone in the squad over five gameweeks, so only the watchlist brings him in
+    const watched = row({ posId: 4, pos: "FWD", teamId: 9, cost: 5, xPts: 10 });
+    const without = planWildcard({ squad: s, pool: [...s, watched], bank: 0 });
+    expect(pick(without)).not.toContain(watched.id);
+    const withIt = planWildcard({ squad: s, pool: [...s, watched], bank: 0, watched: [watched] });
+    expect(pick(withIt)).toContain(watched.id);
+    expect(withIt.watchIds).toEqual([watched.id]);
+    expect(withIt.watchSkipped).toEqual([]);
+  });
+
+  it("skips a watched player no legal squad within budget can hold, and says so", () => {
+    const s = squad(4, 5);
+    const pricey = row({ name: "Pricey", posId: 3, pos: "MID", teamId: 9, cost: 30, xPts: 60 });
+    const cheap = row({ posId: 4, pos: "FWD", teamId: 8, cost: 5, xPts: 10 });
+    const plan = planWildcard({ squad: s, pool: [...s, pricey, cheap], bank: 0, watched: [pricey, cheap] });
+    expect(pick(plan)).not.toContain(pricey.id);
+    expect(pick(plan)).toContain(cheap.id);
+    expect(plan.watchSkipped).toEqual([{ id: pricey.id, name: "Pricey" }]);
+    expect(plan.cost).toBeLessThanOrEqual(plan.budget);
+  });
+
+  it("does not build around an unavailable player", () => {
+    const s = squad(4, 5);
+    const out = row({ posId: 4, pos: "FWD", teamId: 9, cost: 5, xPts: 30, status: "u" });
+    const plan = planWildcard({ squad: s, pool: [...s, out], bank: 0, watched: [out] });
+    expect(plan.watchSkipped.map((w) => w.id)).toEqual([out.id]);
+  });
+
+  it("keeps to the club limit when several watched players share a club", () => {
+    const s = squad(4, 5);
+    const same = [0, 1, 2, 3].map((i) =>
+      row({ posId: 3, pos: "MID", teamId: 7, cost: 5, xPts: 10 + i }),
+    );
+    const plan = planWildcard({ squad: s, pool: [...s, ...same], bank: 0, watched: same });
+    expect(plan.watchIds).toHaveLength(3);
+    expect(plan.watchSkipped).toHaveLength(1);
+  });
+});

@@ -114,6 +114,11 @@ gain is the new squad's best XI against the current squad's, both over five game
 10 points it says to save the chip, since that is ~2 points a week across an XI, inside the
 model's error. 10 is a starting value, not a fitted one.
 
+Signed in, it can be built around the watchlist (`?watch=1`, the app's switch). Watched players
+are tried best first and each is kept only if a full legal squad within budget still exists
+with it, so a set that breaks a quota, the club limit or the budget loses its weakest members
+rather than producing no squad; the ones left out are listed.
+
 ## Limits worth knowing
 
 **The coefficients are hand-tuned, not fitted.** The rating weights, the 0.085 bonus slope,

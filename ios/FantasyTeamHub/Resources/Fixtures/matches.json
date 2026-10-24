@@ -537,14 +537,24 @@
        "minutes": 90
       },
       {
-       "id": 237,
-       "code": 440993,
-       "name": "Ndiaye",
+       "id": 388,
+       "code": 209036,
+       "name": "Guéhi",
        "side": "h",
        "mine": false,
        "watched": true,
-       "points": 5,
+       "points": 1,
        "minutes": 90
+      },
+      {
+       "id": 399,
+       "code": 466052,
+       "name": "Cherki",
+       "side": "h",
+       "mine": false,
+       "watched": true,
+       "points": 0,
+       "minutes": 0
       }
      ]
     },
@@ -1071,23 +1081,13 @@
        "minutes": 90
       },
       {
-       "id": 426,
-       "code": 141746,
-       "name": "B.Fernandes",
+       "id": 427,
+       "code": 446008,
+       "name": "Mbeumo",
        "side": "a",
        "mine": true,
        "watched": false,
-       "points": 1,
-       "minutes": 90
-      },
-      {
-       "id": 330,
-       "code": 226182,
-       "name": "Bogle",
-       "side": "h",
-       "mine": false,
-       "watched": true,
-       "points": 2,
+       "points": 8,
        "minutes": 90
       }
      ]
@@ -1189,13 +1189,13 @@
        "minutes": 90
       },
       {
-       "id": 31,
-       "code": 199798,
-       "name": "Konsa",
+       "id": 4,
+       "code": 226597,
+       "name": "Gabriel",
        "side": "a",
        "mine": false,
        "watched": true,
-       "points": 9,
+       "points": 8,
        "minutes": 90
       }
      ]

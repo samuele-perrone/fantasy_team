@@ -128,6 +128,15 @@ struct WildcardView: Codable, Sendable {
     /// the gain is too small to be worth the chip
     let saveIt: Bool
     let nextEvent: Int
+    /// watched players it was built around (`watch: true`); optional for older servers
+    let watchIds: [Int]?
+    /// watched players that could not fit
+    let watchSkipped: [WatchSkipped]?
+}
+
+struct WatchSkipped: Codable, Hashable, Sendable {
+    let id: Int
+    let name: String
 }
 
 /// Who to captain next gameweek. Players are referred to by ID; they are in `verdicts`.

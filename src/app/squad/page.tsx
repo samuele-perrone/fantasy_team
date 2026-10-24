@@ -61,12 +61,19 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
   const idParam = rawId && /^\d+$/.test(rawId) ? `id=${rawId}` : "";
   const squadHref = idParam ? `/squad?${idParam}` : "/squad";
   const wildcardHref = `/squad?view=wildcard${idParam ? `&${idParam}` : ""}`;
+  // Signed in, the wildcard can be built around the watchlist (?watch=1).
+  const useWatchlist = signedIn && first(params.watch) === "1";
 
   const wantsWildcard = first(params.view) === "wildcard";
   let view;
   let wildcard;
   try {
-    if (wantsWildcard) wildcard = await getWildcardView(entryId);
+    if (wantsWildcard) {
+      const watchIds = useWatchlist
+        ? await listWatchlist((await createClient()) as unknown as SupabaseClient)
+        : [];
+      wildcard = await getWildcardView(entryId, watchIds);
+    }
     else view = await getSquadView(entryId);
   } catch (e) {
     return (
@@ -87,7 +94,19 @@ export default async function SquadPage({ searchParams }: PageProps<"/squad">) {
     );
   }
 
-  if (wildcard) return <Wildcard view={wildcard} back={squadHref} />;
+  if (wildcard) {
+    return (
+      <Wildcard
+        view={wildcard}
+        back={squadHref}
+        watchToggle={
+          signedIn
+            ? { on: useWatchlist, href: useWatchlist ? wildcardHref : `${wildcardHref}&watch=1` }
+            : null
+        }
+      />
+    );
+  }
   if (!view) return null;
 
   const watched = new Set(

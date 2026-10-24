@@ -9,7 +9,7 @@ import { EntryNotFound } from "@/lib/fpl/entry";
  * guideline 5.1.1. Reads auth itself — see getRequestAuth. 401 with neither an ID nor a
  * session, 400 without a usable ID, 404 for a team FPL does not have.
  */
-export function entryRoute<T>(load: (entryId: number) => Promise<T>) {
+export function entryRoute<T>(load: (entryId: number, req: Request) => Promise<T>) {
   return async function GET(req: Request) {
     const param = new URL(req.url).searchParams.get("id");
     let entryId = param ? Number(param) : null;
@@ -28,7 +28,7 @@ export function entryRoute<T>(load: (entryId: number) => Promise<T>) {
     }
 
     try {
-      return Response.json(await load(entryId));
+      return Response.json(await load(entryId, req));
     } catch (e) {
       if (e instanceof EntryNotFound) return Response.json({ error: e.message }, { status: 404 });
       throw e;

@@ -37,7 +37,7 @@ describe("GET /api/v1/squad", () => {
     auth.value = null;
     view.getSquadView.mockResolvedValue({ ok: true });
     expect((await get("?id=7")).status).toBe(200);
-    expect(view.getSquadView).toHaveBeenCalledWith(7);
+    expect(view.getSquadView).toHaveBeenCalledWith(7, expect.any(Request));
   });
 
   it("answers 400 with no id and nothing saved", async () => {
@@ -54,7 +54,7 @@ describe("GET /api/v1/squad", () => {
     view.getSquadView.mockResolvedValue({ team: { entryId: 77 } });
     const res = await get();
     expect(res.status).toBe(200);
-    expect(view.getSquadView).toHaveBeenCalledWith(77);
+    expect(view.getSquadView).toHaveBeenCalledWith(77, expect.any(Request));
   });
 
   it("returns the view as JSON", async () => {
