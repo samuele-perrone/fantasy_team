@@ -1,3 +1,4 @@
+  GW10: not finished yet, skipping
 
 GW2 (snapshot taken 0.3h before the deadline)
   all players            n= 620  MAE=1.23  bias=-0.20  RMSE=2.18  r=0.56  (pred 1.24 vs actual 1.43)
