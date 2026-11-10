@@ -1,4 +1,10 @@
-  GW10: not finished yet, skipping
+
+GW10 (snapshot taken 5.7h before the deadline)
+  all players            n= 670  MAE=1.06  bias=-0.26  RMSE=2.09  r=0.56  (pred 1.10 vs actual 1.37)
+  GKP                    n=  74  MAE=0.69  bias=-0.00  RMSE=1.43  r=0.72  (pred 0.92 vs actual 0.92)
+  DEF                    n= 218  MAE=1.11  bias=-0.24  RMSE=1.99  r=0.54  (pred 1.10 vs actual 1.35)
+  MID                    n= 299  MAE=1.10  bias=-0.31  RMSE=2.16  r=0.55  (pred 1.16 vs actual 1.47)
+  FWD                    n=  79  MAE=1.15  bias=-0.39  RMSE=2.56  r=0.53  (pred 1.05 vs actual 1.44)
   GW11: not finished yet, skipping
 
 GW2 (snapshot taken 0.3h before the deadline)
@@ -58,4 +64,4 @@ GW9 (snapshot taken 0.2h before the deadline)
   FWD                    n=  79  MAE=0.98  bias=-0.27  RMSE=2.21  r=0.57  (pred 1.02 vs actual 1.29)
 
 Across all scored gameweeks
-  all players            n=5258  MAE=1.14  bias=-0.26  RMSE=2.14  r=0.52  (pred 1.12 vs actual 1.38)
+  all players            n=5928  MAE=1.13  bias=-0.26  RMSE=2.14  r=0.53  (pred 1.12 vs actual 1.38)
