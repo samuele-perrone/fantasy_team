@@ -13,6 +13,7 @@ GW11 (snapshot taken 12h before the deadline)
   MID                    n= 299  MAE=1.17  bias=-0.39  RMSE=2.39  r=0.51  (pred 1.17 vs actual 1.57)
   FWD                    n=  79  MAE=1.19  bias=-0.43  RMSE=2.49  r=0.41  (pred 0.99 vs actual 1.42)
   GW12: not finished yet, skipping
+  GW13: not finished yet, skipping
 
 GW2 (snapshot taken 0.3h before the deadline)
   all players            n= 620  MAE=1.23  bias=-0.20  RMSE=2.18  r=0.56  (pred 1.24 vs actual 1.43)
